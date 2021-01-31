@@ -1,2 +1,6 @@
 # Python
 venv/
+__pycache__/
+
+# Local Data
+data/
