@@ -70,7 +70,7 @@ class Predictor:
 
     def intake_and_shape(self) -> pd.DataFrame:
         # Import and parse data
-        df = pd.read_csv(get_csv_url(), parse_dates=['Date'])
+        df = pd.read_csv(get_csv_url(), parse_dates=['timestamp'])
         df.to_csv(self.csv_local_path, index=False)
         df = df.sort_values('Date')
 
@@ -90,12 +90,12 @@ class Predictor:
 
     def preprocess(self, data_raw):
         data = self.to_sequences(data_raw, self.seq_len)
-        num_train = int(self.train_split * data.shape[0])
+        num_to_train = int(self.train_split * data.shape[0])
 
-        self.X_train = data[:num_train, :-1, :]
-        self.y_train = data[:num_train, -1, :]
-        self.X_test = data[num_train:, :-1, :]
-        self.y_test = data[num_train:, -1, :]
+        self.X_train = data[:num_to_train, :-1, :]
+        self.y_train = data[:num_to_train, -1, :]
+        self.X_test = data[num_to_train:, :-1, :]
+        self.y_test = data[num_to_train:, -1, :]
 
     '''
     MODELING
@@ -128,17 +128,8 @@ class Predictor:
             validation_split=0.1
         )
 
-    def save_model(self):
-        # !!! THIS DOES NOT WORK !!!
-        # Solutions online do not fix it
-        self.model.save('model', save_format='tf')
-        save_pickle(self.history, self.history_path)
-
     def predict(self):
-        # predict() takes an array of X values (dates)
-        # and outputs an array of Y values (prices)
         y_hat = self.model.predict(self.X_test)
-        self.y_test_inverse = self.scaler.inverse_transform(self.y_test)
         self.y_hat_inverse = self.scaler.inverse_transform(y_hat)
 
     '''
@@ -146,6 +137,7 @@ class Predictor:
     '''
 
     def render_prediction_chart(self):
+        self.y_test_inverse = self.scaler.inverse_transform(self.y_test)
         plt.plot(self.y_test_inverse, label="Actual Price", color='green')
         plt.plot(self.y_hat_inverse, label="Predicted Price", color='red')
 
