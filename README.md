@@ -1,5 +1,5 @@
 # Cryptographer
- Predictive crypto modeling
+Bitcoin price approximation & trading
 
 ## Setup
 
@@ -24,3 +24,10 @@
         pip install -r requirements.txt
 
 Any issues with CUDA setup, please [refer here](https://www.tensorflow.org/install/gpu) 
+
+## Utilities
+
+- `filter_csv.py`
+        
+  - Used to reduce historical data into larger granuels. Data with sporadic timing can be filtered to regular segments of time.
+  - Expects a CSV with two columns: "timestamp" and "price". Both should be numberical. Timstamp should be epoch seconds.
