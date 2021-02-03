@@ -16,22 +16,29 @@ Manipulate an input CSV into a new file
              'timestamp' (epoch seconds) and 'price' (floats)
 
 <output_path> : str
-    File path of output CSV. Will overwrite if already exists.
+    Format & Filter : File path of output CSV. Will overwrite if already exists.
+    Validate : Out list of bad gaps in data
 
 <mod_type>
     --format :  Reformat the raw CSV. Add column headers, remove 
                 the volume column, and purge null values. No mod_args. 
     --filter :  Filter the CSV to specific time intervals, removing rows
                 in between intervals. Interval determined by mod_arg.
+    --validate: 
 
 <mod_args>
     If filtering, add the interval rate as # of seconds
+    If validating, add the expected interval rate, as well as a tolerance multiplier > 1
+        tolerance multiplier == how many multiples of the interval is acceptable between each row. higher multiplier == fewer bad gaps
 
 Filter input.csv into output.csv with intervals of 60 seconds
 `$ python filter_csv.py input.csv output.csv --filter 60`
 
 Format raw input.csv into nicely formatted output.csv
 `$ python filter_csv.py input.csv output.csv --format`
+
+Validate history.csv with 60-minute intervals with a tolerance of 120mins (60 * 2)
+`$ python filter_csv.py history.csv log.txt --validate 3600 2`
 """
 
 
