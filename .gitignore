@@ -5,3 +5,6 @@ __pycache__/
 # Local Data
 data/
 *.csv
+
+# IDE
+.vscode
