@@ -72,23 +72,18 @@ def reformat_csv(input_path: str, output_path: str):
 
 def validate_csv(input_csv: str, output_file: str, expected_interval: int, margin: int):
     df = pd.read_csv(input_csv)
-    print(df.shape)
-    print(df.head())
     acceptable_diff = expected_interval * margin
+    bad_count = 0
     with open(output_file, 'w+') as file:
         floor = int(df['timestamp'][0])
         for i, row in df.iterrows():
             ceiling = int(row['timestamp'])
             if (ceiling - floor) > acceptable_diff:
-                file.writelines([
-                    'Bad gap!',
-                    f'Row #: {(i + 2)}',
-                    f'Floor: {floor}',
-                    f'Ceiling: {ceiling}',
-                    "========================"
-                ])
+                bad_count += 1
+                file.write(f'Row #: {(i + 2)} \t Diff: {(ceiling - floor)}\n')
             floor = ceiling
-
+    print("Done.")
+    print(f"Bad gap count: {bad_count}")
 
 if __name__ == "__main__":
     try:
@@ -104,7 +99,8 @@ if __name__ == "__main__":
     elif mode == '--format':
         reformat_csv(input, output)
     elif mode == '--validate':
-        interval = sys.argv[4]
-        validate_csv(input, output)
+        interval = int(sys.argv[4])
+        tolerance_multiplier = int(sys.argv[5])
+        validate_csv(input, output, interval, tolerance_multiplier)
     else:
         print("Bad args read docs!")
