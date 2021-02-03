@@ -34,13 +34,13 @@ class Predictor:
         self.y_test: np.ndarray = None
 
         # File paths
-        self.csv_local_path = 'data/historical-data.csv'
+        self.csv_local_path = 'btc-history-60min-small.csv'
         self.history_path = 'model/history.pkl'
         # Length of sequences to chunk data
         self.seq_len = 100
         self.window_size = self.seq_len - 1
         # Proportion of data to reserve for training
-        self.train_split = 0.95
+        self.train_split = 0.99
         # Combat overfitting
         self.dropout = 0.2
         # GUI Config
@@ -70,12 +70,11 @@ class Predictor:
 
     def intake_and_shape(self) -> pd.DataFrame:
         # Import and parse data
-        df = pd.read_csv(get_csv_url(), parse_dates=['timestamp'])
-        df.to_csv(self.csv_local_path, index=False)
-        df = df.sort_values('Date')
+        df = pd.read_csv(self.csv_local_path)
+        df = df.sort_values('timestamp')
 
         # Reshape data into range [0,1]
-        close_price = df.Close.values.reshape(-1, 1)
+        close_price = df.price.values.reshape(-1, 1)
         scaled_close = self.scaler.fit_transform(close_price)
 
         # Remove NaN values from data
