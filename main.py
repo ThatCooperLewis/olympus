@@ -1,82 +1,57 @@
-import numpy as np
+import log_suppressor
 import matplotlib.pyplot as plt
+import numpy as np
 import pandas as pd
-from pandas.core.frame import DataFrame
-from pylab import rcParams
 import seaborn as sns
-from sklearn.preprocessing import MinMaxScaler
 import tensorflow as tf
-from tensorflow.python.keras.layers import CuDNNLSTM, LSTM
-from tensorflow.keras import Sequential, Model
-from tensorflow.keras.layers import Bidirectional, Activation, Dropout, Dense
-from utils import save_pickle, get_csv_url
+from pylab import rcParams
+from sklearn.preprocessing import MinMaxScaler
+from tensorflow.keras import Sequential
+from tensorflow.keras.layers import Activation, Bidirectional, Dense, Dropout
+from tensorflow.python.keras.layers import CuDNNLSTM
 
 
-# This prevents a crash from memory overloading
+# Prevents memory crash
 gpus = tf.config.experimental.list_physical_devices('GPU')
-if gpus:
-    try:
-        for gpu in gpus:
-            tf.config.experimental.set_memory_growth(gpu, True)
-    except RuntimeError as e:
-        print(e)
+if gpus: 
+    for gpu in gpus: tf.config.experimental.set_memory_growth(gpu, True)
 
+class Model:
 
-class Predictor:
-
-    def __init__(self):
+    def __init__(self, input_csv):
+        self.csv_path = input_csv
         self.scaler = MinMaxScaler()
-        self.model = Sequential()
 
         self.X_train: np.ndarray = None
         self.y_train: np.ndarray = None
         self.X_test: np.ndarray = None
         self.y_test: np.ndarray = None
 
-        # File paths
-        self.csv_local_path = 'btc-history-60min-small.csv'
-        self.history_path = 'model/history.pkl'
-        # Length of sequences to chunk data
+        # Tuning Knobs
         self.seq_len = 100
         self.window_size = self.seq_len - 1
-        # Proportion of data to reserve for training
-        self.train_split = 0.99
-        # Combat overfitting
         self.dropout = 0.2
+        self.epoch_count = 50
+        self.testing_split = 0.95
+        self.validation_split = 0.1
+
         # GUI Config
         sns.set(style='whitegrid', palette='muted', font_scale=1.5)
         rcParams['figure.figsize'] = 14, 8
         # Other stuff
         self.batch_size = 64
         np.random.seed(42069)
-
         return
 
-    def run(self):
-        self.prepare_data()
-        self.build_model()
-        self.train_model()
-        self.predict()
-        # self.save_model()
-        self.render_prediction_chart()
-
-    '''
-    DATA PREPROCESSING
-    '''
-
-    def prepare_data(self):
-        scaled_data = self.intake_and_shape()
-        self.preprocess(scaled_data)
-
-    def intake_and_shape(self) -> pd.DataFrame:
+    def intake_data(self) -> pd.DataFrame:
         # Import and parse data
-        df = pd.read_csv(self.csv_local_path)
-        df = df.sort_values('timestamp')
+        df = pd.read_csv(self.csv_path, parse_dates=['timestamp'])
+        return df.sort_values('timestamp')
 
+    def shape_data(self, df):
         # Reshape data into range [0,1]
         close_price = df.price.values.reshape(-1, 1)
         scaled_close = self.scaler.fit_transform(close_price)
-
         # Remove NaN values from data
         scaled_close = scaled_close[~np.isnan(scaled_close)]
         return scaled_close.reshape(-1, 1)
@@ -87,22 +62,12 @@ class Predictor:
             d.append(data[index: index + seq_len])
         return np.array(d)
 
-    def preprocess(self, data_raw):
-        data = self.to_sequences(data_raw, self.seq_len)
-        num_to_train = int(self.train_split * data.shape[0])
-
-        self.X_train = data[:num_to_train, :-1, :]
-        self.y_train = data[:num_to_train, -1, :]
-        self.X_test = data[num_to_train:, :-1, :]
-        self.y_test = data[num_to_train:, -1, :]
-
-    '''
-    MODELING
-    '''
-
-    def build_model(self):
+    def create_model(self):
+        self.model = Sequential()
         self.model.add(Bidirectional(
             CuDNNLSTM(self.window_size, return_sequences=True),
+            # TODO !!! See if shape[-1] changes when new data is added
+            # If not, no need to rebuild model! Just model.fit() each time!!
             input_shape=(self.window_size, self.X_train.shape[-1])
         ))
         self.model.add(Dropout(rate=self.dropout))
@@ -121,19 +86,74 @@ class Predictor:
         self.history = self.model.fit(
             self.X_train,
             self.y_train,
-            epochs=50,
+            epochs=self.epoch_count,
             batch_size=self.batch_size,
             shuffle=False,
-            validation_split=0.1
+            validation_split=self.validation_split,
+            verbose=2
         )
 
     def predict(self):
         y_hat = self.model.predict(self.X_test)
         self.y_hat_inverse = self.scaler.inverse_transform(y_hat)
 
-    '''
-    ANALYTICS
-    '''
+
+class Predict(Model):
+
+    def run(self, prediction_cycles: int = 1):
+        data = self.intake_data()
+        self.preprocess(data)
+        self.create_model()
+        for _ in range(prediction_cycles):
+            self.train_model()
+            self.predict()
+            # TODO: Handle prediction output better
+            # Compile into another list as well as updating data
+            data = self.update_data(data, self.y_hat_inverse)
+            self.preprocess(data)
+
+    def preprocess(self, data_raw):
+        data_raw = self.shape_data(data_raw)
+        data = self.to_sequences(data_raw, self.seq_len)
+        training_size = int(data.shape[0] - 1)
+        self.split_data(data, training_size)
+
+    def split_data(self, data, training_size):
+        self.X_train = data[:, :-1, :]
+        self.y_train = data[:, -1, :]
+        self.X_test = data[-1, :, :]
+
+    def update_data(self, data, new_row):
+        # TODO: See if the date column matters at all
+        # Can it just be the same thing?
+        # If so, no need to handle date parsing?
+        # If not, just add the candle size to the last timestamp
+
+        # return dataframe with added row
+        return data
+
+
+class Test(Model):
+
+    def run(self):
+        data = self.intake_data()
+        self.preprocess(data)
+        self.create_model()
+        self.train_model()
+        self.predict()
+        self.render_prediction_chart()
+
+    def preprocess(self, data_raw):
+        data_raw = self.shape_data(data_raw)
+        data = self.to_sequences(data_raw, self.seq_len)
+        training_size = int(self.testing_split * data.shape[0])
+        self.split_data(data, training_size)
+
+    def split_data(self, data, training_size):
+        self.X_train = data[:training_size, :-1, :]
+        self.y_train = data[:training_size, -1, :]
+        self.X_test = data[training_size:, :-1, :]
+        self.y_test = data[training_size:, -1, :]
 
     def render_prediction_chart(self):
         self.y_test_inverse = self.scaler.inverse_transform(self.y_test)
@@ -149,5 +169,5 @@ class Predictor:
 
 
 if __name__ == "__main__":
-    predictor = Predictor()
-    predictor.run()
+    model = Test(input_csv='btc-history-60min-small.csv')
+    model.run()
