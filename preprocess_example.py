@@ -31,8 +31,9 @@ null
 10
 '''
 
+seq_len = 10
 
-df = pd.read_csv('test.csv')
+df = pd.read_csv('btc-history-60min-small.csv')
 # log('original df', df)
 # <class 'pandas.core.frame.DataFrame'>
 # ========
@@ -51,8 +52,10 @@ df = pd.read_csv('test.csv')
 # 11  10.0
 # ========
 
+rem = df.shape[0] % seq_len
+df = df.iloc[rem:]
 
-reshape = df.nums.values.reshape(-1, 1)
+reshape = df.timestamp.values.reshape(-1, 1)
 # log('reshaped df', reshape)
 # <class 'numpy.ndarray'>
 # (12, 1)
@@ -70,6 +73,19 @@ reshape = df.nums.values.reshape(-1, 1)
 #  [ 9.]
 #  [10.]]
 # ========
+
+
+'''
+Re: adding a volume input
+I *think* the solution is to pair the volume with the each price array
+[
+    [0., vol0]
+    [1., vol1]
+    ...and so on
+]
+
+hopefully we don't have to add another dimension 
+'''
 
 nonnull = reshape[~np.isnan(reshape)]
 # log('nonnull', nonnull)
@@ -100,11 +116,12 @@ reshape_scaled = nonnull.reshape(-1 ,1)
 
 def to_sequences(data, seq_len):
     d = []
-    for index in range(len(data) - seq_len):
+    for index in range(len(data) - seq_len + 1):
         d.append(data[index: index + seq_len])
     return np.array(d)
-
-sequenced = to_sequences(reshape_scaled, 5)
+# print(reshape_scaled.shape)
+sequenced = to_sequences(reshape_scaled, seq_len)
+# print(sequenced[-1][-1][0])
 # log('sequenced', sequenced)
 # <class 'numpy.ndarray'>
 # (6, 5, 1)
@@ -269,7 +286,14 @@ ytrain = sequenced[:, -1, :]
 #  [9.]]
 # ========
 
-# TODO: Figure out how to make a ndarray of a sequence of the last seq_len rows of data
-# then use the last value as the prediction
-# THen update array with that prediction
-# BOOM you know the future
+xpredict = sequenced[-1:, 1:, :]
+
+# This is how to append more data to the 3D array
+# Good fucking luck when there's two values
+xpredict = np.append(xpredict, 6969)
+xpredict = [xpredict.reshape(-1, 1)]
+xpredict = np.array(xpredict)
+log('append', xpredict)
+xpredict = xpredict[:, 1:, :]
+log('chop', xpredict)
+log('simple', xpredict[0])
