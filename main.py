@@ -1,4 +1,5 @@
 import log_suppressor
+import argparse as argp
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
@@ -6,8 +7,8 @@ import seaborn as sns
 import tensorflow as tf
 from pylab import rcParams
 from sklearn.preprocessing import MinMaxScaler
-from tensorflow.keras import Sequential
 from tensorflow.keras import Model as tfModel
+from tensorflow.keras import Sequential
 from tensorflow.keras.layers import Activation, Bidirectional, Dense, Dropout
 from tensorflow.python.keras.layers import CuDNNLSTM
 
@@ -31,10 +32,10 @@ class Model:
         self.y_test: np.ndarray = None
 
         # Tuning Knobs
-        self.seq_len = 100
+        self.seq_len = 25
         self.window_size = self.seq_len - 1
         self.dropout = 0.2
-        self.epoch_count = 300
+        self.epoch_count = 50
         self.testing_split = 0.95
         self.validation_split = 0.2
 
@@ -108,6 +109,15 @@ class Model:
     def load_model(self, file_path: str):
         self.model = tf.keras.models.load_model(file_path)
 
+    def plot_model_loss(self):
+        plt.plot(self.history.history['loss'])
+        plt.plot(self.history.history['val_loss'])
+        plt.title('model loss')
+        plt.ylabel('loss')
+        plt.xlabel('epoch')
+        plt.legend(['train', 'test'], loc='upper left')
+        plt.show()
+
 
 class Predict(Model):
 
@@ -120,6 +130,7 @@ class Predict(Model):
         self.create_model()
         self.train_model()
         self.save_model(self.model)
+        self.plot_model_loss()
         result_feed = []
         for _ in range(prediction_cycles):
             result = self.predict()[0][0]
@@ -134,9 +145,9 @@ class Predict(Model):
         self.split_data(data)
 
     def split_data(self, data):
-        self.X_train = data[:, :-1, :]
-        self.y_train = data[:, -1, :]
-        self.X_test = data[-1:, 1:, :]
+        self.X_train = data[:, :-1, :]  # Remove last element from each sequence
+        self.y_train = data[:, -1, :]   # Create a sequence of only the last element
+        self.X_test = data[-1:, 1:, :]  # Use sequence ending in most recent row
 
     def update_data(self, data: np.ndarray, new_row: int):
         data = np.append(data, new_row)
@@ -170,6 +181,7 @@ class Test(Model):
         self.preprocess(data)
         self.create_model()
         self.train_model()
+        self.plot_model_loss()
         y_hat_inverse = self.predict()
         self.render_prediction_chart(y_hat_inverse)
 
@@ -199,6 +211,8 @@ class Test(Model):
 
 
 if __name__ == "__main__":
-    # model = Test(input_csv='btc-history-60min-small.csv')
-    model = Predict(input_csv='btc-history-60min-smaller.csv')
-    model.run()
+    parser = argp.ArgumentParser()
+    parser.add_argument('input_cav')
+    # model = Test(input_csv='data/recent-intervals/bitstamp-15min-3k.csv')
+    model = Predict(input_csv='data/recent-intervals/bitstamp-15min-5k.csv')
+    model.run(4)
