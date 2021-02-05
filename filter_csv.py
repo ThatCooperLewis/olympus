@@ -24,7 +24,10 @@ Manipulate an input CSV into a new file
                 the volume column, and purge null values. No mod_args. 
     --filter :  Filter the CSV to specific time intervals, removing rows
                 in between intervals. Interval determined by mod_arg.
-    --validate: 
+    --validate: Output a list of particularly large gaps in the data's timeline,
+                defined by a given multitude of the expected interval
+    --reduce :  Remove earliest rows from data, given the desired number
+                of rows to keep
 
 <mod_args>
     If filtering, add the interval rate as # of seconds
@@ -39,6 +42,9 @@ Format raw input.csv into nicely formatted output.csv
 
 Validate history.csv with 60-minute intervals with a tolerance of 120mins (60 * 2)
 `$ python filter_csv.py history.csv log.txt --validate 3600 2`
+
+Reduce a million-line original.csv into a 1,000-line truncated.csv
+`$ python filter_csv.py origina.csv truncated.csv --reduce 1000`
 """
 
 
@@ -69,11 +75,8 @@ def reformat_csv(input_path: str, output_path: str):
         output.write("timestamp,price,volume\n")
         output.write(readcontent)
         output.close()
-    # Stage 2: Drop volume column
-    df = pd.read_csv(output_path)
-    df = df.drop('volume', axis='columns')
-    df.to_csv(output_path, index=False)
     # Stage 3: Drop null rows
+    df = pd.read_csv(output_path)
     df = df.dropna(how='any', axis=0)
     df.to_csv(output_path, index=False)
 
@@ -92,6 +95,11 @@ def validate_csv(input_csv: str, output_file: str, expected_interval: int, margi
     print("Done.")
     print(f"Bad gap count: {bad_count}")
 
+def reduce_csv(input_csv: str, output_csv: str, keep_count: int):
+    df = pd.read_csv(input_csv)
+    df = df[-keep_count:]
+    df.to_csv(output_csv, index=False)
+
 if __name__ == "__main__":
     try:
         input = sys.argv[1]
@@ -109,5 +117,8 @@ if __name__ == "__main__":
         interval = int(sys.argv[4])
         tolerance_multiplier = int(sys.argv[5])
         validate_csv(input, output, interval, tolerance_multiplier)
+    elif mode == '--reduce':
+        keep_count = int(sys.argv[4])
+        reduce_csv(input, output, keep_count)
     else:
         print("Bad args read docs!")
