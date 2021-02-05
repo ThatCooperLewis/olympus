@@ -6,5 +6,8 @@ __pycache__/
 data/
 *.csv
 
+# Model training
+models/
+
 # IDE
 .vscode
