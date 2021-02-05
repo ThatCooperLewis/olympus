@@ -106,6 +106,7 @@ if __name__ == "__main__":
         output = sys.argv[2]
         mode = sys.argv[3]
     except:
+        print(sys.argv)
         print("Bad args read docs!")
         exit()
     if mode == '--filter':
@@ -121,4 +122,4 @@ if __name__ == "__main__":
         keep_count = int(sys.argv[4])
         reduce_csv(input, output, keep_count)
     else:
-        print("Bad args read docs!")
+        print(f'Expected --format, --validate, --filter, or --reduce, got "{mode}"')
