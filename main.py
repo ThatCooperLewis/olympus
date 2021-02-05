@@ -53,8 +53,6 @@ class Model:
         return df.sort_values('timestamp')
 
     def shape_data(self, df: pd.DataFrame):
-        # TODO: Do you need this
-        # df = df.iloc[(df.shape[0] % self.seq_len):]
         close_price = df.price.values.reshape(-1, 1)
         scaled_close = self.scaler.fit_transform(close_price)
         # Remove NaN values from data
