@@ -98,11 +98,15 @@ class Model:
     def predict(self):
         y_hat = self.model.predict(self.X_test)
         result = self.scaler.inverse_transform(y_hat)
-        return result[0][0]
+        return result
 
     def save_model(self, model: tfModel):
-        # TODO
+        model.save('model.h5', save_format='h5')
+        # tf.keras.models.save_model(model, filepath='model.rf', save_format='tf')
         return
+
+    def load_model(self, file_path: str):
+        self.model = tf.keras.models.load_model(file_path)
 
 
 class Predict(Model):
@@ -115,9 +119,10 @@ class Predict(Model):
             initial_feed.append(subarray[0])
         self.create_model()
         self.train_model()
+        self.save_model(self.model)
         result_feed = []
         for _ in range(prediction_cycles):
-            result = self.predict()
+            result = self.predict()[0][0]
             result_feed.append(result)
             self.X_test = self.update_data(self.X_test, result)
             # self.preprocess(data)
@@ -165,8 +170,8 @@ class Test(Model):
         self.preprocess(data)
         self.create_model()
         self.train_model()
-        self.predict()
-        self.render_prediction_chart()
+        y_hat_inverse = self.predict()
+        self.render_prediction_chart(y_hat_inverse)
 
     def preprocess(self, data_raw):
         data_raw = self.shape_data(data_raw)
@@ -180,10 +185,10 @@ class Test(Model):
         self.X_test = data[training_size:, :-1, :]
         self.y_test = data[training_size:, -1, :]
 
-    def render_prediction_chart(self):
+    def render_prediction_chart(self, y_hat):
         self.y_test_inverse = self.scaler.inverse_transform(self.y_test)
         plt.plot(self.y_test_inverse, label="Actual Price", color='green')
-        plt.plot(self.y_hat_inverse, label="Predicted Price", color='red')
+        plt.plot(y_hat, label="Predicted Price", color='red')
 
         plt.title('Bitcoin price prediction')
         plt.xlabel('Time [days]')
