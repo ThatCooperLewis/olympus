@@ -26,7 +26,7 @@ Manipulate an input CSV into a new file
                 in between intervals. Interval determined by mod_arg.
     --validate: Output a list of particularly large gaps in the data's timeline,
                 defined by a given multitude of the expected interval
-    --reduce :  Remove earliest rows from data, given the desired number
+    --reduce :  Remove oldest rows from data, given the desired number
                 of rows to keep
 
 <mod_args>
@@ -40,7 +40,7 @@ Filter input.csv into output.csv with intervals of 60 seconds
 Format raw input.csv into nicely formatted output.csv
 `$ python filter_csv.py input.csv output.csv --format`
 
-Validate history.csv with 60-minute intervals with a tolerance of 120mins (60 * 2)
+Validate history.csv with 60-minute intervals with a tolerance of 120mins (3600 * 2)
 `$ python filter_csv.py history.csv log.txt --validate 3600 2`
 
 Reduce a million-line original.csv into a 1,000-line truncated.csv
@@ -53,6 +53,7 @@ def filter_csv(interval_size: int, input_csv: str, output_csv: str):
     df2 = pd.DataFrame(columns=['timestamp', 'price'])
     floor = int(df['timestamp'][0])
     ceiling = floor + interval_size
+    count = len(df) - 1
 
     for i, row in df.iterrows():
         if i == 0:
@@ -62,9 +63,10 @@ def filter_csv(interval_size: int, input_csv: str, output_csv: str):
         else:
             ceiling = int(row['timestamp']) + interval_size
             df2 = df2.append(row)
-        print(i, end='\r')
+        print(f'Progress: {i} / {count}', end='\r')
 
     df2.to_csv(output_csv, index=False)
+    print(f"Completed. Total Row Count: {len(df2) - 1}")
 
 
 def reformat_csv(input_path: str, output_path: str):
@@ -96,9 +98,14 @@ def validate_csv(input_csv: str, output_file: str, expected_interval: int, margi
     print(f"Bad gap count: {bad_count}")
 
 def reduce_csv(input_csv: str, output_csv: str, keep_count: int):
+    # TODO: Reducer keeps oldest row if now header row exists
+    print("Status: Reading CSV...    ", end="\r")
     df = pd.read_csv(input_csv)
+    print("Status: Discarding rows...", end="\r")
     df = df[-keep_count:]
+    print("Status: Saving file...    ", end="\r")
     df.to_csv(output_csv, index=False)
+    print("Status: Done...           ", end="\r")
 
 if __name__ == "__main__":
     try:
@@ -116,7 +123,7 @@ if __name__ == "__main__":
         reformat_csv(input, output)
     elif mode == '--validate':
         interval = int(sys.argv[4])
-        tolerance_multiplier = int(sys.argv[5])
+        tolerance_multiplier = float(sys.argv[5])
         validate_csv(input, output, interval, tolerance_multiplier)
     elif mode == '--reduce':
         keep_count = int(sys.argv[4])
