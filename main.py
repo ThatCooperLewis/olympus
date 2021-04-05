@@ -295,5 +295,3 @@ if __name__ == "__main__":
         except:
             interval = 0
         PredictFuture(model_name, input_csv=args.csv_path).run(interval)
-    elif args.mode.lower() in ['next', 'n']:
-        UpOrDown(model_name, args.csv_path, args.model_path).run()
