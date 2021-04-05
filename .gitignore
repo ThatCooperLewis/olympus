@@ -7,7 +7,7 @@ data/
 *.csv
 
 # Model training
-models/
+results/
 
 # IDE
 .vscode
