@@ -1,4 +1,6 @@
+import csv
 import sys
+import argparse as argp
 import pandas as pd
 
 """
@@ -97,6 +99,20 @@ def validate_csv(input_csv: str, output_file: str, expected_interval: int, margi
     print("Done.")
     print(f"Bad gap count: {bad_count}")
 
+def split_csv(input_csv: str, output_csv: str, validation_csv: str, excluded_rows: int):
+    # Move final rows to new file for validation runs
+    f = open(input_csv, "r+")
+    lines = f.readlines()
+    excluded_lines = []
+    for _ in range(excluded_rows):
+        # TODO: Get this properly. Make a file of just the prices
+        # Or do this when extracting the file
+        excluded_lines.insert(0, lines.pop().split(',')[1])
+    f = open(output_csv, "w+")
+    f.writelines(lines)
+    f = open(validation_csv, "w+")
+    f.writelines(excluded_lines)
+
 def reduce_csv(input_csv: str, output_csv: str, keep_count: int):
     # TODO: Reducer keeps oldest row if now header row exists
     print("Status: Reading CSV...    ", end="\r")
@@ -108,6 +124,11 @@ def reduce_csv(input_csv: str, output_csv: str, keep_count: int):
     print("Status: Done...           ", end="\r")
 
 if __name__ == "__main__":
+    # parser = argp.ArgumentParser()
+    # parser.description = "Here is the description"
+    # parser.add_argument('input_path', help="File path of Input CSV")
+    # parser.add_argument('output_path', help="File path of Output CSV")
+    # parser.add_argument('mode', help="")
     try:
         input = sys.argv[1]
         output = sys.argv[2]
