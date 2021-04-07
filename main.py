@@ -14,6 +14,7 @@ from pylab import rcParams
 from sklearn.preprocessing import MinMaxScaler
 from tensorflow.keras import Model as tfModel
 from tensorflow.keras import Sequential
+from tensorflow.keras.callbacks import EarlyStopping, ModelCheckpoint
 from tensorflow.keras.layers import Activation, Bidirectional, Dense, Dropout
 from tensorflow.python.keras.layers import CuDNNLSTM
 
@@ -50,6 +51,7 @@ class Model:
         self.testing_split = params.get('testing_split', 0.95)
         self.validation_split = params.get('validation_split', 0.2)
         self.exclude_rows = params.get('exclude_rows', 0)
+        self.patience = int(self.epoch_count * .15)
 
         # GUI Config
         # todo: style='darkgrid'
@@ -85,12 +87,11 @@ class Model:
         self.split_data(data)
 
     def split_data(self, data):
-        # Remove last element from each sequence
-        self.X_train = data[:, :-1, :]
-        # Create a sequence of only the last element
-        self.y_train = data[:, -1, :]
-        # Use sequence ending in most recent row
-        self.X_test = data[-1-self.exclude_rows:, 1:, :]
+        training_size = int(self.testing_split * data.shape[0])
+        self.X_train = data[:training_size, :-1, :]
+        self.y_train = data[:training_size, -1, :]
+        self.X_test = data[training_size:, :-1, :]
+        self.y_test = data[training_size:, -1, :]
 
     def append_xTest(self, new_row: int):
         data = self.X_test
@@ -101,12 +102,10 @@ class Model:
 
     # MODELING
 
-    def create_model(self):
+    def __create_model(self):
         self.model = Sequential()
         self.model.add(Bidirectional(
             CuDNNLSTM(self.window_size, return_sequences=True),
-            # TODO !!! See if shape[-1] changes when new data is added
-            # If not, no need to rebuild model! Just model.fit() each time!!
             input_shape=(self.window_size, self.X_train.shape[-1])
         ))
         self.model.add(Dropout(rate=self.dropout))
@@ -120,7 +119,11 @@ class Model:
         self.model.add(Dense(units=1))
         self.model.add(Activation('linear'))
 
-    def train_model(self):
+    def __train_model(self):
+        model_dir = f"results/{self.name}"
+        model_path = f"{model_dir}/model.h5"
+        if not os.path.exists('results'): os.mkdir('results')
+        if not os.path.exists(model_dir): os.mkdir(model_dir)
         self.model.compile(loss='mean_squared_error', optimizer='adam')
         self.history = self.model.fit(
             self.X_train,
@@ -129,7 +132,17 @@ class Model:
             batch_size=self.batch_size,
             shuffle=False,
             validation_split=self.validation_split,
+            callbacks=[
+                EarlyStopping(monitor='val_loss', mode='min', verbose=1, patience=self.patience),
+                ModelCheckpoint(filepath=model_path, monitor='val_loss', save_best_only=True)
+            ]
         )
+        self.model = tf.keras.models.load_model(model_path)
+
+    def evaluate(self):
+        train_loss = self.model.evaluate(self.X_train, self.y_train, verbose=1)
+        test_loss = self.model.evaluate(self.X_test, self.y_test, verbose=1)
+        return train_loss, test_loss
 
     def predict(self):
         y_hat = self.model.predict(self.X_test)
@@ -138,8 +151,8 @@ class Model:
 
     def train(self):
         self.intake_preprocess()
-        self.create_model()
-        self.train_model()
+        self.__create_model()
+        self.__train_model()
 
     def build_predictions(self, cycles: int = 3):
         predictions = []
@@ -157,7 +170,7 @@ class Model:
 
     # UTILITIES
 
-    def __save_params(self):
+    def save_params(self):
         with open(f"results/{self.name}/params.json", "w+") as file:
             json.dump({
                 "seq_len" : self.seq_len,
@@ -165,25 +178,7 @@ class Model:
                 "epoch_count" : self.epoch_count,
                 "testing_split" : self.testing_split,
                 "validation_split" : self.validation_split,
-            }, file)
-
-    def __save_model(self):
-        # Get just the filename without extension
-        # TODO: Do this properly with file path objects
-        self.model.save(f"results/{self.name}/model.h5", save_format='h5')
-        return
-
-    def save(self, override_subdir: str = None):
-        original_name = self.name
-        if override_subdir:
-            self.name = override_subdir
-        if not os.path.exists('results'):
-            os.mkdir('results')
-        if not os.path.exists(f"results/{self.name}"):
-            os.mkdir(f"results/{self.name}")
-        self.__save_params()
-        self.__save_model()
-        self.name = original_name
+            }, file, indent=4)
 
     def load_model(self, file_path: str):
         if not file_path:
@@ -192,23 +187,44 @@ class Model:
             self.model = tf.keras.models.load_model(file_path)
 
     def plot_model_loss(self, save=False) -> plt:
+        f = plt.figure()
+        f.clear()
+        plt.close(f)
         plt.plot(self.history.history['loss'])
         plt.plot(self.history.history['val_loss'])
         plt.title('model loss')
         plt.ylabel('loss')
         plt.xlabel('epoch')
+        plt.ylim([0.0, 0.015])
         plt.legend(['train', 'test'], loc='upper left')
         if save:
             plt.savefig(f"results/{self.name}/model_loss.png")
         return plt
 
 
-class PredictFuture(Model):
+class Predict(Model):
+
+    def run(self):
+        self.intake_preprocess()
+        result = self.predict()[0][0]
+        return result
+
+    # Override methods to shape "test" data properly 
+    def to_sequences(self, data, seq_len):
+        print("correct function call")
+        data = np.array([data[-(seq_len-1):]])
+        print(self.scaler.inverse_transform(data[0]))
+        return data
+
+    def split_data(self, data):
+        self.X_test = data
+
+class TrainPredict(Model):
 
     def run(self, prediction_cycles: int = 1):
         if not self.model:
             self.train()
-            self.save()
+            self.save_params()
         initial_feed = []
         for subarray in self.scaler.inverse_transform(self.X_test[0]):
             # Create most recent history for graph
@@ -227,6 +243,14 @@ class PredictFuture(Model):
         data = np.array([data.reshape(-1, 1)])
         data = data[:, 1:, :]
         return data
+
+    def split_data(self, data):
+        # Remove last element from each sequence
+        self.X_train = data[:, :-1, :]
+        # Create a sequence of only the last element
+        self.y_train = data[:, -1, :]
+        # Use sequence ending in most recent row
+        self.X_test = data[-1:, 1:, :]
 
     def render_prediction_chart(self, initial_feed: list, prediction_feed: list) -> plt:
         initial_feed = initial_feed[int(len(initial_feed)/1.25):]
@@ -251,7 +275,7 @@ class TestHistory(Model):
 
     def run(self):
         self.train()
-        self.save()
+        self.save_params()
         self.plot_model_loss().show()
         y_hat_inverse = self.predict()
         self.render_prediction_chart(y_hat_inverse).show()
@@ -278,20 +302,25 @@ class TestHistory(Model):
         plt.ylabel('Price')
         plt.legend(loc='best')
 
+
 if __name__ == "__main__":
-    parser = argp.ArgumentParser()
-    parser.add_argument('csv_path')
-    parser.add_argument('mode', help="Test historical data (test, t) Predict upcoming intervals (predict, p) Guess next direction (next, n)")
-    parser.add_argument('--model_path', help="Filepath of existing .h5 model")
-    parser.add_argument('--intervals', help="How many intervals forward to guess (Predict Mode requirement)")
-    args = parser.parse_args()
-    csv_path = args.csv_path
-    model_name = f"{csv_path.split('/')[-1].split('.')[0]}"
-    if args.mode.lower() in ['test', 't']:
-        TestHistory(model_name, input_csv=args.csv_path).run()
-    elif args.mode.lower() in ['predict', 'p']:
-        try:
-            interval = int(args.intervals)
-        except:
-            interval = 0
-        PredictFuture(model_name, input_csv=args.csv_path).run(interval)
+    with open(f'results/1617764061 - 0.0002/params.json') as file:
+            params = json.load(file)
+    result = Predict('TODOFIX', 'newBTC.csv', 'results/1617764061 - 0.0002/model.h5', params=params).run()
+    print(result)
+    # parser = argp.ArgumentParser()
+    # parser.add_argument('csv_path')
+    # parser.add_argument('mode', help="Test historical data (test, t) Predict upcoming intervals (predict, p) Guess next direction (next, n)")
+    # parser.add_argument('--model_path', help="Filepath of existing .h5 model")
+    # parser.add_argument('--intervals', help="How many intervals forward to guess (Predict Mode requirement)")
+    # args = parser.parse_args()
+    # csv_path = args.csv_path
+    # model_name = f"{csv_path.split('/')[-1].split('.')[0]}"
+    # if args.mode.lower() in ['test', 't']:
+    #     TestHistory(model_name, input_csv=args.csv_path).run()
+    # elif args.mode.lower() in ['predict', 'p']:
+    #     try:
+    #         interval = int(args.intervals)
+    #     except:
+    #         interval = 0
+    #     TrainPredict(model_name, input_csv=args.csv_path).run(interval)
