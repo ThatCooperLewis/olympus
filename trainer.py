@@ -2,7 +2,7 @@ import json
 import random
 import time
 
-from main import Model
+from model import Model
 
 default_params = {
     "seq_len": 10,
@@ -63,11 +63,9 @@ def build_and_train(params: dict):
 
     train_loss_history =  model.history.history['loss']
     validation_loss_history = model.history.history['val_loss']
-    # average_loss = avg_loss_difference(train_loss_history, validation_loss)
     train_loss, test_loss = model.evaluate()
     results = {
         "timestamp": start,
-        # "average_loss": average_loss,
         "duration": duration,
         "train_loss" : train_loss,
         "test_loss" : test_loss,
@@ -78,14 +76,6 @@ def build_and_train(params: dict):
     with open(f"results/{model.name}/validation.json", "w+") as file:
         json.dump(results, file, indent=4)
     return results
-
-def avg_loss_difference(train_loss: list, val_loss: list):
-    train_last = train_loss[10:]
-    val_last = val_loss[10:]
-    diffs = []
-    for i in range(len(train_last)):
-        diffs.append(abs(val_last[i]) - train_last[i])
-    return sum(diffs)/len(diffs)
 
 def find_best_alteration(params: dict, cycles: int, randomize: bool, best_result: dict = {"test_loss" : 1}):
     best_params = params
@@ -110,8 +100,7 @@ if __name__ == "__main__":
             best_params, best_result = find_best_alteration(best_params, 10, False, best_result)
         else:
             best_params, best_result = find_best_alteration(best_params, 10, True, best_result)
-    print("DONE")
-    print(f"best best {best_result['timestamp']}")
+    print(f"Overall Best: {best_result['timestamp']}")
 
 
 
