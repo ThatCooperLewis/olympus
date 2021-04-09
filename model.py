@@ -18,6 +18,13 @@ from tensorflow.keras.callbacks import EarlyStopping, ModelCheckpoint
 from tensorflow.keras.layers import Activation, Bidirectional, Dense, Dropout
 from tensorflow.python.keras.layers import CuDNNLSTM
 
+# GLOBAL CONSTANTS
+DEFAULT_SEQ_LEN = 20
+DEFAULT_DROPOUT = 0.2
+DEFAULT_EPOCH_COUNT = 50 
+DEFAULT_TESTING_SPLIT = 0.95
+DEFAULT_VALIDATION_SPLIT = 0.2
+
 
 print("Loading memory patch")
 gpus = tf.config.experimental.list_physical_devices('GPU')
@@ -43,14 +50,13 @@ class Model:
         self.y_test: np.ndarray = None
 
         # Tuning Knobs
-        params = params.get('params', {})
-        self.seq_len = params.get('seq_len', 20)
+        override_params = params.get('params', {})
+        self.seq_len = override_params.get('seq_len', DEFAULT_SEQ_LEN)
+        self.dropout = override_params.get('dropout', DEFAULT_DROPOUT)
+        self.epoch_count = override_params.get('epoch_count', DEFAULT_EPOCH_COUNT)
+        self.testing_split = override_params.get('testing_split', DEFAULT_TESTING_SPLIT)
+        self.validation_split = override_params.get('validation_split', DEFAULT_VALIDATION_SPLIT)
         self.window_size = self.seq_len - 1
-        self.dropout = params.get('dropout', 0.2)
-        self.epoch_count = params.get('epoch_count', 50)
-        self.testing_split = params.get('testing_split', 0.95)
-        self.validation_split = params.get('validation_split', 0.2)
-        self.exclude_rows = params.get('exclude_rows', 0)
         self.patience = int(self.epoch_count * .15)
 
         # GUI Config
@@ -308,19 +314,20 @@ if __name__ == "__main__":
             params = json.load(file)
     result = Predict('TODOFIX', 'newBTC.csv', 'results/1617764061 - 0.0002/model.h5', params=params).run()
     print(result)
-    # parser = argp.ArgumentParser()
-    # parser.add_argument('csv_path')
-    # parser.add_argument('mode', help="Test historical data (test, t) Predict upcoming intervals (predict, p) Guess next direction (next, n)")
-    # parser.add_argument('--model_path', help="Filepath of existing .h5 model")
-    # parser.add_argument('--intervals', help="How many intervals forward to guess (Predict Mode requirement)")
-    # args = parser.parse_args()
-    # csv_path = args.csv_path
-    # model_name = f"{csv_path.split('/')[-1].split('.')[0]}"
-    # if args.mode.lower() in ['test', 't']:
-    #     TestHistory(model_name, input_csv=args.csv_path).run()
-    # elif args.mode.lower() in ['predict', 'p']:
-    #     try:
-    #         interval = int(args.intervals)
-    #     except:
-    #         interval = 0
-    #     TrainPredict(model_name, input_csv=args.csv_path).run(interval)
+    exit()
+    parser = argp.ArgumentParser()
+    parser.add_argument('csv_path')
+    parser.add_argument('mode', help="Test historical data (test, t) Predict upcoming intervals (predict, p) Guess next direction (next, n)")
+    parser.add_argument('--model_path', help="Filepath of existing .h5 model")
+    parser.add_argument('--intervals', help="How many intervals forward to guess (Predict Mode requirement)")
+    args = parser.parse_args()
+    csv_path = args.csv_path
+    model_name = f"{csv_path.split('/')[-1].split('.')[0]}"
+    if args.mode.lower() in ['test', 't']:
+        TestHistory(model_name, input_csv=args.csv_path).run()
+    elif args.mode.lower() in ['predict', 'p']:
+        try:
+            interval = int(args.intervals)
+        except:
+            interval = 0
+        TrainPredict(model_name, input_csv=args.csv_path).run(interval)
