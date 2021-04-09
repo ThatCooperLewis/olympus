@@ -7,7 +7,7 @@ data/
 *.csv
 
 # Shh It's A Secret
-credentials.json
+credentials*.json
 
 # Model training
 results/
