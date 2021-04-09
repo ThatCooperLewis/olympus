@@ -5,7 +5,6 @@
 
 # Analysis
 
-1. CrossTower API scraping
 2. Multithreaded handler
     a. Prediction thread
     b. Scraping thread, updating live feed
