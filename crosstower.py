@@ -1,20 +1,21 @@
 import base64
 import json
 import requests
-from time import sleep, strptime, time
 from calendar import timegm
+from time import sleep, strptime, time
+from objects import Symbol, Ticker
 
+SYMBOL = 'BTCUSD_TR'
 
-class CrossTower:
+class API:
 
-    def __init__(self):
-        self.auth_header = self.__load_credentials()
+    def __init__(self, credentials_path='credentials.json'):
+        self.__load_credentials(credentials_path)
         self.__authenticate()
 
-    def __load_credentials(self):
-        creds = None
+    def __load_credentials(self, credentials_path):
         try:
-            with open('credentials.json', 'r') as file:
+            with open(credentials_path, 'r') as file:
                 creds = json.load(file)
             api_key = creds.get('api_key')
             secret_key = creds.get('secret_key')
@@ -25,41 +26,56 @@ class CrossTower:
             credentials = credential_base64.decode('ascii')
             if not credentials:
                 raise Exception
-            return {'Authorization': f'Basic {credentials}'}
+            self.auth_header = {'Authorization': f'Basic {credentials}'}
         except:
             raise Exception("Credentials file missing or invalid")
 
     def __authenticate(self) -> list:
         resp = requests.get(
-            'https://api.crosstower.com/api/2/trading/balance', headers=self.auth_header)
+            'https://api.crosstower.com/api/2/trading/balance',
+            headers=self.auth_header
+        )
         if resp.status_code != 200:
-            raise Exception(
-                f'Unexpected auth response code: {resp.status_code}')
+            error_str = f'Unexpected auth response code: {resp.status_code}'
+            raise Exception(error_str)
         return resp.json()
 
-    def __market_order(self, type: str, amount_btc: float) -> dict:
-        if type not in ['buy','sell']:
-            raise Exception("Bad 'type' arg for __market_order")
+    def __market_order(self, side: str, amount: float, symbol: str, ) -> dict:
+        if amount < 0.00001:
+            raise Exception('Intended BTC purchase is too small')
+        if side not in ['buy', 'sell']:
+            raise Exception("Bad 'side' arg for __market_order")
         timestamp = int(time())
         resp = requests.put(
-            f"https://api.crosstower.com/api/2/order/{timestamp}", 
+            f"https://api.crosstower.com/api/2/order/{timestamp}",
             headers=self.auth_header,
             data={
-                'symbol' : 'BTCUSD_TR',
-                'side' : 'buy',
-                'type' : 'market',
-                'quantity': amount_btc
+                'symbol': 'BTCUSD_TR',
+                'side': side,
+                'type': 'market',
+                'quantity': amount
             }
+        )
+        if resp.status_code != 200:
+            print('ERROR: Bad response code from market order')
+            print(resp.content)
+            return None
+        return resp.json()
+
+    def buy(self, amount: float, symbol: str = 'BTCUSD_TR') -> dict:
+        return self.__market_order('buy', amount, symbol)
+
+    def sell(self, amount: float, symbol: str = 'BTCUSD_TR') -> dict:
+        return self.__market_order('sell', amount, symbol)
+
+    def fee_rate(self) -> dict:
+        resp = requests.get(
+            "https://api.crosstower.com/api/2/trading/fee/BTCUSD_TR",
+            headers=self.auth_header
         )
         return resp.json()
 
-    def buy_btc(self, amount_btc: float):
-        return self.__market_order('buy', amount_btc)
-
-    def sell_btc(self, amount_btc: float):
-        return self.__market_order('sell', amount_btc)
-    
-    def get_balance(self, currencies: list = ['USD', 'BTC']):
+    def balance(self, currencies: list = ['USD', 'BTC']) -> dict:
         result = self.__authenticate()
         balance = {}
         for coin in result:
@@ -71,19 +87,22 @@ class CrossTower:
         return balance
 
     @classmethod
-    def get_ticker(cls):
-        resp = requests.get(
-            "https://api.crosstower.com/api/2/public/ticker/BTCUSD_TR")
-        return resp.json()
+    def get_order_book(cls):
+        pass
 
+    @classmethod
+    def get_symbol(cls, symbol: str = 'BTCUSD_TR') -> requests.Response:
+        return Symbol(symbol)
 
-
+    @classmethod
+    def get_ticker(cls, symbol: str = 'BTCUSD_TR') -> requests.Response:
+        return Ticker(symbol)
 
 def scrape_tickers():
     print("Starting...")
     while True:
         try:
-            ticker = CrossTower.get_ticker()
+            ticker = API.ticker().json()
             if not ticker.get('ask'):
                 print("ERROR: Got bad ticker\n")
                 print(ticker)
@@ -113,7 +132,11 @@ def scrape_tickers():
 
 
 if __name__ == "__main__":
-    ct = CrossTower()
-    print(ct.buy_btc(0.00017206))
+    ct = API()
+    # print(ct.get_btc_symbol())
+    # print(ct.buy_btc(0.0001))
+    sm = Symbol('ETHBTC')
+    sm.margin_trading
+    print(sm.base_currency)
     # pass
     # scrape_tickers()
