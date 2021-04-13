@@ -102,7 +102,8 @@ def scrape_tickers():
     print("Starting...")
     while True:
         try:
-            ticker = API.ticker().json()
+            print("Sending request..", end='\r')
+            ticker = requests.get(f"https://api.crosstower.com/api/2/public/ticker/BTCUSD_TR").json()
             if not ticker.get('ask'):
                 print("ERROR: Got bad ticker\n")
                 print(ticker)
@@ -135,8 +136,8 @@ if __name__ == "__main__":
     ct = API()
     # print(ct.get_btc_symbol())
     # print(ct.buy_btc(0.0001))
-    sm = Symbol('ETHBTC')
-    sm.margin_trading
-    print(sm.base_currency)
+    # sm = Symbol('ETHBTC')
+    # sm.margin_trading
+    # print(sm.base_currency)
     # pass
-    # scrape_tickers()
+    scrape_tickers()
