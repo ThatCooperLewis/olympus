@@ -4,9 +4,42 @@ from typing import List
 
 
 class Trade:
+    """Trades information for a symbol"""
 
-    def __init__(self):
-        return
+    def __init__(self, data: dict) -> None:
+        self._data = data
+
+    @property
+    def dict(self) -> dict:
+        return self._data
+
+    @property
+    def id(self) -> int:
+        """Trade identifier"""
+        return int(self._data.get('id'))
+    
+    @property
+    def price(self) -> float:
+        """Trade price"""
+        return float(self._data.get('price'))
+
+    @property
+    def quantity(self) -> float:
+        """Trade quantity"""
+        return float(self._data.get('quantity'))
+
+    @property
+    def side(self) -> str:
+        """Trade side, `"sell"` or `"buy"`"""
+        return self._data.get('side')
+
+    @property
+    def timestamp(self) -> struct_time:
+        """Trade timestamp"""
+        return strptime(
+            self._data.get('timestamp'),
+            "%Y-%m-%dT%H:%M:%S.%fZ"
+        )
 
 
 class Order:
@@ -135,7 +168,6 @@ class Order:
     @property
     def trades_report(self) -> List[Trade]:
         return
-
 
 
 class Symbol:
