@@ -1,11 +1,11 @@
 from requests import Response
-from crosstower.config import API_BASE_URL
+from crosstower.config import REST_URL
 
 
 def build_url(endpoint: str) -> str:
     if endpoint[0] == '/':
         endpoint = endpoint[1:]
-    return f"{API_BASE_URL}/{endpoint}"
+    return f"{REST_URL}/{endpoint}"
 
 
 def handle_response(response: Response, request_name: str = 'API') -> dict:
