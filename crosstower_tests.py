@@ -1,13 +1,13 @@
 from calendar import c, timegm
-from crosstower.public_api import MarketData as market
-from crosstower.private_api import AccountManagement as Account
-from crosstower.private_api import Trading
 from time import sleep, strptime
 
-
-from crosstower.models import Balance, Commission
 import requests
 
+from crosstower.rest_api import AccountManagement as Account
+from crosstower.rest_api import MarketData as market
+from crosstower.rest_api import Trading
+
+from crosstower.auth import Authentication
 def scrape_tickers():
     print("Starting...")
     while True:
@@ -38,8 +38,14 @@ def scrape_tickers():
 
 
 if __name__ == "__main__":
-    trade = Trading()
-    account = Account()
+    # trade = Trading()
+    # account = Account()
+    # print(account.get_account_balance(['BTC', 'USD'])[1].dict)
+    auth = Authentication('hs256')
+    trade = Trading
+    # resp = auth.auth_get('trading/balance')
+    # resp = auth.auth_put('order')
+    # print(resp)
     # print(account.get_commission())
     # print(market.get_symbol().dict)
     # buy = trade.buy(0.00002)
