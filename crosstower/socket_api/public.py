@@ -96,7 +96,7 @@ class TickerScraper:
                     continue
                 self.queue.put(ticker)
 
-    def scrape_thread(self):
+    def ticket_loop(self):
         try:
             loop = asyncio.new_event_loop()
             asyncio.set_event_loop(loop)
@@ -108,9 +108,7 @@ class TickerScraper:
             print('Closing')
             loop.close()
 
-    def run(self):
-        scrape_thread = Thread(target=self.scrape_thread, daemon=True)
-        scrape_thread.start()
+    def csv_loop(self):
         try:
             latest = None
             while not self.quit:
@@ -118,17 +116,11 @@ class TickerScraper:
                     ticker: Ticker = self.queue.get()
                     if not latest or (ticker.timestamp - latest) >= self.interval:
                         latest = ticker.timestamp
-                        # TODO: 
-                        '''
-                        Hello future cooper
-                        Wow this throttler works real well
-                        Just need to write it to a file
-                        Look into doing this for the other subscriptions
-                        See if we can get consistent/useful data
-
-                        Look into replacing the thread with multiprocessing. Should be useful in future
-                        '''
-
                         print(ticker.csv_line, end='   \r')
         except KeyboardInterrupt:
             pass
+
+    def run(self):
+        scrape_thread = Thread(target=self.ticket_loop, daemon=True)
+        scrape_thread.start()
+        self.csv_loop()
