@@ -1,5 +1,6 @@
-from sys import api_version
-from time import strptime, struct_time
+from calendar import timegm
+from datetime import datetime
+from time import strptime, struct_time, mktime
 from typing import List
 
 
@@ -17,7 +18,7 @@ class Trade:
     def id(self) -> int:
         """Trade identifier"""
         return int(self._data.get('id'))
-    
+
     @property
     def price(self) -> float:
         """Trade price"""
@@ -60,7 +61,7 @@ class Order:
     def client_order_id(self) -> str:
         """
         Order unique identifier as assigned by trader. 
-        
+
         Uniqueness must be guaranteed within a single trading day, including all active orders.
         """
         return self._data.get('clientOrderId')
@@ -93,24 +94,24 @@ class Order:
     def timeInForce(self) -> str:
         """
         Time in Force is a special instruction used when placing a trade to indicate how long an order will remain active before it is executed or expired.
-        
+
         `GTC` - ''Good-Till-Cancelled'' order won't be closed until it is filled.
-        
+
         `IOC` - ''Immediate-Or-Cancel'' order must be executed immediately. Any part of an IOC order that cannot be filled immediately will be cancelled.
-        
+
         `FOK` - ''Fill-Or-Kill'' is a type of ''Time in Force'' designation used in securities trading that instructs a brokerage to execute a transaction immediately and completely or not execute it at all.
-        
+
         `Day` - keeps the order active until the end of the trading day (UTC).
-        
+
         `GTD` - ''Good-Till-Date''. The date is specified in expireTime.
         """
         return self._data.get('type')
-    
+
     @property
     def quantity(self) -> float:
         """Order quantity"""
         return float(self._data.get('quantity'))
-    
+
     @property
     def price(self) -> float:
         """Order price"""
@@ -120,7 +121,7 @@ class Order:
     def avg_price(self) -> float:
         """Average execution price, only for history orders"""
         return float(self._data.get('avgPrice'))
-    
+
     @property
     def cum_quantity(self) -> float:
         """Average execution price, only for history orders"""
@@ -146,7 +147,7 @@ class Order:
     def stop_price(self) -> float:
         """Required for stop-limit and stop-market orders"""
         return float(self._data.get('stopPrice'))
-    
+
     @property
     def post_only(self) -> bool:
         """
@@ -238,11 +239,20 @@ class Ticker:
     """Symbol ticker information"""
 
     def __init__(self, data: dict) -> None:
+        """Symbol ticker information"""
         self._data = data
 
     @property
     def dict(self) -> dict:
         return self._data
+
+    @property
+    def csv_line(self) -> str:
+        utc_time = strptime(
+            self._data.get('timestamp'),
+            "%Y-%m-%dT%H:%M:%S.%fZ"
+        )
+        return f"{self.ask},{self.bid},{self.last},{self.low},{self.high},{self.open},{self.volume},{self.volume_quote},{self.timestamp}\n"
 
     @property
     def symbol(self) -> str:
@@ -287,15 +297,16 @@ class Ticker:
     @property
     def volume_quote(self) -> float:
         """Total trading amount within 24 hours in quote currency"""
-        return self._data.get('volume_quote')
+        return self._data.get('volumeQuote')
 
     @property
-    def timestamp(self) -> struct_time:
+    def timestamp(self) -> int:
         """Last update or refresh ticker timestamp"""
-        return strptime(
+        struct = strptime(
             self._data.get('timestamp'),
             "%Y-%m-%dT%H:%M:%S.%fZ"
         )
+        return int(mktime(struct))
 
 
 class Candle:
@@ -353,7 +364,7 @@ class Balance:
     def currency(self) -> str:
         """Currency code"""
         return self._data.get('currency')
-    
+
     @property
     def available(self) -> float:
         """Amount available for trading or transfer to main account"""
