@@ -6,37 +6,10 @@ import requests
 
 from crosstower.rest_api import AccountManagement as Account
 from crosstower.rest_api import MarketData as market
-from crosstower.rest_api import Trading
+from crosstower.rest_api import Trading 
 from crosstower.socket_api import public
 
 from crosstower.auth import Authentication
-def scrape_tickers():
-    print("Starting...")
-    while True:
-        try:
-            print("Sending request..", end='\r')
-            ticker = requests.get(f"https://api.crosstower.com/api/2/public/ticker/BTCUSD_TR").json()
-            if not ticker.get('ask'):
-                print("ERROR: Got bad ticker\n")
-                print(ticker)
-                continue
-            with open("crosstower.csv", "a") as file:
-                print('Opening file...', end='\r')
-                utc_time = strptime(
-                    ticker.get('timestamp'),
-                    "%Y-%m-%dT%H:%M:%S.%fZ"
-                )
-                line = f"{ticker.get('ask')},{ticker.get('bid')},{ticker.get('last')},{ticker.get('low')},{ticker.get('high')},{ticker.get('open')},{ticker.get('volume')},{ticker.get('volumeQuote')},{timegm(utc_time)}\n"
-                print('Writing line...', end='\r')
-                file.write(line)
-                file.close()
-            for i in range(4):
-                print(f'Waiting ({i+1}/4)  ', end='\r')
-                sleep(15)
-        except Exception as err:
-            print("Uh oh! Didn't work\n")
-            print(err)
-            continue
 
 
 if __name__ == "__main__":
@@ -48,7 +21,7 @@ if __name__ == "__main__":
     # symbol = asyncio.get_event_loop().run_until_complete(public.get_symbol())
     # print(symbol.tick_size)
 
-    public.TickerScraper().run()
+    public.TickerScraper().run('crosstower-socket.csv')
 
     # resp = auth.auth_get('trading/balance')
     # resp = auth.auth_put('order')
