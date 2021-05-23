@@ -14,7 +14,7 @@ class MarketData:
     def __init__(self) -> None:
         return
 
-    async def get_request(self, method: str, params: dict):
+    async def request(self, method: str, params: dict):
         async with Connection(SOCKET_URI) as websocket:
             data = {
                 "method": method,
@@ -23,21 +23,22 @@ class MarketData:
             }
             await websocket.send(json.dumps(data))
             response = json.loads(await websocket.recv())
-            if response.get('error'):
-                err = f"API responded with error {response['error']['code']}: '{response['error']['message']}'"
-                raise Exception(err)
-            return response.get('result')
+            return utils.handle_response(response).get('result')
+
+    def __request_until_complete(self, method: str, params: str):
+        return asyncio.get_event_loop().run_until_complete(self.request(method, params))
 
     def get_currency(self, currency: str = DEFAULT_CURRENCY):
-        currency = asyncio.get_event_loop().run_until_complete(
-            self.get_request(method='getCurrency', params={
-                             'currency': currency})
+        currency = self.__request_until_complete(
+            method='getCurrency',
+            params={'currency': currency}
         )
         return currency
 
     def get_symbol(self, symbol: str = DEFAULT_SYMBOL) -> Symbol:
-        symbol = asyncio.get_event_loop().run_until_complete(
-            self.get_request(method='getSymbol', params={'symbol': symbol})
+        symbol = self.__request_until_complete(
+            method='getSymbol',
+            params={'symbol': symbol}
         )
         return Symbol(symbol)
 
