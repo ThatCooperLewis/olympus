@@ -1,3 +1,6 @@
+# Up next
+1. Test reliability of websocket scraper, and implement on RaspPi
+2. Finishing touches on scraper controller
 
 # Data intake
 1. Lambda script for Crosstower fetching

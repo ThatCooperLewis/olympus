@@ -2,6 +2,7 @@ import asyncio
 import json
 from queue import Queue
 from threading import Thread
+from time import sleep, time as now
 
 from crosstower.config import DEFAULT_CURRENCY, DEFAULT_SYMBOL, SOCKET_URI
 from crosstower.models import Symbol, Ticker
@@ -19,7 +20,7 @@ class MarketData:
             data = {
                 "method": method,
                 "params": params,
-                "id": 123  # TODO: make good ID generator
+                "id": int(now())
             }
             await websocket.send(json.dumps(data))
             response = json.loads(await websocket.recv())
@@ -47,72 +48,114 @@ class TickerScraper:
 
     def __init__(self):
         self.queue = Queue()
-        self.quit = False
+        # Setting self.quitting to True will kill all threads. Cannot be undone
+        self.quitting = False
+        # Counts the number of attempts to connect to socket.
+        # Used to kill old connections
+        self.connection_attempts: int = 0
+
+    def __restart_socket(self):
+        self.connection_attempts += 1
+        Thread(target=self.ticker_loop, daemon=True).start()
 
     async def __subscribe(self, socket: Connection):
         data = {
             "method": "subscribeTicker",
             "params": {"symbol": self.symbol},
-            "id": 123
+            "id": int(now())
         }
         await socket.send(json.dumps(data))
 
     async def __get_response(self, websocket: Connection) -> Ticker:
+        final_result = None
+        response = None
         while True:
-            attempts = 0
+            request_attempts = 0
             try:
                 response = await websocket.recv()
                 break
             except Exception as err:
-                if attempts > 3:
-                    raise err
+                if request_attempts > 3:
+                    response = None
+                    break
                 else:
-                    attempts += 1
+                    request_attempts += 1
                     continue
-        result = utils.handle_response(response).get('params')
-        if not result:
-            return None
-        return Ticker(result)
+        if response:
+            final_result = utils.handle_response(response).get('params')
+        if final_result:
+            return Ticker(final_result)
+        return None
 
-    async def scrape_coroutine(self):
+    async def scrape_coroutine(self, current_attempt):
         async with Connection(SOCKET_URI) as websocket:
             await self.__subscribe(websocket)
-            latest = None
-            while True:
+            while not self.quitting and self.connection_attempts == current_attempt:
                 ticker = await self.__get_response(websocket)
                 if not ticker:
                     continue
                 self.queue.put(ticker)
+            return
 
-    def ticket_loop(self):
+    def ticker_loop(self):
         try:
             loop = asyncio.new_event_loop()
+            attempt = int(self.connection_attempts)
             asyncio.set_event_loop(loop)
-            asyncio.ensure_future(self.scrape_coroutine())
-            loop.run_forever()
-        except KeyboardInterrupt:
-            self.quit = True
-        finally:
-            print('Closing')
+            future = asyncio.ensure_future(self.scrape_coroutine(attempt))
+            loop.run_until_complete(future)
+        except Exception as err:
             loop.close()
+            raise err
+
+    def watchdog_loop(self, path: str, interval: int):
+        last_line = utils.get_last_line(path)
+        last_time = now()
+        while not self.quitting:
+            current_line = utils.get_last_line(path)
+            time_since_update = now() - last_time
+            if current_line == last_line and time_since_update > interval:
+                # TODO: Notify if several attempts don't work                
+                self.__restart_socket()
+            elif current_line != last_line:
+                last_line = current_line
+                last_time = now()
+            sleep(5)
 
     def csv_loop(self, path):
-        try:
-            latest = None
-            while not self.quit:
-                if self.queue.qsize() > 0:
-                    ticker: Ticker = self.queue.get()
-                    if not latest or (ticker.timestamp - latest) >= self.interval:
-                        latest = ticker.timestamp
-                        with open(path, 'a') as file:
-                            file.write(ticker.csv_line)
-                            file.close()
-        except KeyboardInterrupt:
-            pass
+        latest = None
+        while not self.quitting:
+            if self.queue.qsize() > 0:
+                ticker: Ticker = self.queue.get()
+                if not latest or (ticker.timestamp - latest) >= self.interval:
+                    latest = ticker.timestamp
+                    with open(path, 'a') as file:
+                        file.write(ticker.csv_line)
+                        file.close()
+
+    def handle_commands(self):
+        print(utils.scraper_startup_message)
+        while True:
+            string = input("Enter command: ")
+            if string.lower() == 'exit':
+                print(utils.scraper_exit_message)
+                self.quitting = True
+                break
+            elif string.lower() == 'restart':
+                print(utils.scraper_restart_message)
+                self.__restart_socket()
+            elif string.lower() == 'status':
+                # TODO: Print last line, converted datetime of last updated, socket attempt count
+                pass
 
     def run(self, csv_path: str, symbol: str = DEFAULT_SYMBOL, interval: int = 1):
         self.symbol = symbol
         self.interval = interval
-        scrape_thread = Thread(target=self.ticket_loop, daemon=True)
-        scrape_thread.start()
-        self.csv_loop(csv_path)
+        # Watch for new tickers in queue
+        Thread(target=self.csv_loop, args=(csv_path,)).start()
+        # Constantly fetch new tickers
+        Thread(target=self.ticker_loop, daemon=True).start()
+        # Make sure lines are being added to the spreadsheet
+        Thread(target=self.watchdog_loop, args=(csv_path, 20)).start()
+        
+        self.handle_commands()
