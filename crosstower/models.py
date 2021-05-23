@@ -1,5 +1,3 @@
-from calendar import timegm
-from datetime import datetime
 from time import strptime, struct_time, mktime
 from typing import List
 
