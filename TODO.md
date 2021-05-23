@@ -1,11 +1,6 @@
-# Crosstower wrapper
-1. Finish endpoints for account management
-4. ** DO IT ALL OVER but with async websockets because its QUICKER **
 
 # Data intake
 1. Lambda script for Crosstower fetching
-2. Fix header detection for reduction method
-3. Implement argparse with helper descriptions
 
 # Analysis
 1. Multithreaded handler
@@ -13,3 +8,8 @@
     b. Scraping thread, updating live feed
     c. trading thread (maybe, or just put it in A)
     d. re-training thread (maybe)
+
+# Non-essential tasks
+1. Finish wrapping crosstower API methods (account management, etc)
+3. Implement argparse with helper descriptions in filter.py
+2. Fix header detection for filter.py reduction method
