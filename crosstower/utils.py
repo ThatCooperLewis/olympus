@@ -1,5 +1,8 @@
+from typing import List
 from requests import Response
+
 from crosstower.config import REST_URL
+from crosstower.models import Order
 
 
 def build_url(endpoint: str) -> str:
@@ -15,3 +18,10 @@ def handle_response(response: Response, request_name: str = 'API') -> dict:
         print(response.content)
         raise Exception(error_str)
     return response.json()
+
+def aggregate_orders(orders_list) -> List[Order]:
+    """Convert a raw dictlist of orders into a list of `Order` objects"""
+    orders = []
+    for order_data in orders_list:
+        orders.append(Order(order_data))
+    return orders

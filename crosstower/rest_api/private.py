@@ -1,4 +1,5 @@
 import base64
+from crosstower.socket_api import utils
 import json
 from time import struct_time, time
 from typing import List
@@ -179,13 +180,6 @@ class AccountManagement(__API):
 class Trading(__API):
     """Create, track, and cancel trade orders"""
 
-    def __aggregate_orders(self, orders_list) -> List[Order]:
-        """Convert a raw dictlist of orders into a list of `Order` objects"""
-        orders = []
-        for order_data in orders_list:
-            orders.append(Order(order_data))
-        return orders
-
     def __market_order(self, side: str, amount: float, symbol: str = DEFAULT_SYMBOL) -> dict:
         if amount < 0.00001:
             raise Exception('Intended BTC purchase is too small')
@@ -259,7 +253,7 @@ class Trading(__API):
         ---------
         List of active `Order` objects
         """
-        return self.__aggregate_orders(self._auth_get('order'))
+        return utils.aggregate_orders(self._auth_get('order'))
 
     def get_active_order(self, order: Order) -> Order:
         """
@@ -284,7 +278,7 @@ class Trading(__API):
         ---------
         An array of `Order` objects
         """
-        return self.__aggregate_orders(self._auth_delete(
+        return utils.aggregate_orders(self._auth_delete(
             endpoint=f"{REST_URL}/order",
             request_name="Cancel All Orders"
         ))
