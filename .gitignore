@@ -6,6 +6,10 @@ __pycache__/
 data/
 *.csv
 
+# Test files
+socket_test.py
+tests.py
+
 # Shh It's A Secret
 credentials*.json
 
