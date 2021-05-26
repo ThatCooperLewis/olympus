@@ -2,7 +2,8 @@ import asyncio
 import json
 from queue import Queue
 from threading import Thread
-from time import sleep, time as now
+from time import sleep
+from time import time as now
 
 from crosstower.config import DEFAULT_CURRENCY, DEFAULT_SYMBOL, SOCKET_URI
 from crosstower.models import Symbol, Ticker
@@ -109,17 +110,17 @@ class TickerScraper:
             raise err
 
     def watchdog_loop(self, path: str, interval: int):
-        last_line = utils.get_last_line(path)
-        last_time = now()
+        self.last_line = utils.get_newest_line(path)
+        self.last_time = now()
         while not self.quitting:
-            current_line = utils.get_last_line(path)
-            time_since_update = now() - last_time
-            if current_line == last_line and time_since_update > interval:
+            current_line = utils.get_newest_line(path)
+            time_since_update = now() - self.last_time
+            if current_line == self.last_line and time_since_update > interval:
                 # TODO: Notify if several attempts don't work                
                 self.__restart_socket()
-            elif current_line != last_line:
-                last_line = current_line
-                last_time = now()
+            elif current_line != self.last_line:
+                self.last_line = current_line
+                self.last_time = now()
             sleep(5)
 
     def csv_loop(self, path):
@@ -137,16 +138,17 @@ class TickerScraper:
         print(utils.scraper_startup_message)
         while True:
             string = input("Enter command: ")
-            if string.lower() == 'exit':
+            if string.lower() in ['exit', 'e']:
                 print(utils.scraper_exit_message)
                 self.quitting = True
                 break
-            elif string.lower() == 'restart':
+            elif string.lower() in ['restart', 'r']:
                 print(utils.scraper_restart_message)
                 self.__restart_socket()
-            elif string.lower() == 'status':
-                # TODO: Print last line, converted datetime of last updated, socket attempt count
-                pass
+            elif string.lower() in ['status', 's']:
+                utils.print_status_message(self.last_time, self.connection_attempts)
+            elif string.lower() in ['help', 'h']:
+                print(utils.scraper_startup_message)
 
     def run(self, csv_path: str, symbol: str = DEFAULT_SYMBOL, interval: int = 1):
         self.symbol = symbol
