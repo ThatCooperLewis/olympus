@@ -1,10 +1,8 @@
-import time
-startTime = time.time()
-
-import log_suppressor
+import cryptographer.log_suppressor # MUST IMPORT FIRST - Hides debug logs from tensorflow 
 import argparse as argp
 import json
 import os
+
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
@@ -17,6 +15,7 @@ from tensorflow.keras import Sequential
 from tensorflow.keras.callbacks import EarlyStopping, ModelCheckpoint
 from tensorflow.keras.layers import Activation, Bidirectional, Dense, Dropout
 from tensorflow.python.keras.layers import CuDNNLSTM
+
 
 # GLOBAL CONSTANTS
 DEFAULT_SEQ_LEN = 20

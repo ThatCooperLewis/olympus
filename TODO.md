@@ -14,5 +14,5 @@
 
 # Non-essential tasks
 1. Finish wrapping crosstower API methods (account management, etc)
-3. Implement argparse with helper descriptions in filter.py
+3. Implement argparse with helper descriptions in filter.py and/or separate into distinct files
 2. Fix header detection for filter.py reduction method
