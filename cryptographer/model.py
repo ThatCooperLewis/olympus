@@ -209,14 +209,13 @@ class Model:
 
 class Predict(Model):
 
-    def run(self):
+    def run(self) -> float:
         self.intake_preprocess()
         result = self.predict()[0][0]
-        return result
+        return float(result)
 
     # Override methods to shape "test" data properly 
     def to_sequences(self, data, seq_len):
-        print("correct function call")
         data = np.array([data[-(seq_len-1):]])
         print(self.scaler.inverse_transform(data[0]))
         return data
@@ -310,7 +309,7 @@ class TestHistory(Model):
 
 if __name__ == "__main__":
     with open(f'results/1617764061 - 0.0002/params.json') as file:
-            params = json.load(file)
+        params = json.load(file)
     result = Predict('TODOFIX', 'newBTC.csv', 'results/1617764061 - 0.0002/model.h5', params=params).run()
     print(result)
     exit()
