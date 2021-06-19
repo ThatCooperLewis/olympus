@@ -4,7 +4,7 @@ from time import time
 from typing import Tuple
 import shutil
 
-from cryptographer.model import Predict
+from prometheus.model import Predict
 
 
 class Delphi:

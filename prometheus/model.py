@@ -1,4 +1,4 @@
-import cryptographer.log_suppressor # MUST IMPORT FIRST - Hides debug logs from tensorflow 
+import prometheus.log_suppressor # MUST IMPORT FIRST - Hides debug logs from tensorflow 
 import argparse as argp
 import json
 import os
