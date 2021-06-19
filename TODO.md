@@ -3,14 +3,20 @@
 2. Finishing touches on scraper controller
 
 # Data intake
-1. Lambda script for Crosstower fetching
+1. Lambda script for Crosstower fetching? EC2?
 
-# Analysis
+# Olympus watchdog
 1. Multithreaded handler
     a. Prediction thread
     b. Scraping thread, updating live feed
     c. trading thread (maybe, or just put it in A)
-    d. re-training thread (maybe)
+
+# Delphi predictor
+1. write get_current_data function
+2. test with model, add print statements along the way
+
+# Hermes trader
+1. Make it
 
 # Non-essential tasks
 1. Finish wrapping crosstower API methods (account management, etc)
