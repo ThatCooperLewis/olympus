@@ -1,6 +1,6 @@
 import json
 from queue import Queue
-from time import time
+from time import sleep, time
 from typing import Tuple
 import shutil
 
@@ -16,36 +16,57 @@ class Delphi:
         params_path: str,
         iteration_length: int
     ) -> None:
-        
+
         self.csv_path = csv_path
         self.tmp_csv_path = csv_path.replace('.csv', '_tmp.csv')
+
         with open(params_path) as file:
             params = json.load(file)
             self.seq_len = params.get('seq_len')
             if not self.seq_len:
                 raise Exception("No seq_len in params")
 
-        self.predictor = Predict('', self.tmp_csv_path, model_path, params)
+        self.predictor = Predict(
+            model_name='',
+            input_csv=self.tmp_csv_path,
+            input_model=model_path,
+            params=params
+        )
+
         self.abort = False  # can be used to shut down loop
         self.iterations = iteration_length  # how many prediction cycles
-        self.delta_threshold = 0.03  # When price changes this much, take 100% action
-        self.interval_size = 300  # Seconds between price tickers & prediction cycles
+        self.delta_threshold = 0.0003  # When price changes this much, take 100% action
+        self.interval_size = 1  # TODO CHANGE Seconds between price tickers & prediction cycles
 
-    def __get_current_data(self) -> Tuple[float, int]:
-        shutil.copyfile(self.csv_path, self.tmp_csv_path)
-        # TODO
-        # filter backwards from last line, keep only sequence of params.seq_len + header
-        # return current price & timestamp
-        pass
+    def __get_current_data_from_csv(self) -> Tuple[float, int]:
+        with open(self.csv_path, 'r') as file:
+            rows = file.readlines()
+            file.close()
 
-    def __append_prediction(self, prediction: float):
+        tmp_rows = [rows[0]]
+        for index in range(-100, 0):
+            tmp_rows.append(rows[index])
+
+        with open(self.tmp_csv_path, 'w+') as file:
+            file.writelines(tmp_rows)
+            file.close()
+
+        last_row = tmp_rows[-1]
+        price = float(last_row.split(',')[0])
+        timestamp = int(last_row.split(',')[-1])
+
+        return price, timestamp
+
+    def __add_prediction_to_csv(self, prediction: float, timestamp: int):
         with open(self.tmp_csv_path, 'a') as file:
             # Training model only cares about first column
-            file.write(f'{prediction},0.0,0.0,0.0,0.0,0.0,0.0,0.0,0\n')
+            file.write(
+                f'{prediction},10.0,10.0,10.0,10.0,10.0,10.0,10.0,{timestamp}\n')
 
-    def weigh_delta(self, prediction, current):
+    def __weigh_price_delta_against_threshold(self, prediction, current):
         # Returns a value between -1 and 1 that represents the intensity of change, relative to the threshold
         delta = (prediction - current)/current
+        # print(f"Percent change: {round((delta*100), 4)}%")
         eval = delta/self.delta_threshold
         if eval > 1:
             return 1
@@ -55,25 +76,39 @@ class Delphi:
 
     def run_loop(self, order_queue: Queue):
         while not self.abort:
-            current_price, timestamp = self.__get_current_data()
-            prediction_time = timestamp + \
-                (self.interval_size * self.iterations)
-            for _ in range(self.iterations):
-                prediction = self.predictor.run()
-                self.__append_prediction(prediction)
-            weight = self.weigh_delta(prediction, current_price)
-            ticker = ConfidenceTicker(weight, prediction_time)
-            order_queue.put(ticker)
+            current_price, timestamp = self.__get_current_data_from_csv()
+            prediction_ts = timestamp
+            predictions = []
 
-            # run once for now
-            self.abort = True
+            for i in range(self.iterations):
+                prediction_ts += self.interval_size
+                predictions.append(self.predictor.run())
+                self.__add_prediction_to_csv(
+                    prediction=round(predictions[i], 2),
+                    timestamp=prediction_ts
+                )
+
+            order_queue.put(
+                ConfidenceTicker(
+                    weight=self.__weigh_price_delta_against_threshold(
+                        prediction=predictions[-1],
+                        current=current_price
+                    ),
+                    predictions=predictions,
+                    timestamp=prediction_ts
+                )
+            )
+
+            sleep(self.interval_size + self.iterations)
+            # self.abort = True
 
 
 class ConfidenceTicker:
 
     # Simple solution for useful queue objects
-    def __init__(self, weight, timestamp):
+    def __init__(self, weight, predictions, timestamp):
         self.weight = weight
+        self.prediction_history = predictions
         self.timestamp = timestamp
 
 
@@ -81,5 +116,6 @@ if __name__ == "__main__":
     Delphi(
         csv_path='crosstower-btc.csv',
         model_path='results/1617764061 - 0.0002/model.h5',
-        params_path='results/1617764061 - 0.0002/params.json'
+        params_path='results/1617764061 - 0.0002/params.json',
+        iteration_length=3
     ).run_loop()
