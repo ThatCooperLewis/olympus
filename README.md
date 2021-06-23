@@ -25,6 +25,20 @@ Bitcoin price approximation & trading
 
 Any issues with CUDA setup, please [refer here](https://www.tensorflow.org/install/gpu) 
 
+## Components
+For some reason I decided to name everything after Greek gods.
+
+### **Zeus** - Central Command
+- Creates & manages all entities
+### **Athena** - Wisdom
+- Continuously scrapes price data from CrossTower API
+### **Prometheus** - Foresight
+- Trains a keras model based on Athena's historical price data
+### **Delphi** - Prediction
+- Utilizes latest price history & the Prometheus model to predict changes over iterate 
+### **Hermes** - Commerce
+- Intakes predictions from Delphi and makes market orders based on its recommendations 
+
 ## Tools
 
 - `tools/filter_csv.py`

@@ -14,3 +14,8 @@
 - Include regular check for failed orders
 
 '''
+
+class Hermes: 
+
+    def __init__(self) -> None:
+        pass

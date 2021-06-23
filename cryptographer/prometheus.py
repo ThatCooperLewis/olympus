@@ -1,7 +1,11 @@
-import prometheus.log_suppressor # MUST IMPORT FIRST - Hides debug logs from tensorflow 
+import os
+# Hide tensorflow info logs (but keep warnings/errors)
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '1'
+
 import argparse as argp
 import json
-import os
+import random
+import time
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -16,8 +20,7 @@ from tensorflow.keras.callbacks import EarlyStopping, ModelCheckpoint
 from tensorflow.keras.layers import Activation, Bidirectional, Dense, Dropout
 from tensorflow.python.keras.layers import CuDNNLSTM
 
-
-# GLOBAL CONSTANTS
+# GLOBAL DEFAULTS
 DEFAULT_SEQ_LEN = 20
 DEFAULT_DROPOUT = 0.2
 DEFAULT_EPOCH_COUNT = 50 
@@ -30,6 +33,7 @@ gpus = tf.config.experimental.list_physical_devices('GPU')
 if gpus:
     for gpu in gpus:
         tf.config.experimental.set_memory_growth(gpu, True)
+
 
 class Model:
 
@@ -223,6 +227,7 @@ class Predict(Model):
     def split_data(self, data):
         self.X_test = data
 
+
 class TrainPredict(Model):
 
     def run(self, prediction_cycles: int = 1):
@@ -307,25 +312,110 @@ class TestHistory(Model):
         plt.legend(loc='best')
 
 
+class Prometheus:
+
+    def __init__(self):
+        pass
+
+    def randomize_params(self, params: dict, fixed: list) -> dict:
+        if 'seq_len' not in fixed:
+            params['seq_len'] = random.randint(10, 50)
+        if 'dropout' not in fixed:
+            params['dropout'] = round(random.uniform(.15, .3), 3)
+        if 'epoch_count' not in fixed:
+            params['epoch_count'] = random.randint(100, 500)
+        if 'testing_split' not in fixed:
+            params['testing_split'] = round(random.uniform(.85, .95), 2)
+        if 'validation_split' not in fixed:
+            params['validation_split'] = round(random.uniform(.15, .25), 2)
+        return params
+
+    def __alter(self, params: dict, key: str, ignore_list: list, isInt: bool, min, max):
+        if key in ignore_list: return params
+        value = params[key]
+        new_val = 0
+        while new_val < min or new_val > max:
+            new_val = value * round(random.uniform(.9, 1.1), 3)
+            if isInt: new_val = round(new_val)
+        params[key] = new_val
+        return params
+
+    def alter_params(self, params: dict, fixed: list) -> dict:
+        params = self.__alter(params, 'seq_len', fixed, True, 10, 50)
+        params = self.__alter(params, 'dropout', fixed, False, .15, .3)
+        params = self.__alter(params, 'epoch_count', fixed, True, 100, 500)
+        params = self.__alter(params, 'testing_split', fixed, False, .85, .95)
+        params = self.__alter(params, 'validation_split', fixed, False, .15, .25)
+        return params
+
+    def build_and_train(self, params: dict):
+        start = time.time()
+        model = Model(model_name=str(int(start)), input_csv='bitstamp60sec.csv', params=params)
+        model.train()
+        model.evaluate()
+        model.save_params()
+        model.plot_model_loss(save=True).close()
+        duration = str(time.time() - start)
+
+        train_loss_history =  model.history.history['loss']
+        validation_loss_history = model.history.history['val_loss']
+        train_loss, test_loss = model.evaluate()
+        results = {
+            "timestamp": start,
+            "duration": duration,
+            "train_loss" : train_loss,
+            "test_loss" : test_loss,
+            "train_loss_history": train_loss_history,
+            "validation_loss_history": validation_loss_history
+        }
+
+        with open(f"results/{model.name}/validation.json", "w+") as file:
+            json.dump(results, file, indent=4)
+        return results
+
+    def find_best_alteration(self, params: dict, cycles: int, randomize: bool, best_result: dict = {"test_loss" : 1}):
+        best_params = params
+        for i in range(cycles):
+            if i > 0: 
+                if randomize:
+                    params = self.randomize_params(self, params, ['testing_split'])
+                else:
+                    params = self.alter_params(params, ['testing_split'])
+            result = self.build_and_train(params)
+            if result['test_loss'] < best_result['test_loss']:
+                best_result = result
+                best_params = params
+        print(f"Best: {best_result['timestamp']}")
+        return best_params, best_result
+
+    def run(self, initial_params: dict, best_result={"test_loss" : 1}):
+        for i in range (5):
+            if i > 0:
+                initial_params, best_result = self.find_best_alteration(initial_params, 10, False, best_result)
+            else:
+                initial_params, best_result = self.find_best_alteration(initial_params, 10, True, best_result)
+
+        print(f"Overall Best: {best_result['timestamp']}")
+
+
 if __name__ == "__main__":
-    with open(f'results/1617764061 - 0.0002/params.json') as file:
-        params = json.load(file)
-    result = Predict('TODOFIX', 'newBTC.csv', 'results/1617764061 - 0.0002/model.h5', params=params).run()
-    print(result)
-    exit()
-    parser = argp.ArgumentParser()
-    parser.add_argument('csv_path')
-    parser.add_argument('mode', help="Test historical data (test, t) Predict upcoming intervals (predict, p) Guess next direction (next, n)")
-    parser.add_argument('--model_path', help="Filepath of existing .h5 model")
-    parser.add_argument('--intervals', help="How many intervals forward to guess (Predict Mode requirement)")
-    args = parser.parse_args()
-    csv_path = args.csv_path
-    model_name = f"{csv_path.split('/')[-1].split('.')[0]}"
-    if args.mode.lower() in ['test', 't']:
-        TestHistory(model_name, input_csv=args.csv_path).run()
-    elif args.mode.lower() in ['predict', 'p']:
-        try:
-            interval = int(args.intervals)
-        except:
-            interval = 0
-        TrainPredict(model_name, input_csv=args.csv_path).run(interval)
+    default_params = {
+        "seq_len": 10,
+        "dropout": 0.15,
+        "epoch_count": 50,
+        "testing_split": 0.88,
+        "validation_split": 0.2
+    }
+    # reallyGoodOne
+    starting_params = {
+        "seq_len": 22,
+        "dropout": 0.1893861151446167,
+        "epoch_count": 300,
+        "testing_split": 0.88,
+        "validation_split": 0.2
+    }
+    best_result = {
+        'test_loss': 0.0008506495505571365, 
+        'timestamp': 'anotherGoodOne'
+    }
+    Prometheus().run(starting_params, best_result)

@@ -1,10 +1,10 @@
 import json
 from queue import Queue
-from time import sleep, time
+from time import sleep
 from typing import Tuple
 import shutil
 
-from prometheus.model import Predict
+from cryptographer.prometheus import Predict
 
 
 class Delphi:
