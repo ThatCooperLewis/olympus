@@ -126,11 +126,12 @@ class OrderListener:
         self.__thread: Thread = Thread(target=self.__wait_loop, daemon=True)
         self.__queue: Queue = Queue()
         self.__creds_path = credentials_path
+        self.__quit = False
 
     async def __orders_coroutine(self):
         try:
             socket = await SocketAPI.get_authenticated_socket(self.__creds_path)
-            while True:
+            while not self.__quit:
                 if self.__queue.qsize() > 0:
                     order: Order = self.__queue.get()
                     await SocketAPI.request(socket, 'newOrder', order.dict)
@@ -144,7 +145,7 @@ class OrderListener:
             asyncio.ensure_future(self.__orders_coroutine())
             loop.run_forever()
         except KeyboardInterrupt:
-            self.quit = True
+            self.__quit = True
         finally:
             print('Closing')
             loop.close()
@@ -153,5 +154,8 @@ class OrderListener:
         """Put `Order` in queue for execution"""
         self.__queue.put(order)
 
-    def start_listener(self):
+    def start(self):
         self.__thread.start()
+
+    def end(self):
+        self.__quit = True
