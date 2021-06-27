@@ -2,9 +2,9 @@ import json
 from queue import Queue
 from time import sleep
 from typing import Tuple
-import shutil
 
 from cryptographer.prometheus import Predict
+from cryptographer.hermes import ConfidenceTicker
 
 
 class Delphi:
@@ -101,15 +101,6 @@ class Delphi:
 
             sleep(self.interval_size + self.iterations)
             # self.abort = True
-
-
-class ConfidenceTicker:
-
-    # Simple solution for useful queue objects
-    def __init__(self, weight, predictions, timestamp):
-        self.weight = weight
-        self.prediction_history = predictions
-        self.timestamp = timestamp
 
 
 if __name__ == "__main__":
