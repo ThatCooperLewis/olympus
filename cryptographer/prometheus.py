@@ -314,6 +314,10 @@ class TestHistory(Model):
 
 class Prometheus:
 
+    '''
+    Build & train a predictive neural network
+    '''
+
     def __init__(self):
         pass
 

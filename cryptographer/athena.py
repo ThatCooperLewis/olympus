@@ -12,6 +12,9 @@ from websockets import connect as Connection
 
 
 class Athena:
+    '''
+    Scrape CrossTower API for crypto price history
+    '''
 
     def __init__(self):
         self.queue = Queue()
