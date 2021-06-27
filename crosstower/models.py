@@ -1,5 +1,7 @@
-from time import strptime, struct_time, mktime
+from time import mktime, strptime, struct_time
 from typing import List
+
+from crosstower.config import DEFAULT_SYMBOL
 
 
 class Trade:
@@ -45,6 +47,66 @@ class Order:
 
     def __init__(self, data: dict) -> None:
         self._data = data
+
+    @classmethod
+    def create(cls, quantity: float, side: str, symbol, order_type: str = 'market', time_in_force: str = 'GTC', price: float = None, stop_price: float = None):
+        # TODO: Expand to GTD orders at some point. Requires timestamp parsing
+        '''
+        Create a new order
+
+        Parameters
+        ----------
+        quantity : float
+            Order quantity
+        side : str
+            Can be `sell` or `buy`
+        symbol : str
+            Trading symbol, ex. 'BTCUSD'
+        order_type : str
+            Can be `limit`, `market`, `stopLimit`, `stopMarket`. Defaults to `market`.
+        time_in_force : str
+            Accepted values: `GTC`, `IOC`, `FOK`, `Day`. Defaults to `GTC`. `GTD` not yet supported.
+        price : float
+            Order price. Required for `limit` types
+        stop_price : float
+            Required for `stopLimit` and `stopMarket` orders
+
+        Returns
+        ----------
+        `Order` object
+        '''
+        bad_args = False
+        order_data = {
+            'symbol': symbol
+        }
+
+        if side in ['sell', 'buy'] and order_type in ['limit', 'market', 'stopLimit', 'stopMarket'] and time_in_force in ['GTC', 'IOC', 'FOK', 'Day']:
+            order_data['side'] = side
+            order_data['type'] = type
+            order_data['timeInForce'] = side
+        else:
+            bad_args = True
+
+        if price:
+            if type(price) is float:
+                order_data['price'] = str(price)
+            else:
+                bad_args = True
+
+        if stop_price:
+            if type(stop_price) is float:
+                order_data['stopPrice'] = str(stop_price)
+            else:
+                bad_args = True
+
+        if type(quantity) is float:
+            order_data['quantity'] = str(quantity)
+        else:
+            bad_args = True
+
+        if bad_args:
+            raise Exception("Bad args passed to Order.create(), check types")
+        return Order(order_data)
 
     @property
     def dict(self) -> dict:
