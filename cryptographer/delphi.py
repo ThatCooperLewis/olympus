@@ -4,10 +4,14 @@ from time import sleep
 from typing import Tuple
 
 from cryptographer.prometheus import Predict
-from cryptographer.hermes import ConfidenceTicker
+from cryptographer.hermes import PredictionVector
 
 
 class Delphi:
+
+    '''
+    Make predictions based on current trends
+    '''
 
     def __init__(
         self,
@@ -89,7 +93,7 @@ class Delphi:
                 )
 
             order_queue.put(
-                ConfidenceTicker(
+                PredictionVector(
                     weight=self.__weigh_price_delta_against_threshold(
                         prediction=predictions[-1],
                         current=current_price
