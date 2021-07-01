@@ -10,5 +10,9 @@
 
 class Zeus:
 
+    '''
+    Initialize and watch everything
+    '''
+
     def __init__(self) -> None:
         pass
