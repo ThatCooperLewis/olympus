@@ -37,6 +37,10 @@ if gpus:
 
 class Model:
 
+    '''
+    Training, testing, and running the prediction model
+    '''
+
     def __init__(self, model_name: str, input_csv: str = None, input_model: str = None, **params):
         print(params.get('params'))
         self.name = model_name
