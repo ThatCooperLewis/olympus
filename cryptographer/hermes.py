@@ -1,7 +1,7 @@
 from queue import Queue
 from threading import Thread
 from time import time as now
-from typing import List
+from typing import List, Tuple
 
 from crosstower.models import Order, Balance
 from crosstower.socket_api.private import OrderListener, Trading
@@ -45,7 +45,9 @@ class Hermes:
         self.__thread: Thread = Thread(target=self.__main_loop, args=())
         self.__order_listener = OrderListener()
         self.__trading_account = Trading()
+        # TODO this is a tuple but I treat is like a single Order object. Also this isn't syntactically correct
         self.__last_order = (Order, PredictionVector)
+        self.order_history = []
 
     # Public
 
@@ -73,23 +75,29 @@ class Hermes:
 
     # Private
 
-    def __create_order(self, prediction: PredictionVector, balances: List[Balance]) -> Order:
-        crypto_balance = None
-        fiat_balance = None
+    def __parse_quantity(prediction: PredictionVector, balance: float) -> float:
+        percentage = MAX_TRADE_PERCENTAGE * abs(prediction.weight)
+        order_quantity =  percentage * balance
+        return order_quantity
+
+
+    def __parse_balances(self, balances: List[Balance]) -> Tuple[float, float]:
         for balance in balances:
             if balance.currency == FIAT_SYMBOL:
                 fiat_balance = balance.available
             elif balance.available == CRYPTO_SYMBOL:
                 crypto_balance = balance.available
+        return crypto_balance, fiat_balance
+
+    def __create_order(self, prediction: PredictionVector, balances: List[Balance]) -> Order:
+        crypto_balance, fiat_balance = self.__parse_balances(balances)
+        trade_quantity = self.__parse_quantity(prediction, crypto_balance)
         if prediction.weight > 0:
-            trade_percentage = MAX_TRADE_PERCENTAGE * prediction.weight
             side = 'buy'
         elif prediction.weight < 0:
-            trade_percentage = MAX_TRADE_PERCENTAGE * abs(prediction.weight)
             side = 'sell'
         else:
             return None
-        trade_quantity = crypto_balance * trade_percentage
         # TODO: maybe incorporate the prediction cycles so this is the actual current price?
         predicted_price = prediction.prediction_history[-4]
         if side == 'buy' and (predicted_price * trade_quantity) > fiat_balance:
@@ -99,7 +107,23 @@ class Hermes:
         # also check total account balance to determine portion
         pass
 
-    def __create_follower_order(self, last_order: Order, new_prediction: PredictionVector) -> Order:
+    def __create_follower_order(self, last_order: Tuple[Order, PredictionVector], new_prediction: PredictionVector, balances: List[Balance]) -> Order:
+        crypto_balance, fiat_balance = self.__parse_balances(balances)
+        # trade_quantity = self.__parse_quantity(new_prediction, crypto_balance)
+        order = Order(last_order.quantity, '', TRADING_SYMBOL)
+        if last_order.side == 'buy': 
+            order.side = 'buy' # Continuing trend upwards
+            if new_prediction.weight < 0:
+                order.side = 'sell' # Turning down
+        elif last_order.side == 'sell':
+            order.side = 'sell' # Continuing trend downwards
+            if new_prediction.weight > 0:
+                order.side = 'buy' # Turning up
+
+        # Need to figured out order history stacking
+        # That way, as the same trend compounds, the inverse will trigger a full sale of all previous orders in that direction
+
+
         # Act on previous order if conditions are ideal
         # IF prediction is same direction, do same order
         #  - track total of all "same orders" in a row
