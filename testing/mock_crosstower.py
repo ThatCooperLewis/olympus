@@ -116,3 +116,18 @@ class MockAPI:
         self.listener = OrderListener(
             websocket_override=MockSocket(self.__balance_sheet))
         return
+    
+    
+'''
+
+HELLO FUTURE COOPER
+
+- This is off to a great start
+- Hermes can be properly mocked, and submitting a PredictionVector successfully updates test_balances.json
+- Next steps:
+
+    - Figure out the BTC buy percentage issue as mentioned in the TODO under Hermes.create_order
+    - Setup a way for Athena to scrape new data continuously, that way Delphi can be the one sending predictions to Hermes
+
+    - We need a SUPER reliable crash handler for Athena. Discord notifs if anything goes wrong? Constant retries? idk
+'''

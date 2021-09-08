@@ -16,7 +16,8 @@
 2. test with model, add print statements along the way
 
 # Hermes trader
-1. Make it
+1. Resolve buy percentage issue in create_order
+2. Wrap brain around the stacked order history
 
 # Non-essential tasks
 1. Finish wrapping crosstower API methods (account management, etc)

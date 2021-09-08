@@ -8,7 +8,7 @@
 
 '''
 
-class Zeus:
+class Olympus:
 
     '''
     Initialize and watch everything

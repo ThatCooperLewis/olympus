@@ -28,16 +28,16 @@ Any issues with CUDA setup, please [refer here](https://www.tensorflow.org/insta
 ## Components
 For some reason I decided to name everything after Greek gods.
 
-### **Zeus** - Leadership
-- Creates & manages all entities
-### **Athena** - Wisdom
-- Continuously scrapes price data from CrossTower API
-### **Prometheus** - Foresight
-- Trains a keras model based on Athena's historical price data
-### **Delphi** - Prediction
-- Utilizes latest price history & the Prometheus model to predict changes over iterate 
-### **Hermes** - Commerce
-- Intakes predictions from Delphi and makes market orders based on its recommendations 
+### Olympus
+- **Leadership** - Creates & manages all entities
+### Athena
+- **Wisdom** - Scrapes price data from CrossTower API
+### Prometheus
+- **Foresight** - Trains a keras model based on Athena's historical price data
+### Delphi
+- **Prediction** - Utilizes latest price history & the Prometheus model to predict changes over iterate 
+### Hermes
+- **Commerce** - Intakes predictions from Delphi and makes market orders based on its recommendations 
 
 ## Tools
 
