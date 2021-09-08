@@ -40,14 +40,24 @@ class Hermes:
     Calculate order amounts based on predictions
     '''
 
-    def __init__(self) -> None:
+    def __init__(self, override_orderListener=None, override_tradingAccount=None) -> None:
         self.__queue: Queue = Queue()
         self.__thread: Thread = Thread(target=self.__main_loop, args=())
-        self.__order_listener = OrderListener()
-        self.__trading_account = Trading()
+
+        # Override the API classes if testing
+        if override_orderListener:
+            self.__order_listener = override_orderListener
+        else:
+            self.__order_listener = OrderListener()
+        if override_tradingAccount:
+            self.__trading_account = override_tradingAccount
+        else:
+            self.__trading_account = Trading()
+
         # TODO this is a tuple but I treat is like a single Order object. Also this isn't syntactically correct
-        self.__last_order = (Order, PredictionVector)
+        self.__last_order: Tuple[Order, PredictionVector] = None
         self.order_history = []
+        self.__abort = False
 
     # Public
 
@@ -74,24 +84,26 @@ class Hermes:
         self.__order_listener.end()
 
     # Private
-
-    def __parse_quantity(prediction: PredictionVector, balance: float) -> float:
+    def __parse_quantity(self, prediction: PredictionVector, balance: float) -> float:
         percentage = MAX_TRADE_PERCENTAGE * abs(prediction.weight)
-        order_quantity =  percentage * balance
+        order_quantity = percentage * balance
         return order_quantity
-
 
     def __parse_balances(self, balances: List[Balance]) -> Tuple[float, float]:
         for balance in balances:
             if balance.currency == FIAT_SYMBOL:
                 fiat_balance = balance.available
-            elif balance.available == CRYPTO_SYMBOL:
+            elif balance.currency == CRYPTO_SYMBOL:
                 crypto_balance = balance.available
         return crypto_balance, fiat_balance
 
     def __create_order(self, prediction: PredictionVector, balances: List[Balance]) -> Order:
         crypto_balance, fiat_balance = self.__parse_balances(balances)
-        trade_quantity = self.__parse_quantity(prediction, crypto_balance)
+        # TODO: There's an issue here.. when the BTC balance is very high and USD low, basic buy orders fail? Because it's trying to buy too much BTC
+        # I think buy & sell need to be computed separately
+        # But that means we'd have to grab the current BTC price to convert here
+        trade_quantity: float = self.__parse_quantity(
+            prediction, crypto_balance)
         if prediction.weight > 0:
             side = 'buy'
         elif prediction.weight < 0:
@@ -103,7 +115,7 @@ class Hermes:
         if side == 'buy' and (predicted_price * trade_quantity) > fiat_balance:
             print('UH OH! No money UwU')
             return None
-        return Order.create(trade_quantity, side, TRADING_SYMBOL) 
+        return Order.create(trade_quantity, side, TRADING_SYMBOL)
         # also check total account balance to determine portion
         pass
 
@@ -111,18 +123,17 @@ class Hermes:
         crypto_balance, fiat_balance = self.__parse_balances(balances)
         # trade_quantity = self.__parse_quantity(new_prediction, crypto_balance)
         order = Order(last_order.quantity, '', TRADING_SYMBOL)
-        if last_order.side == 'buy': 
-            order.side = 'buy' # Continuing trend upwards
+        if last_order.side == 'buy':
+            order.side = 'buy'  # Continuing trend upwards
             if new_prediction.weight < 0:
-                order.side = 'sell' # Turning down
+                order.side = 'sell'  # Turning down
         elif last_order.side == 'sell':
-            order.side = 'sell' # Continuing trend downwards
+            order.side = 'sell'  # Continuing trend downwards
             if new_prediction.weight > 0:
-                order.side = 'buy' # Turning up
+                order.side = 'buy'  # Turning up
 
         # Need to figured out order history stacking
         # That way, as the same trend compounds, the inverse will trigger a full sale of all previous orders in that direction
-
 
         # Act on previous order if conditions are ideal
         # IF prediction is same direction, do same order
@@ -134,9 +145,10 @@ class Hermes:
     def __main_loop(self):
         try:
             while not self.__abort:
-                if self.__queue.qsize():
+                if self.__queue.qsize() > 0:
                     prediction: PredictionVector = self.__queue.get()
-                    balances = self.__trading_account.get_trading_balance([CRYPTO_SYMBOL, FIAT_SYMBOL])
+                    balances = self.__trading_account.get_trading_balance(
+                        [CRYPTO_SYMBOL, FIAT_SYMBOL])
                     if self.__last_order:
                         last_order = self.__last_order
                         follower_order = self.__create_follower_order(

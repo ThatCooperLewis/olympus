@@ -28,7 +28,7 @@ Any issues with CUDA setup, please [refer here](https://www.tensorflow.org/insta
 ## Components
 For some reason I decided to name everything after Greek gods.
 
-### **Zeus** - Central Command
+### **Zeus** - Leadership
 - Creates & manages all entities
 ### **Athena** - Wisdom
 - Continuously scrapes price data from CrossTower API

@@ -9,6 +9,7 @@ data/
 # Test files
 socket_test.py
 tests.py
+test_balances.json
 
 # Shh It's A Secret
 credentials*.json

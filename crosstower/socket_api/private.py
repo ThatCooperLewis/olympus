@@ -122,7 +122,10 @@ class Trading:
 
 class OrderListener:
 
-    def __init__(self, credentials_path: str = 'credentials.json') -> None:
+    def __init__(self, credentials_path: str = 'credentials.json', websocket_override=None) -> None:
+        self.__socket: SocketAPI = SocketAPI
+        if websocket_override:
+            self.__socket = websocket_override 
         self.__thread: Thread = Thread(target=self.__wait_loop, daemon=True)
         self.__queue: Queue = Queue()
         self.__creds_path = credentials_path
@@ -130,11 +133,11 @@ class OrderListener:
 
     async def __orders_coroutine(self):
         try:
-            socket = await SocketAPI.get_authenticated_socket(self.__creds_path)
+            socket = await self.__socket.get_authenticated_socket(self.__creds_path)
             while not self.__quit:
                 if self.__queue.qsize() > 0:
                     order: Order = self.__queue.get()
-                    await SocketAPI.request(socket, 'newOrder', order.dict)
+                    await self.__socket.request(socket, 'newOrder', order.dict)
         except KeyboardInterrupt:
             pass
 
