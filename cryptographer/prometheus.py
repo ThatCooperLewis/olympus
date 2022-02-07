@@ -14,11 +14,10 @@ import seaborn as sns
 import tensorflow as tf
 from pylab import rcParams
 from sklearn.preprocessing import MinMaxScaler
-from tensorflow.keras import Model as tfModel
-from tensorflow.keras import Sequential
-from tensorflow.keras.callbacks import EarlyStopping, ModelCheckpoint
-from tensorflow.keras.layers import Activation, Bidirectional, Dense, Dropout
-from tensorflow.python.keras.layers import CuDNNLSTM
+from keras import Model as tfModel
+from keras import Sequential
+from keras.callbacks import EarlyStopping, ModelCheckpoint
+from keras.layers import Activation, Bidirectional, Dense, Dropout, CuDNNLSTM
 
 # GLOBAL DEFAULTS
 DEFAULT_SEQ_LEN = 20
@@ -33,7 +32,8 @@ gpus = tf.config.experimental.list_physical_devices('GPU')
 if gpus:
     for gpu in gpus:
         tf.config.experimental.set_memory_growth(gpu, True)
-
+else:
+    print('Warning: No GPUs detected')
 
 class Model:
 
