@@ -66,6 +66,7 @@ class TestAthena(TestCase):
         self.assertEqual(utils.count_rows_from_file(filename), 1)
         self.assertEqual(utils.get_first_row_from_file(filename),'2.0,1.0,3,6,5,7,4,None,1546329600\n')
         self.athena.quitting = True
+        utils.delete_file(filename)
 
 
 
