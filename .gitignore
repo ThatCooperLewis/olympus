@@ -19,3 +19,7 @@ results/
 
 # IDE
 .vscode
+
+
+# Include unit test files
+!test_data.csv

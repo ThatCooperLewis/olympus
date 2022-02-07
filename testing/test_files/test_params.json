@@ -1,0 +1,7 @@
+{
+    "seq_len": 18,
+    "dropout": 0.288,
+    "epoch_count": 161,
+    "testing_split": 0.88,
+    "validation_split": 0.22
+}
