@@ -23,6 +23,9 @@ class Athena:
         # Counts the number of attempts to connect to socket.
         # Used to kill old connections
         self.connection_attempts: int = 0
+        # Apply default symbol and interval
+        self.symbol = DEFAULT_SYMBOL
+        self.interval = 1
 
     def __restart_socket(self):
         self.connection_attempts += 1
@@ -119,14 +122,16 @@ class Athena:
             elif string.lower() in ['help', 'h']:
                 print(utils.scraper_startup_message)
 
-    def run(self, csv_path: str, symbol: str = DEFAULT_SYMBOL, interval: int = 1):
-        self.symbol = symbol
-        self.interval = interval
+    def run(self, csv_path: str, custom_symbol: str = None, custom_interval: int = 1, headless: bool = False):
+        if custom_symbol:
+            self.symbol = custom_symbol
+        if custom_interval:
+            self.interval = custom_interval
         # Watch for new tickers in queue
         Thread(target=self.csv_loop, args=(csv_path,)).start()
         # Constantly fetch new tickers
         Thread(target=self.ticker_loop, daemon=True).start()
         # Make sure lines are being added to the spreadsheet
         Thread(target=self.watchdog_loop, args=(csv_path, 20)).start()
-        
-        self.handle_commands()
+        if not headless:
+            self.handle_commands()
