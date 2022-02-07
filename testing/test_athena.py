@@ -1,7 +1,7 @@
 from unittest import TestCase
 import unittest
 from time import sleep
-from cryptographer.athena import Athena
+from cryptographer import Athena
 from threading import Thread
 import testing.utils as utils 
 from crosstower.models import Ticker
