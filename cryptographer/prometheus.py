@@ -42,7 +42,7 @@ class Model:
     '''
 
     def __init__(self, model_name: str, input_csv: str = None, input_model: str = None, **params):
-        print(params.get('params'))
+        # print(params.get('params'))
         self.name = model_name
         if not input_csv and not input_model:
             print("ERROR: Neither of input_csv nor a input_model provided!")
@@ -225,7 +225,7 @@ class Predict(Model):
     # Override methods to shape "test" data properly 
     def to_sequences(self, data, seq_len):
         data = np.array([data[-(seq_len-1):]])
-        print(self.scaler.inverse_transform(data[0]))
+        # print(self.scaler.inverse_transform(data[0]))
         return data
 
     def split_data(self, data):

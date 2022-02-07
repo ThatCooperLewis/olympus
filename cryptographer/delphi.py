@@ -65,7 +65,7 @@ class Delphi:
         with open(self.tmp_csv_path, 'a') as file:
             # Training model only cares about first column
             file.write(
-                f'{prediction},10.0,10.0,10.0,10.0,10.0,10.0,10.0,{timestamp}\n')
+                f'\n{prediction},10.0,10.0,10.0,10.0,10.0,10.0,10.0,{timestamp}')
 
     def __weigh_price_delta_against_threshold(self, prediction, current):
         # Returns a value between -1 and 1 that represents the intensity of change, relative to the threshold
