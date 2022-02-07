@@ -1,43 +1,73 @@
 # Cryptographer
 Bitcoin price approximation & trading
 
+## Requirements
+
+- Windows machine with Nvidia GPU
+- Visual Studio Code
+- Crosstower trading account w/ API Key
+- Nvidia Developer account
+
 ## Setup
 
-1. Update to latest Nvidia Drivers
+- Update to latest Nvidia Drivers
 
-2. Download & install [CUDA 11.2 for Windows 10](https://developer.download.nvidia.com/compute/cuda/11.2.0/local_installers/cuda_11.2.0_460.89_win10.exe)
+- Download & install the following:
 
-3. Download [cuDNN SDK 8.0.4](https://developer.nvidia.com/rdp/cudnn-download) (will require account & ethics agreement). Extract the `cuda/` directory to `C:\tools`
+  - [CUDA 11.2 for Windows 10](https://developer.nvidia.com/cuda-11.2.0-download-archive?target_os=Windows&target_arch=x86_64&target_version=10&target_type=exelocal)
 
-4. Go to Start -> type 'env' -> Set Envrionment Variables -> System Variables and add the following paths to `Path`
+  - [cuDNN SDK 8.0.4](https://developer.nvidia.com/rdp/cudnn-archive) (Extract the `cuda/` directory to `C:\tools`)
 
-        C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v11.2\bin;%PATH%
-        C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v11.2\libnvvp
-        C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v11.2\extras\CUPTI\lib64;%PATH%
-        C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v11.2\include;%PATH%
-        C:\tools\cuda\bin;%PATH%
+  - [Microsoft C++ Build Tools](https://visualstudio.microsoft.com/visual-cpp-build-tools/) (Open the Visual Studio Installer, go to `Individual Components` and install `MSVC v140 - VS 2015 C++ build tools (v14.00)`)
 
-4. Setup virtual environment & install dependencies (in repo directory)
+  - [Microsoft Windows SDK](https://developer.microsoft.com/en-us/windows/downloads/windows-sdk/) (Close VS Code during installation)
+
+- Go to Start -> type 'env' -> Set Envrionment Variables For Account -> System Variables and add the following paths to the existing `Path` variable:
+
+  - `C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v11.2\bin`
+  - `C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v11.2\libnvvp`
+  - `C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v11.2\extras\CUPTI\lib64`
+  - `C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v11.2\include`
+  - `C:\tools\cuda\bin`
+
+
+- The following `Path` addition one may be different for your machine. Navigate to the directory yourself to confirm the location of `mt.exe` ([Microsoft Management Tool](https://docs.microsoft.com/en-us/windows/win32/sbscs/mt-exe))
+
+  - `C:\Program Files (x86)\Windows Kits\10\bin\10.0.22000.0\x86`
+
+5. Setup virtual environment & install dependencies (in repo directory)
         
         python -m venv venv
+        
+        // Option 1: Windows Command Prompt
         & c:/path/to/venv/Scripts/Activate.ps1
-        pip install -r requirements.txt
+        
+        // Option 2: Bash
+        source venv/Scripts/activate
+
+        python -m pip install -r requirements.txt
 
 Any issues with CUDA setup, please [refer here](https://www.tensorflow.org/install/gpu) 
 
-## Components
-For some reason I decided to name everything after Greek gods.
+TODO - Crosstower API Setup, credentials.json
 
-### Olympus
-- **Leadership** - Creates & manages all entities
-### Athena
-- **Wisdom** - Scrapes price data from CrossTower API
-### Prometheus
-- **Foresight** - Trains a keras model based on Athena's historical price data
-### Delphi
-- **Prediction** - Utilizes latest price history & the Prometheus model to predict changes over iterate 
-### Hermes
-- **Commerce** - Intakes predictions from Delphi and makes market orders based on its recommendations 
+## Components
+
+### Crosstower
+
+- TODO - SDK description
+
+### Cryptographer
+
+- **Olympus** : Creates & manages all entities
+
+- **Athena** : Scrapes price data from CrossTower API
+
+- **Prometheus** : Trains a keras model based on Athena's historical price data
+
+- **Delphi** : Utilizes latest price history & the Prometheus model to make predictions
+
+- **Hermes** : Intakes predictions from Delphi and makes market orders based on its recommendations 
 
 ## Tools
 
