@@ -3,7 +3,7 @@ Bitcoin price approximation & trading
 
 ## Requirements
 
-- Windows machine with Nvidia GPU
+- Ubuntu 20.04 machine with CUDA-compatible Nvidia GPU
 - Visual Studio Code
 - Crosstower trading account w/ API Key
 - Nvidia Developer account
@@ -12,42 +12,25 @@ Bitcoin price approximation & trading
 
 - Update to latest Nvidia Drivers
 
-- Download & install the following:
+- Setup Ubuntu CUDA, following all steps [here](https://docs.nvidia.com/cuda/cuda-installation-guide-linux/index.html#ubuntu-installation) including pre- and post-installation instructions
+  - CUDA Toolkit Parameters
+    - Distro: `ubuntu2004`
+    - Version: `11-6`
+    - Arch: `x86_64`
 
-  - [CUDA 11.2 for Windows 10](https://developer.nvidia.com/cuda-11.2.0-download-archive?target_os=Windows&target_arch=x86_64&target_version=10&target_type=exelocal)
+- **Do not define any environment variables mentioned in the Nvidia guides, except for the following.** Defining `LD_LIBRARY_PATH` should not be necessary if you use the Ubuntu `.deb` installations.
 
-  - [cuDNN SDK 8.0.4](https://developer.nvidia.com/rdp/cudnn-archive) (Extract the `cuda/` directory to `C:\tools`)
+      export PATH=/usr/local/cuda-11.6/bin${PATH:+:${PATH}
 
-  - [Microsoft C++ Build Tools](https://visualstudio.microsoft.com/visual-cpp-build-tools/) (Open the Visual Studio Installer, go to `Individual Components` and install `MSVC v140 - VS 2015 C++ build tools (v14.00)`)
+- Install `libcudnn8`
 
-  - [Microsoft Windows SDK](https://developer.microsoft.com/en-us/windows/downloads/windows-sdk/) (Close VS Code during installation)
+      $ sudo apt install libcudnn8
 
-- Go to Start -> type 'env' -> Set Envrionment Variables For Account -> System Variables and add the following paths to the existing `Path` variable:
-
-  - `C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v11.2\bin`
-  - `C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v11.2\libnvvp`
-  - `C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v11.2\extras\CUPTI\lib64`
-  - `C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v11.2\include`
-  - `C:\tools\cuda\bin`
-
-
-- The following `Path` addition one may be different for your machine. Navigate to the directory yourself to confirm the location of `mt.exe` ([Microsoft Management Tool](https://docs.microsoft.com/en-us/windows/win32/sbscs/mt-exe))
-
-  - `C:\Program Files (x86)\Windows Kits\10\bin\10.0.22000.0\x86`
-
-5. Setup virtual environment & install dependencies (in repo directory)
+- Setup virtual environment & install dependencies (in repo directory)
         
-        python -m venv venv
-        
-        // Option 1: Windows Command Prompt
-        & c:/path/to/venv/Scripts/Activate.ps1
-        
-        // Option 2: Bash
-        source venv/Scripts/activate
-
-        python -m pip install -r requirements.txt
-
-Any issues with CUDA setup, please [refer here](https://www.tensorflow.org/install/gpu) 
+      $ python -m venv venv
+      $ source venv/bin/activate
+      $ pip install -r requirements.txt
 
 TODO - Crosstower API Setup, credentials.json
 
