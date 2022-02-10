@@ -41,27 +41,40 @@ class Hermes:
     '''
 
     def __init__(self, override_orderListener=None, override_tradingAccount=None) -> None:
+        self.abort = False
+        self.__orders = []
         self.__queue: Queue = Queue()
         self.__thread: Thread = Thread(target=self.__main_loop, args=())
 
         # Override the API classes if testing
         if override_orderListener:
-            self.__order_listener = override_orderListener
+            self.order_listener = override_orderListener
         else:
-            self.__order_listener = OrderListener()
-        if override_tradingAccount:
-            self.__trading_account = override_tradingAccount
-        else:
-            self.__trading_account = Trading()
+            self.order_listener = OrderListener()
 
-        # TODO this is a tuple but I treat is like a single Order object. Also this isn't syntactically correct
-        self.__last_order: Tuple[Order, PredictionVector] = None
-        self.order_history = []
-        self.__abort = False
+        if override_tradingAccount:
+            self.trading_account = override_tradingAccount
+        else:
+            self.trading_account = Trading()
+
 
     # Public
 
-    def submit(self, queue_object: PredictionVector):
+    def start(self):
+        '''
+        Run in the background, waiting for new ticker submissions
+        '''
+        self.order_listener.start()
+        self.__thread.start()
+
+    def stop(self):
+        '''
+        Notify all active threads to end their loops
+        '''
+        self.abort = True
+        self.order_listener.end()
+
+    def submit_prediction_to_queue(self, queue_object: PredictionVector):
         '''
         Submit a new PredictionVector to the queue, starting a new order process
         '''
@@ -69,27 +82,31 @@ class Hermes:
             raise Exception("What's up guy? Bad type submitted to queue!")
         self.__queue.put(queue_object)
 
-    def start(self):
-        '''
-        Run in the background, waiting for new ticker submissions
-        '''
-        self.__order_listener.start()
-        self.__thread.start()
-
-    def abort(self):
-        '''
-        Notify all active threads to end their loops
-        '''
-        self.__abort = True
-        self.__order_listener.end()
-
     # Private
+
     def __parse_quantity(self, prediction: PredictionVector, balance: float) -> float:
+        '''
+        Given a prediction vector, a balance, and a maximum trade percentage, return the quantity of the
+        prediction vector to buy or sell
+
+        :param prediction: The prediction vector for the current time step
+        :type prediction: PredictionVector
+        :param balance: The amount of money you have to spend on the trade
+        :type balance: float
+        :return: The quantity of the asset to be traded.
+        '''
         percentage = MAX_TRADE_PERCENTAGE * abs(prediction.weight)
         order_quantity = percentage * balance
         return order_quantity
 
     def __parse_balances(self, balances: List[Balance]) -> Tuple[float, float]:
+        '''
+        Returns the available crypto and fiat balances.
+
+        :param balances: List[Balance]
+        :type balances: List[Balance]
+        :return: The balances of crypto and fiat.
+        '''
         for balance in balances:
             if balance.currency == FIAT_SYMBOL:
                 fiat_balance = balance.available
@@ -99,7 +116,7 @@ class Hermes:
 
     def __create_order(self, prediction: PredictionVector, balances: List[Balance]) -> Order:
         crypto_balance, fiat_balance = self.__parse_balances(balances)
-        # TODO: There's an issue here.. when the BTC balance is very high and USD low, basic buy orders fail? Because it's trying to buy too much BTC
+        # TODO: There's an issue here.. when the BTC balance is very high and USD low, basic buy orders fail, because it's trying to buy too much BTC
         # I think buy & sell need to be computed separately
         # But that means we'd have to grab the current BTC price to convert here
         trade_quantity: float = self.__parse_quantity(
@@ -117,55 +134,46 @@ class Hermes:
             return None
         return Order.create(trade_quantity, side, TRADING_SYMBOL)
         # also check total account balance to determine portion
-        pass
 
-    def __create_follower_order(self, last_order: Tuple[Order, PredictionVector], new_prediction: PredictionVector, balances: List[Balance]) -> Order:
-        crypto_balance, fiat_balance = self.__parse_balances(balances)
-        # trade_quantity = self.__parse_quantity(new_prediction, crypto_balance)
-        order = Order(last_order.quantity, '', TRADING_SYMBOL)
-        if last_order.side == 'buy':
-            order.side = 'buy'  # Continuing trend upwards
-            if new_prediction.weight < 0:
-                order.side = 'sell'  # Turning down
-        elif last_order.side == 'sell':
-            order.side = 'sell'  # Continuing trend downwards
-            if new_prediction.weight > 0:
-                order.side = 'buy'  # Turning up
-
-        # Need to figured out order history stacking
-        # That way, as the same trend compounds, the inverse will trigger a full sale of all previous orders in that direction
-
-        # Act on previous order if conditions are ideal
-        # IF prediction is same direction, do same order
-        #  - track total of all "same orders" in a row
-        # ELSE prediction is stagnant or opposite, do inverse order
-        #  - inverse order should be same-order total from (a)
-        pass
+    def __execute_order(self, order: Order):
+        '''
+        If the last order in the list is the same as the current order, add the current order to the list.
+        If the last order in the list is not the same as the current order, execute the last order and add
+        the current order to the list
+        
+        :param order: The order that was just submitted
+        :type order: Order
+        '''
+        if len(self.__orders) == 0:
+            # No past orders, execute & add to list
+            self.__orders.append(order)
+            self.order_listener.submit_order(order)
+        elif self.__orders[-1].side == order.side:
+            # Same direction, add to list
+            self.__orders.append(order)
+            self.order_listener.submit_order(order)
+        elif self.__orders[-1].side != order.side:
+            # Opposite direction, execute summed inverse order
+            total_quantity = 0
+            for order in self.__orders:
+                total_quantity += order.quantity
+            order.quantity += total_quantity
+            self.order_listener.submit_order(order)
+            self.__orders = []
 
     def __main_loop(self):
+        '''
+        Get the next prediction from the queue, get the current balances, and create an order based on the
+        prediction, repeat until abort
+        '''
         try:
-            while not self.__abort:
+            while not self.abort:
                 if self.__queue.qsize() > 0:
                     prediction: PredictionVector = self.__queue.get()
-                    balances = self.__trading_account.get_trading_balance(
+                    balances = self.trading_account.get_trading_balance(
                         [CRYPTO_SYMBOL, FIAT_SYMBOL])
-                    if self.__last_order:
-                        last_order = self.__last_order
-                        follower_order = self.__create_follower_order(
-                            last_order, prediction)
-                        if follower_order:
-                            self.__order_listener.submit_order(follower_order)
                     order = self.__create_order(prediction, balances)
                     if order:
-                        self.__order_listener.submit_order(order)
-                        self.__last_order = order
+                        self.__execute_order(order)
         except KeyboardInterrupt:
             self.abort()
-
-
-'''
-get trading balance (both BTC and USD)
-get prediction vector
-use 
-
-'''

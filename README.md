@@ -3,7 +3,8 @@ Bitcoin price approximation & trading
 
 ## Requirements
 
-- Ubuntu 20.04 machine with CUDA-compatible Nvidia GPU
+- Ubuntu 20.04 machine with CUDA-compatible Nvidia GPU 
+  - Other operating systems may work, but the setup guide below is tailored for Linux Mint
 - Visual Studio Code
 - Crosstower trading account w/ API Key
 - Nvidia Developer account
@@ -18,7 +19,7 @@ Bitcoin price approximation & trading
     - Version: `11-6`
     - Arch: `x86_64`
 
-- **Do not define any environment variables mentioned in the Nvidia guides, except for the following.** Defining `LD_LIBRARY_PATH` should not be necessary if you use the Ubuntu `.deb` installations.
+- **Do not define any environment variables mentioned in the Nvidia guides, except for the following $PATH update.** Defining `LD_LIBRARY_PATH` should not be necessary if you use the Ubuntu `.deb` installations.
 
       export PATH=/usr/local/cuda-11.6/bin${PATH:+:${PATH}
 
@@ -41,6 +42,8 @@ TODO - Crosstower API Setup, credentials.json
 - TODO - SDK description
 
 ### Cryptographer
+
+To make things a little more difficult for those who lack the sheer will to make this code work for themselves, I obscured all the components with Greek Mythology codewords
 
 - **Olympus** : Creates & manages all entities
 
