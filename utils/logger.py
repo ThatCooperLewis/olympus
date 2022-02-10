@@ -1,26 +1,24 @@
-import imp
 import logging
-from utils.logger import Logger
 
 
 class Logger():
-
-    # Make the logging process a little more streamlined/less verbose
-
-    def __init__(self, category_str):
-        logging.basicConfig()
-        self.log = logging.getLogger()
-        self.category = category_str
-        self.log.setLevel(logging.INFO)
-
-    def info(self, message):
-        self.log.info('{0}: {1}'.format(self.category, message))
-
-    def warn(self, message):
-        self.log.warning('{0}: {1}'.format(self.category, message))
-
-    def error(self, message):
-        self.log.error('{0}: {1}'.format(self.category, message))
-
-    def debug(self, message):
-        self.log.debug('{0}: {1}'.format(self.category, message))
+    '''
+    Make logging simple.
+    Call `Logger.setup('example.name')` to get a formatted logger.
+    '''
+        
+    @classmethod
+    def setup(cls, category_str: str):
+        '''
+        Create a `logging` object with a given name, and attach a formatter to it
+        
+        :param category_str: The name of the logger
+        :type category_str: str
+        :return: A logger object.
+        '''
+        logger = logging.getLogger(category_str)
+        console = logging.StreamHandler()
+        console_format = logging.Formatter('%(asctime)s [%(name)s] %(levelname)s: %(message)s')
+        console.setFormatter(console_format)
+        logger.addHandler(console)
+        return logger
