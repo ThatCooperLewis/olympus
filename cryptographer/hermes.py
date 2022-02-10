@@ -5,7 +5,7 @@ from typing import List, Tuple
 
 from crosstower.models import Order, Balance
 from crosstower.socket_api.private import OrderListener, Trading
-
+from utils import Logger
 '''
 
 - should we hodl when it drops? sell on the way down?
@@ -41,6 +41,7 @@ class Hermes:
     '''
 
     def __init__(self, override_orderListener=None, override_tradingAccount=None) -> None:
+        self.log = Logger.setup('hermes')
         self.abort = False
         self.__orders = []
         self.__queue: Queue = Queue()
@@ -56,7 +57,6 @@ class Hermes:
             self.trading_account = override_tradingAccount
         else:
             self.trading_account = Trading()
-
 
     # Public
 
@@ -126,11 +126,13 @@ class Hermes:
         elif prediction.weight < 0:
             side = 'sell'
         else:
+            self.log.debug('Prediction weight is 0, not executing order')
             return None
         # TODO: maybe incorporate the prediction cycles so this is the actual current price?
         predicted_price = prediction.prediction_history[-4]
         if side == 'buy' and (predicted_price * trade_quantity) > fiat_balance:
-            print('UH OH! No money UwU')
+            self.log.error('Buy order failed, insufficient funds.\nFiat Balance: {}\nPredicted Price: {}\nTrade Quantity: {}'.format(
+                fiat_balance, predicted_price, trade_quantity))
             return None
         return Order.create(trade_quantity, side, TRADING_SYMBOL)
         # also check total account balance to determine portion
@@ -140,7 +142,7 @@ class Hermes:
         If the last order in the list is the same as the current order, add the current order to the list.
         If the last order in the list is not the same as the current order, execute the last order and add
         the current order to the list
-        
+
         :param order: The order that was just submitted
         :type order: Order
         '''
@@ -160,12 +162,15 @@ class Hermes:
             order.quantity += total_quantity
             self.order_listener.submit_order(order)
             self.__orders = []
+        self.log.debug(
+            f'Executed order: {order.side} {order.symbol} {order.quantity}')
 
     def __main_loop(self):
         '''
         Get the next prediction from the queue, get the current balances, and create an order based on the
         prediction, repeat until abort
         '''
+        self.log.debug('Starting loop')
         try:
             while not self.abort:
                 if self.__queue.qsize() > 0:
@@ -177,3 +182,4 @@ class Hermes:
                         self.__execute_order(order)
         except KeyboardInterrupt:
             self.abort()
+        self.log.debug('Exiting loop')

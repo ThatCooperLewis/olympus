@@ -5,7 +5,7 @@ from typing import Tuple
 
 from cryptographer.prometheus import Predict
 from cryptographer.hermes import PredictionVector
-
+from utils import Logger
 
 class Delphi:
 
@@ -20,7 +20,7 @@ class Delphi:
         params_path: str,
         iteration_length: int
     ) -> None:
-
+        self.log = Logger.setup('delphi')
         self.csv_path = csv_path
         self.tmp_csv_path = csv_path.replace('.csv', '_tmp.csv')
 
@@ -28,6 +28,7 @@ class Delphi:
             params = json.load(file)
             self.seq_len = params.get('seq_len')
             if not self.seq_len:
+                self.log.error('No seq_len in params file')
                 raise Exception("No seq_len in params")
 
         self.predictor = Predict(
@@ -66,11 +67,19 @@ class Delphi:
             # Training model only cares about first column
             file.write(
                 f'\n{prediction},10.0,10.0,10.0,10.0,10.0,10.0,10.0,{timestamp}')
+            self.log.debug('Added prediction to csv')
 
     def __weigh_price_delta_against_threshold(self, prediction, current):
-        # Returns a value between -1 and 1 that represents the intensity of change, relative to the threshold
+        '''
+        Takes in a prediction and a current value, and returns a value between -1 and 1 that represents
+        the intensity of change, relative to the threshold
+        
+        :param prediction: The predicted future price
+        :param current: The current price of the stock
+        :return: A value between -1 and 1 that represents the intensity of change, relative to the threshold
+        '''
         delta = (prediction - current)/current
-        # print(f"Percent change: {round((delta*100), 4)}%")
+        self.log.debug(f"Predicted percent change: {round((delta*100), 4)}%")
         eval = delta/self.delta_threshold
         if eval > 1:
             return 1
@@ -79,6 +88,7 @@ class Delphi:
         return eval
 
     def run_loop(self, order_queue: Queue):
+        self.log.debug('Starting loop')
         while not self.abort:
             current_price, timestamp = self.__get_current_data_from_csv()
             prediction_ts = timestamp
@@ -104,7 +114,7 @@ class Delphi:
             )
 
             sleep(self.interval_size + self.iterations)
-            # self.abort = True
+        self.log.debug('Exiting loop')
 
 
 if __name__ == "__main__":
