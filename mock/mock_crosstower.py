@@ -27,7 +27,7 @@ class MockBalanceSheet:
 
     @property
     def balances(self) -> List[Balance]:
-        print("[BalanceSheet]: Fetching all balances")
+        # print("[BalanceSheet]: Fetching all balances")
         converted = []
         for balance_dict in self.__balances:
             converted.append(Balance(balance_dict))
@@ -41,8 +41,8 @@ class MockBalanceSheet:
                     "[BalanceSheet]: Invalid JSON format: expected list")
 
     def set_balance(self, currency: str, amount_change: float):
-        print(
-            f"[BalanceSheet]: Adjusting balance of {currency} by amount {amount_change}")
+        # print(
+        #     f"[BalanceSheet]: Adjusting balance of {currency} by amount {amount_change}")
         for i, balance_dict in enumerate(self.__balances):
             if balance_dict.get('currency') == currency:
                 self.__balances[i]['available'] += amount_change
@@ -60,12 +60,12 @@ class MockSocket:
 
     def __init__(self, balances: MockBalanceSheet) -> None:
         self.balance_sheet = balances
-        print("[MockSocket]: Initialized!")
-        print(self.balance_sheet)
+        # print("[MockSocket]: Initialized!")
+        # print(self.balance_sheet)
         return
 
     async def request(self, socket: Connection, method: str, params: dict):
-        print("[MockSocket]: New request incoming...")
+        # print("[MockSocket]: New request incoming...")
         if method != 'newOrder':
             raise NotImplementedError
         ticker = MarketData.get_ticker()
@@ -74,10 +74,10 @@ class MockSocket:
         btc_quantity: float = float(params['quantity'])
         usd_quantity = btc_quantity * latest_price
         if side == 'buy':
-            print("[MockSocket]: It's a buy order")
+            # print("[MockSocket]: It's a buy order")
             usd_quantity *= -1
         elif side == 'sell':
-            print("[MockSocket]: It's a sell order")
+            # print("[MockSocket]: It's a sell order")
             btc_quantity *= -1
         else:
             raise Exception(
@@ -85,7 +85,7 @@ class MockSocket:
 
         self.balance_sheet.set_balance(FIAT_SYMBOL, usd_quantity)
         self.balance_sheet.set_balance(CRYPTO_SYMBOL, btc_quantity)
-        print("[MockSocket]: Balances updated!")
+        # print("[MockSocket]: Balances updated!")
         return True
 
     async def get_authenticated_socket(self, credentials_path: str):
@@ -96,8 +96,8 @@ class MockTrading:
 
     def __init__(self, balances: MockBalanceSheet) -> None:
         self.balance_sheet = balances
-        print("MockTrading initialized")
-        print(self.balance_sheet)
+        # print("MockTrading initialized")
+        # print(self.balance_sheet)
 
     def get_trading_balance(self, currencies: list = []):
         return self.balance_sheet.balances

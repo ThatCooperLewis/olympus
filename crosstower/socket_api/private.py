@@ -162,3 +162,6 @@ class OrderListener:
 
     def end(self):
         self.__quit = True
+
+    def is_running(self):
+        return self.__thread.is_alive()
