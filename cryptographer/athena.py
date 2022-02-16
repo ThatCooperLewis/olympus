@@ -8,6 +8,7 @@ from time import time as now
 from crosstower.config import DEFAULT_SYMBOL, SOCKET_URI
 from crosstower.models import Ticker
 from crosstower.socket_api import utils
+from utils import Logger
 from websockets import connect as Connection
 
 
@@ -17,6 +18,7 @@ class Athena:
     '''
 
     def __init__(self):
+        self.log = Logger.setup('Athena')
         self.queue = Queue()
         # Setting self.quitting to True will kill all threads. Cannot be undone
         self.quitting = False
@@ -39,7 +41,7 @@ class Athena:
         }
         await socket.send(json.dumps(data))
 
-    async def __get_response(self, websocket: Connection) -> Ticker:
+    async def __get_response(self, websocket: Connection, attempt_threshold = 3) -> Ticker:
         final_result = None
         response = None
         while True:
@@ -48,7 +50,7 @@ class Athena:
                 response = await websocket.recv()
                 break
             except Exception as err:
-                if request_attempts > 3:
+                if request_attempts > attempt_threshold:
                     response = None
                     break
                 else:
@@ -56,13 +58,18 @@ class Athena:
                     continue
         if response:
             final_result = utils.handle_response(response).get('params')
+        else:
+            self.log.debug(f'[__get_response] No response received after {attempt_threshold} attempts')
         if final_result:
             return Ticker(final_result)
+        else:
+            self.log.debug('[__get_response] No final_result received from response')
         return None
 
     async def scrape_coroutine(self, current_attempt):
         async with Connection(SOCKET_URI) as websocket:
             await self.__subscribe(websocket)
+            self.log.debug(f'Starting scrape attempt {current_attempt}')
             while not self.quitting and self.connection_attempts == current_attempt:
                 ticker = await self.__get_response(websocket)
                 if not ticker:
@@ -85,6 +92,7 @@ class Athena:
         self.last_line = utils.get_newest_line(path)
         self.last_time = now()
         while not self.quitting:
+            self.log.debug('Running watchdog loop...')
             current_line = utils.get_newest_line(path)
             time_since_update = now() - self.last_time
             if current_line == self.last_line and time_since_update > interval:
@@ -98,6 +106,7 @@ class Athena:
     def csv_loop(self, path):
         latest = None
         while not self.quitting:
+            self.log.debug('Running CSV loop...')
             if self.queue.qsize() > 0:
                 ticker: Ticker = self.queue.get()
                 if not latest or (ticker.timestamp - latest) >= self.interval:
@@ -123,6 +132,7 @@ class Athena:
                 print(utils.scraper_startup_message)
 
     def run(self, csv_path: str, custom_symbol: str = None, custom_interval: int = 1, headless: bool = False):
+        self.log.debug('Running...')
         if custom_symbol:
             self.symbol = custom_symbol
         if custom_interval:
@@ -134,4 +144,5 @@ class Athena:
         # Make sure lines are being added to the spreadsheet
         Thread(target=self.watchdog_loop, args=(csv_path, 20)).start()
         if not headless:
+            self.log.debug('Running in interactive mode...')
             self.handle_commands()
