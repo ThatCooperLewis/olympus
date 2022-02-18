@@ -1,7 +1,7 @@
 from unittest import TestCase
 import unittest
 from time import sleep
-from cryptographer import Delphi
+from cryptographer import Delphi, PredictionQueue
 import testing.utils as utils
 from queue import Queue
 from threading import Thread
@@ -9,11 +9,13 @@ from threading import Thread
 class TestDelphi(TestCase):
 
     def setUp(self):
+        self.queue = PredictionQueue()
         self.delphi = Delphi(
             csv_path='testing/test_files/test_data.csv',
             model_path='testing/test_files/test_model.h5',
             params_path='testing/test_files/test_params.json',
-            iteration_length=3
+            iteration_length=3,
+            prediction_queue=self.queue
         )
 
     def tearDown(self):
@@ -30,15 +32,14 @@ class TestDelphi(TestCase):
         self.assertEqual(self.delphi.delta_threshold, 0.0003)
 
     def test_run_loop(self):
-        queue = Queue()
-        thread = Thread(target=self.delphi.run_loop, args=(queue,))
+        thread = Thread(target=self.delphi.run_loop, daemon=True)
         thread.start()
         # Wait for the queue to fill up.
         for i in range(5):
             sleep(5)
-            if queue.qsize() > 0:
+            if self.queue.size > 0:
                 break
-        self.assertTrue(queue.qsize() > 0)
+        self.assertTrue(self.queue.size > 0)
         self.delphi.abort = True
         thread.join()
         sleep(5)

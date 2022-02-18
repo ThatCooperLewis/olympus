@@ -4,7 +4,7 @@ from time import sleep
 from typing import Tuple
 
 from cryptographer.prometheus import Predict
-from cryptographer.hermes import PredictionVector
+from cryptographer.utils.helper_objects import PredictionVector, PredictionQueue
 from utils import Logger
 
 class Delphi:
@@ -18,7 +18,8 @@ class Delphi:
         csv_path: str,
         model_path: str,
         params_path: str,
-        iteration_length: int
+        iteration_length: int,
+        prediction_queue: PredictionQueue,
     ) -> None:
         self.log = Logger.setup(__name__)
         self.csv_path = csv_path
@@ -42,6 +43,7 @@ class Delphi:
         self.iterations = iteration_length  # how many prediction cycles
         self.delta_threshold = 0.0003  # When price changes this much, take 100% action
         self.interval_size = 1  # TODO CHANGE Seconds between price tickers & prediction cycles
+        self.prediction_queue = prediction_queue
 
     def __get_current_data_from_csv(self) -> Tuple[float, int]:
         with open(self.csv_path, 'r') as file:
@@ -87,7 +89,7 @@ class Delphi:
             return -1
         return eval
 
-    def run_loop(self, order_queue: Queue):
+    def run_loop(self):
         self.log.debug('Starting loop')
         while not self.abort:
             current_price, timestamp = self.__get_current_data_from_csv()
@@ -102,7 +104,7 @@ class Delphi:
                     timestamp=prediction_ts
                 )
 
-            order_queue.put(
+            self.prediction_queue.put(
                 PredictionVector(
                     weight=self.__weigh_price_delta_against_threshold(
                         prediction=predictions[-1],

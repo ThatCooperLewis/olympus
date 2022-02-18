@@ -5,6 +5,7 @@ from typing import List, Tuple
 
 from crosstower.models import Order, Balance
 from crosstower.socket_api.private import OrderListener, Trading
+from cryptographer.utils.helper_objects import PredictionVector, PredictionQueue
 from utils import Logger
 '''
 
@@ -25,13 +26,7 @@ FIAT_SYMBOL = 'USD'
 TRADING_SYMBOL = 'BTCUSD_TR'
 
 
-class PredictionVector:
 
-    # Simple solution for useful queue objects
-    def __init__(self, weight, predictions, timestamp):
-        self.weight = weight
-        self.prediction_history = predictions
-        self.timestamp = timestamp
 
 
 class Hermes:
@@ -40,28 +35,28 @@ class Hermes:
     Calculate order amounts based on predictions
     '''
 
-    def __init__(self, override_orderListener: OrderListener = None, override_tradingAccount: Trading = None, override_predictionQueue: Queue = None) -> None:
+    def __init__(self, override_orderListener: OrderListener = None, override_tradingAccount: Trading = None, override_predictionQueue: PredictionQueue = None) -> None:
         self.log = Logger.setup(__name__)
         self.abort = False
         self.__orders = []
         self.__thread: Thread = Thread(target=self.__main_loop, args=())
-
+        self.submitted_order_count = 0 # Used for tracking activity status
         if override_orderListener:
             self.log.debug('Overriding order listener')
-            self.order_listener = override_orderListener
+            self.order_listener: OrderListener = override_orderListener
         else:
-            self.order_listener = OrderListener()
+            self.order_listener: OrderListener = OrderListener()
 
         if override_tradingAccount:
             self.log.debug('Overriding trading account')
-            self.trading_account = override_tradingAccount
+            self.trading_account: Trading = override_tradingAccount
         else:
-            self.trading_account = Trading()
+            self.trading_account: Trading = Trading()
 
         if override_predictionQueue:
-            self.__queue = override_predictionQueue
+            self.__prediction_queue: PredictionQueue = override_predictionQueue
         else:
-            self.__queue = Queue()
+            self.__prediction_queue: PredictionQueue = PredictionQueue()
 
     # Public
 
@@ -85,10 +80,18 @@ class Hermes:
         '''
         Submit a new PredictionVector to the queue, starting a new order process
         '''
-        if type(queue_object) is not PredictionVector:
-            self.log.error('Tried to submit non-PredictionVector to queue')
-            raise Exception("What's up guy? Bad type submitted to queue!")
-        self.__queue.put(queue_object)
+        self.__prediction_queue.put(queue_object)
+    
+    @property
+    def status(self) -> Tuple[int, int]:
+        '''
+        Returns the size of the prediction queue, and the total number of orders submitted. 
+        '''
+        return self.__prediction_queue.size, self.submitted_order_count
+
+    @property
+    def queue(self) -> PredictionQueue:
+        return self.__prediction_queue
 
     # Private
 
@@ -146,7 +149,7 @@ class Hermes:
         return Order.create(trade_quantity, side, TRADING_SYMBOL)
         # also check total account balance to determine portion
 
-    def __execute_order(self, order: Order):
+    def __submit_order(self, order: Order):
         '''
         If the last order in the list is the same as the current order, add the current order to the list.
         If the last order in the list is not the same as the current order, execute the last order and add
@@ -182,14 +185,15 @@ class Hermes:
         self.log.debug('Starting loop')
         try:
             while not self.abort:
-                if self.__queue.qsize() > 0:
-                    prediction: PredictionVector = self.__queue.get()
+                if self.__prediction_queue.size > 0:
+                    prediction: PredictionVector = self.__prediction_queue.get()
                     self.log.debug('Got prediction from queue')
                     balances = self.trading_account.get_trading_balance(
                         [CRYPTO_SYMBOL, FIAT_SYMBOL])
                     order = self.__create_order(prediction, balances)
                     if order:
-                        self.__execute_order(order)
+                        self.__submit_order(order)
         except KeyboardInterrupt:
+            self.log.debug('Keyboard interrupt received, aborting')
             self.abort()
         self.log.debug('Exiting loop')

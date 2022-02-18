@@ -11,25 +11,34 @@ from crosstower.socket_api import utils
 from utils import Logger
 from websockets import connect as Connection
 
+# Number of seconds without any new data before attempt a socket reconnect
+SOCKET_RESTART_TIMEOUT = 20
 
 class Athena:
     '''
     Scrape CrossTower API for crypto price history
     '''
 
-    def __init__(self):
+    def __init__(self, csv_path: str, custom_symbol: str = None, custom_interval: int = 1):
         self.log = Logger.setup(__name__)
+        self.csv_path = csv_path
         self.queue = Queue()
         # Setting self.abort to True will kill all threads. Cannot be undone
         self.abort = False
         # Counts the number of attempts to connect to socket.
         # Used to kill old connections
         self.connection_attempts: int = 0
-        # Apply default symbol and interval
-        self.symbol = DEFAULT_SYMBOL
-        self.interval = 1
         # Set timestamp for last update
         self.last_time = now()
+
+        if custom_symbol:
+            self.symbol = custom_symbol
+        else:
+            self.symbol = DEFAULT_SYMBOL
+        if custom_interval:
+            self.interval = custom_interval
+        else:
+            self.interval = 1
 
     def __restart_socket(self):
         self.log.debug('Restarting socket...')
@@ -122,7 +131,7 @@ class Athena:
             loop.close()
             raise err
 
-    def watchdog_loop(self, path: str, interval: int):
+    def watchdog_loop(self):
         '''
         Monitor a running scraper. If the last line of the log file is the same as the current line, and the time since the last update
         is longer than the interval, then restart the socket
@@ -132,29 +141,28 @@ class Athena:
         :param interval: How often to check for updates
         :type interval: int
         '''
-        self.last_line = utils.get_newest_line(path)
+        self.last_line = utils.get_newest_line(self.csv_path)
         self.last_time = now()
         self.log.debug('Running watchdog loop...')
         while not self.abort:
             self.log.debug('Running watchdog loop...')
-            current_line = utils.get_newest_line(path)
+            current_line = utils.get_newest_line(self.csv_path)
             time_since_update = now() - self.last_time
-            if current_line == self.last_line and time_since_update > interval:
-                # TODO: Notify if several attempts don't work                
+            if current_line == self.last_line and time_since_update > SOCKET_RESTART_TIMEOUT:
+                # TODO: Notify if several attempts don't work            
+                self.log.warn(f'No new data received for {SOCKET_RESTART_TIMEOUT} seconds. Restarting socket...')    
                 self.__restart_socket()
             elif current_line != self.last_line:
                 self.last_line = current_line
                 self.last_time = now()
             sleep(5)
 
-    def csv_loop(self, path):
+    def csv_loop(self):
         '''
         If the queue is populated, get the ticker from the queue, 
         and if the ticker's timestamp is more than
         interval seconds away from the latest timestamp,
         then write the ticker to the csv file
-        
-        :param path: The path to the CSV file
         '''
         latest = None
         while not self.abort:
@@ -163,7 +171,7 @@ class Athena:
                 ticker: Ticker = self.queue.get()
                 if not latest or (ticker.timestamp - latest) >= self.interval:
                     latest = ticker.timestamp
-                    with open(path, 'a') as file:
+                    with open(self.csv_path, 'a') as file:
                         file.write(ticker.csv_line)
                         file.close()
 
@@ -183,18 +191,14 @@ class Athena:
             elif string.lower() in ['help', 'h']:
                 print(utils.scraper_startup_message)
 
-    def run(self, csv_path: str, custom_symbol: str = None, custom_interval: int = 1, headless: bool = False):
+    def run(self, headless: bool = False):
         self.log.debug('Starting...')
-        if custom_symbol:
-            self.symbol = custom_symbol
-        if custom_interval:
-            self.interval = custom_interval
         # Watch for new tickers in queue
-        Thread(target=self.csv_loop, args=(csv_path,)).start()
+        Thread(target=self.csv_loop).start()
         # Constantly fetch new tickers
         Thread(target=self.ticker_loop, daemon=True).start()
         # Make sure lines are being added to the spreadsheet
-        Thread(target=self.watchdog_loop, args=(csv_path, 20)).start()
+        Thread(target=self.watchdog_loop).start()
         if not headless:
             self.log.debug('Running in interactive mode...')
             self.handle_commands()
