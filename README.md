@@ -11,27 +11,7 @@ Bitcoin price approximation & trading
 
 ## Setup
 
-- Update to latest Nvidia Drivers
-
-- Setup Ubuntu CUDA, following all steps [here](https://docs.nvidia.com/cuda/cuda-installation-guide-linux/index.html#ubuntu-installation) including pre- and post-installation instructions
-  - CUDA Toolkit Parameters
-    - Distro: `ubuntu2004`
-    - Version: `11-6`
-    - Arch: `x86_64`
-
-- **Do not define any environment variables mentioned in the Nvidia guides, except for the following $PATH update.** Defining `LD_LIBRARY_PATH` should not be necessary if you use the Ubuntu `.deb` installations.
-
-      export PATH=/usr/local/cuda-11.6/bin${PATH:+:${PATH}
-
-- Install `libcudnn8`
-
-      $ sudo apt install libcudnn8
-
-- Setup virtual environment & install dependencies (in repo directory)
-        
-      $ python -m venv venv
-      $ source venv/bin/activate
-      $ pip install -r requirements.txt
+For running on a local Ubuntu machine, [refer to this guide](docs/local_setup.md)
 
 TODO - Crosstower API Setup, credentials.json
 
