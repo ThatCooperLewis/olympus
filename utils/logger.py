@@ -22,14 +22,3 @@ class Logger():
         console.setFormatter(console_format)
         logger.addHandler(console)
         return logger
-
-
-'''
-
-YO WADDUP FUTURE COOPER
-this log works super well, just need to implement it in more places
-Athena needs it, Hermes & Websocket kinda do too
-
-Olympus is next. We're ready.
-
-'''

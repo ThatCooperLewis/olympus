@@ -322,7 +322,8 @@ class Prometheus:
     Build & train a predictive neural network
     '''
 
-    def __init__(self):
+    def __init__(self, csv_path: str):
+        self.csv_path = csv_path
         pass
 
     def randomize_params(self, params: dict, fixed: list) -> dict:
@@ -358,7 +359,7 @@ class Prometheus:
 
     def build_and_train(self, params: dict):
         start = time.time()
-        model = Model(model_name=str(int(start)), input_csv='bitstamp60sec.csv', params=params)
+        model = Model(model_name=str(int(start)), input_csv=self.csv_path, params=params)
         model.train()
         model.evaluate()
         model.save_params()
@@ -426,4 +427,4 @@ if __name__ == "__main__":
         'test_loss': 0.0008506495505571365, 
         'timestamp': 'anotherGoodOne'
     }
-    Prometheus().run(starting_params, best_result)
+    Prometheus('bitstamp60sec.csv').run(starting_params, best_result)

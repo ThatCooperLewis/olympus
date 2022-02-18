@@ -83,7 +83,7 @@ class Athena:
         if final_result:
             return Ticker(final_result)
         else:
-            self.log.error('[__get_response] No final_result received from response')
+            self.log.debug('[__get_response] No final_result received from response (This is okay. Probably means no new data)')
         return None
 
     async def scrape_coroutine(self, current_attempt):
