@@ -13,7 +13,7 @@ def get_newest_line(filepath: str) -> str:
     '''
     Efficient method for retrieving the newest/last line of a text file, without parsing the entire file.
     
-    Does not check for file existence, and will crash if not exist.
+    Does not check for file existence, and will raise error if not exist.
     '''
     with open(filepath, 'rb') as f:
         for i in range(-2, 0):

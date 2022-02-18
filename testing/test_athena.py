@@ -17,7 +17,7 @@ class TestAthena(TestCase):
 
     def test_init(self):
         self.assertEqual(self.athena.connection_attempts, 0)
-        self.assertEqual(self.athena.quitting, False)
+        self.assertEqual(self.athena.abort, False)
         self.assertEqual(self.athena.queue.qsize(), 0)
         self.assertEqual(self.athena.symbol, 'BTCUSD')
         self.assertEqual(self.athena.interval, 1)
@@ -31,7 +31,7 @@ class TestAthena(TestCase):
         sleep(5)
         # Test that the file is not empty
         self.assertTrue(utils.count_rows_from_file(filename) > 1)
-        self.athena.quitting = True
+        self.athena.abort = True
         sleep(2)
 
         # Test that the file is unchanged after quitting
@@ -44,7 +44,7 @@ class TestAthena(TestCase):
         thread = Thread(target=self.athena.ticker_loop, daemon=True).start()
         sleep(5)
         self.assertTrue(self.athena.queue.qsize() > 0)
-        self.athena.quitting = True
+        self.athena.abort = True
 
     def test_csv_loop(self):
         filename = utils.create_blank_file()

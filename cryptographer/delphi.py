@@ -20,7 +20,7 @@ class Delphi:
         params_path: str,
         iteration_length: int
     ) -> None:
-        self.log = Logger.setup('delphi')
+        self.log = Logger.setup(__name__)
         self.csv_path = csv_path
         self.tmp_csv_path = csv_path.replace('.csv', '_tmp.csv')
 
@@ -93,7 +93,7 @@ class Delphi:
             current_price, timestamp = self.__get_current_data_from_csv()
             prediction_ts = timestamp
             predictions = []
-
+            
             for i in range(self.iterations):
                 prediction_ts += self.interval_size
                 predictions.append(self.predictor.run())

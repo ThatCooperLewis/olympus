@@ -124,7 +124,7 @@ class Trading:
 class OrderListener:
 
     def __init__(self, credentials_path: str = 'credentials.json', websocket_override=None) -> None:
-        self.log = Logger.setup('OrderListener')
+        self.log = Logger.setup(self.__class__.__name__)
         self.__socket: SocketAPI = SocketAPI
         if websocket_override:
             self.__socket = websocket_override 

@@ -18,16 +18,18 @@ class Athena:
     '''
 
     def __init__(self):
-        self.log = Logger.setup('Athena')
+        self.log = Logger.setup(__name__)
         self.queue = Queue()
-        # Setting self.quitting to True will kill all threads. Cannot be undone
-        self.quitting = False
+        # Setting self.abort to True will kill all threads. Cannot be undone
+        self.abort = False
         # Counts the number of attempts to connect to socket.
         # Used to kill old connections
         self.connection_attempts: int = 0
         # Apply default symbol and interval
         self.symbol = DEFAULT_SYMBOL
         self.interval = 1
+        # Set timestamp for last update
+        self.last_time = now()
 
     def __restart_socket(self):
         self.log.debug('Restarting socket...')
@@ -96,7 +98,7 @@ class Athena:
         async with Connection(SOCKET_URI) as websocket:
             await self.__subscribe(websocket)
             self.log.debug(f'Starting scrape attempt {current_attempt}')
-            while not self.quitting and self.connection_attempts == current_attempt:
+            while not self.abort and self.connection_attempts == current_attempt:
                 ticker = await self.__get_response(websocket)
                 if not ticker:
                     continue
@@ -116,7 +118,7 @@ class Athena:
             future = asyncio.ensure_future(self.scrape_coroutine(attempt))
             loop.run_until_complete(future)
         except Exception as err:
-            self.log.error(f'[ticker_loop] {err}')
+            self.log.error(f'[ticker_loop] {err}\n{err.__traceback__}')
             loop.close()
             raise err
 
@@ -133,7 +135,7 @@ class Athena:
         self.last_line = utils.get_newest_line(path)
         self.last_time = now()
         self.log.debug('Running watchdog loop...')
-        while not self.quitting:
+        while not self.abort:
             self.log.debug('Running watchdog loop...')
             current_line = utils.get_newest_line(path)
             time_since_update = now() - self.last_time
@@ -155,7 +157,7 @@ class Athena:
         :param path: The path to the CSV file
         '''
         latest = None
-        while not self.quitting:
+        while not self.abort:
             self.log.debug('Running CSV loop...')
             if self.queue.qsize() > 0:
                 ticker: Ticker = self.queue.get()
@@ -171,7 +173,7 @@ class Athena:
             string = input("Enter command: ")
             if string.lower() in ['exit', 'e']:
                 print(utils.scraper_exit_message)
-                self.quitting = True
+                self.abort = True
                 break
             elif string.lower() in ['restart', 'r']:
                 print(utils.scraper_restart_message)
@@ -182,7 +184,7 @@ class Athena:
                 print(utils.scraper_startup_message)
 
     def run(self, csv_path: str, custom_symbol: str = None, custom_interval: int = 1, headless: bool = False):
-        self.log.info('Starting Athena...')
+        self.log.debug('Starting...')
         if custom_symbol:
             self.symbol = custom_symbol
         if custom_interval:

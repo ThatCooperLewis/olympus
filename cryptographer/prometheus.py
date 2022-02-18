@@ -27,7 +27,6 @@ DEFAULT_TESTING_SPLIT = 0.95
 DEFAULT_VALIDATION_SPLIT = 0.2
 
 
-print("Loading memory patch")
 gpus = tf.config.experimental.list_physical_devices('GPU')
 if gpus:
     for gpu in gpus:

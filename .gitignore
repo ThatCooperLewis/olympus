@@ -11,11 +11,18 @@ socket_test.py
 tests.py
 test_balances.json
 
+# Unit Test Temp Files
+testing/*.csv
+testing/**/*.json
+
 # Shh It's A Secret
 credentials*.json
 
 # Model training
 results/
+
+# Runtime files
+run/
 
 # IDE
 .vscode
@@ -23,3 +30,5 @@ results/
 
 # Include unit test files
 !test_data.csv
+!test_params.json
+!test_model.h5

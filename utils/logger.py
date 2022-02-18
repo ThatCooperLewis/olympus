@@ -21,4 +21,6 @@ class Logger():
         console_format = logging.Formatter('%(asctime)s [%(name)s] %(levelname)s: %(message)s')
         console.setFormatter(console_format)
         logger.addHandler(console)
+        # TODO: _Move this to config file
+        logger.level = logging.INFO
         return logger

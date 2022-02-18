@@ -40,14 +40,12 @@ class Hermes:
     Calculate order amounts based on predictions
     '''
 
-    def __init__(self, override_orderListener=None, override_tradingAccount=None) -> None:
-        self.log = Logger.setup('hermes')
+    def __init__(self, override_orderListener: OrderListener = None, override_tradingAccount: Trading = None, override_predictionQueue: Queue = None) -> None:
+        self.log = Logger.setup(__name__)
         self.abort = False
         self.__orders = []
-        self.__queue: Queue = Queue()
         self.__thread: Thread = Thread(target=self.__main_loop, args=())
 
-        # Override the API classes if testing
         if override_orderListener:
             self.log.debug('Overriding order listener')
             self.order_listener = override_orderListener
@@ -59,6 +57,11 @@ class Hermes:
             self.trading_account = override_tradingAccount
         else:
             self.trading_account = Trading()
+
+        if override_predictionQueue:
+            self.__queue = override_predictionQueue
+        else:
+            self.__queue = Queue()
 
     # Public
 

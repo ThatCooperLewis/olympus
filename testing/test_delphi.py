@@ -33,7 +33,11 @@ class TestDelphi(TestCase):
         queue = Queue()
         thread = Thread(target=self.delphi.run_loop, args=(queue,))
         thread.start()
-        sleep(5)
+        # Wait for the queue to fill up.
+        for i in range(5):
+            sleep(5)
+            if queue.qsize() > 0:
+                break
         self.assertTrue(queue.qsize() > 0)
         self.delphi.abort = True
         thread.join()
