@@ -49,11 +49,13 @@ class Hermes:
 
         # Override the API classes if testing
         if override_orderListener:
+            self.log.debug('Overriding order listener')
             self.order_listener = override_orderListener
         else:
             self.order_listener = OrderListener()
 
         if override_tradingAccount:
+            self.log.debug('Overriding trading account')
             self.trading_account = override_tradingAccount
         else:
             self.trading_account = Trading()
@@ -64,6 +66,7 @@ class Hermes:
         '''
         Run in the background, waiting for new ticker submissions
         '''
+        self.log.debug('Starting Hermes...')
         self.order_listener.start()
         self.__thread.start()
 
@@ -71,6 +74,7 @@ class Hermes:
         '''
         Notify all active threads to end their loops
         '''
+        self.log.debug('Stopping Hermes...')
         self.abort = True
         self.order_listener.end()
 
@@ -79,6 +83,7 @@ class Hermes:
         Submit a new PredictionVector to the queue, starting a new order process
         '''
         if type(queue_object) is not PredictionVector:
+            self.log.error('Tried to submit non-PredictionVector to queue')
             raise Exception("What's up guy? Bad type submitted to queue!")
         self.__queue.put(queue_object)
 
@@ -95,6 +100,7 @@ class Hermes:
         :type balance: float
         :return: The quantity of the asset to be traded.
         '''
+        self.log.debug('Parsing quantity for prediction vector: {}'.format(prediction))
         percentage = MAX_TRADE_PERCENTAGE * abs(prediction.weight)
         order_quantity = percentage * balance
         return order_quantity
@@ -147,15 +153,15 @@ class Hermes:
         :type order: Order
         '''
         if len(self.__orders) == 0:
-            # No past orders, execute & add to list
+            self.log.debug('No orders in list, adding new order')
             self.__orders.append(order)
             self.order_listener.submit_order(order)
         elif self.__orders[-1].side == order.side:
-            # Same direction, add to list
+            self.log.debug('Same direction as last order, adding to list')
             self.__orders.append(order)
             self.order_listener.submit_order(order)
         elif self.__orders[-1].side != order.side:
-            # Opposite direction, execute summed inverse order
+            self.log('Opposite direction as last order, summing & inversing past orders')
             total_quantity = 0
             for order in self.__orders:
                 total_quantity += order.quantity
@@ -175,6 +181,7 @@ class Hermes:
             while not self.abort:
                 if self.__queue.qsize() > 0:
                     prediction: PredictionVector = self.__queue.get()
+                    self.log.debug('Got prediction from queue')
                     balances = self.trading_account.get_trading_balance(
                         [CRYPTO_SYMBOL, FIAT_SYMBOL])
                     order = self.__create_order(prediction, balances)

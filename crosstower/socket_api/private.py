@@ -9,6 +9,7 @@ from crosstower.models import Order, Balance
 from crosstower.socket_api import utils
 from crosstower.utils import aggregate_orders
 from websockets import connect as Connection
+from utils import Logger
 
 
 class SocketAPI:
@@ -123,6 +124,7 @@ class Trading:
 class OrderListener:
 
     def __init__(self, credentials_path: str = 'credentials.json', websocket_override=None) -> None:
+        self.log = Logger.setup('OrderListener')
         self.__socket: SocketAPI = SocketAPI
         if websocket_override:
             self.__socket = websocket_override 
@@ -138,11 +140,14 @@ class OrderListener:
                 if self.__queue.qsize() > 0:
                     order: Order = self.__queue.get()
                     await self.__socket.request(socket, 'newOrder', order.dict)
+            self.log.debug('self.__orders_coroutine() is quitting')
         except KeyboardInterrupt:
+            self.log.debug('KeyboardInterrupt during orders coroutine')
             pass
 
     def __wait_loop(self):
         try:
+            self.log.debug('Starting order listener')
             loop = asyncio.new_event_loop()
             asyncio.set_event_loop(loop)
             asyncio.ensure_future(self.__orders_coroutine())
