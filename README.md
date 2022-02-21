@@ -25,7 +25,7 @@ TODO - Crosstower API Setup, credentials.json
 
 To make things a little more difficult for those who lack the sheer will to make this code work for themselves, I obscured all the components with Greek Mythology codewords
 
-- **Olympus** : Creates & manages all entities
+- **Zeus** : Manages all entities
 
 - **Athena** : Scrapes price data from CrossTower API
 
@@ -34,6 +34,8 @@ To make things a little more difficult for those who lack the sheer will to make
 - **Delphi** : Utilizes latest price history & the Prometheus model to make predictions
 
 - **Hermes** : Intakes predictions from Delphi and makes market orders based on its recommendations 
+
+- **PrimordialChaos** : Superclass of all others, manages starting/stopping of threads and handles alerts
 
 ## Tools
 

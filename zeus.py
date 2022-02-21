@@ -3,8 +3,8 @@ from threading import Thread
 from time import time as now
 
 from crosstower.socket_api import OrderListener, Trading
-
 from cryptographer import Athena, Delphi, Hermes, PredictionQueue
+from cryptographer.primordial_chaos import PrimordialChaos
 from utils import Logger
 
 # Constants
@@ -19,7 +19,7 @@ PREDICTION_ITERATIONS = 3
 PREDICTION_QUEUE_MAX_SIZE = 5
 
 
-class Olympus:
+class Zeus:
 
     '''
     Initialize and watch everything
@@ -66,12 +66,7 @@ class Olympus:
                 # Monitor thread, ensure data continues to populate
                 time_since_update = now() - self.athena.last_time
                 if time_since_update > ATHENA_SCRAPE_INTERVAL_SECONDS*3:
-                    if self.athena.abort:
-                        self.log.debug('Athena has been aborted, ending loop')
-                    else:
-                        # TODO: Handle this better. Send alerts to discord
-                        self.log.error('Athena has not updated for 3x the scrape interval. Aborting Olympus...')
-                        self.abort_all()
+                    self.handle_timeout(self.athena)
                     break
         except KeyboardInterrupt:
             self.log.info('Keyboard interrupt detected in run_athena, aborting')
@@ -88,11 +83,7 @@ class Olympus:
             while not self.abort:
                 submission_count = queue_size = self.hermes.status[1]
                 if queue_size > PREDICTION_QUEUE_MAX_SIZE and last_submission_count == submission_count:
-                    if self.hermes.abort:
-                        self.log.debug('Hermes has been aborted, ending loop')
-                    else:
-                        self.log.error('Hermes is unresponsive, aborting Olympus...')
-                        self.abort_all()
+                    self.handle_timeout(self.hermes)
                     break
                 else:
                     last_submission_count = submission_count
@@ -100,19 +91,28 @@ class Olympus:
             self.log.info('Keyboard interrupt detected in run_hermes, aborting')
             self.abort_all()
 
+    # Runtime error handling
+
+    def handle_timeout(self, olympian: PrimordialChaos):
+        if olympian.abort:
+            self.log.debug(f'{olympian.__class__.__name__} has been aborted, ending loop')
+        else:
+            self.log.error(f'{olympian.__class__.__name__} has timed out, aborting Zeus...')
+        return 
+
+
     '''
     Hello, future self.
     This is looking good
     1) Setup Delphi thread here
     2) Figure out hermes buy percentage issue
-    3) Override hermes with mock trading account here (or in a mock_olympus.py file)
+    3) Override hermes with mock trading account here (or in a mock_zeus.py file)
     4) Get a 24/7 scraper running
-    5) Discord integration - webhook alerts
     
 
     Outstanding questions:
     Is Delphi handling the CSVs properly? 
-    Does olympus need to let Athena run to fill enough data?
+    Does zeus need to let Athena run to fill enough data?
     Test cases for Prometheus?
     How to format 24/7 scraper CSVs? ...SQL database??    
     '''
@@ -140,5 +140,5 @@ class Olympus:
             exit(0)
 
 if __name__ == "__main__":
-    olympus = Olympus()
-    olympus.start()
+    zeus = Zeus()
+    zeus.start()

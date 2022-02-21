@@ -67,7 +67,26 @@ class TestAthena(TestCase):
         self.athena.abort = True
         thread.join()
 
+    def test_superclass(self):
+        self.athena.run(headless=True)
+        sleep(2)
+        self.athena.join_threads()
+        sleep(5)
+        for thread in self.athena.all_threads:
+            self.assertFalse(thread.is_alive())
 
+    def test_restart_and_stop(self):
+        self.athena.run(headless=True)
+        sleep(3)
+        old = utils.count_rows_from_file(self.filename)
+        self.athena.restart_socket()
+        sleep(3)
+        new = utils.count_rows_from_file(self.filename)
+        self.assertNotEqual(old, new)
+        self.athena.stop()
+        sleep(5)
+        for thread in self.athena.all_threads:
+            self.assertFalse(thread.is_alive())
 
 if __name__ == '__main__':
     unittest.main()

@@ -32,15 +32,20 @@ class TestDelphi(TestCase):
         self.assertEqual(self.delphi.delta_threshold, 0.0003)
 
     def test_run_loop(self):
-        thread = Thread(target=self.delphi.run_loop, daemon=True)
-        thread.start()
+        self.delphi.run()
         # Wait for the queue to fill up.
         for i in range(5):
             sleep(5)
             if self.queue.size > 0:
                 break
         self.assertTrue(self.queue.size > 0)
-        self.delphi.abort = True
-        thread.join()
+        self.delphi.stop()
         sleep(5)
         self.assertEqual(utils.count_rows_from_file(self.delphi.tmp_csv_path), 104)
+
+    def test_superclass(self):
+        self.delphi.run()
+        sleep(2)
+        self.delphi.join_threads()
+        sleep(5)
+        self.assertFalse(self.delphi.primary_thread.is_alive())

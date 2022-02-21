@@ -8,28 +8,38 @@ from time import time as now
 from crosstower.config import DEFAULT_SYMBOL, SOCKET_URI
 from crosstower.models import Ticker
 from crosstower.socket_api import utils
-from utils import Logger
+from cryptographer.primordial_chaos import PrimordialChaos
+from utils import Logger, DiscordWebhook
 from websockets import connect as Connection
 
 # Number of seconds without any new data before attempt a socket reconnect
 SOCKET_RESTART_TIMEOUT = 20
 
-class Athena:
+class Athena(PrimordialChaos):
     '''
     Scrape CrossTower API for crypto price history
     '''
 
     def __init__(self, csv_path: str, custom_symbol: str = None, custom_interval: int = 1):
+        super().__init__()
         self.log = Logger.setup(__name__)
+        self.discord = DiscordWebhook('Athena')
         self.csv_path = csv_path
         self.queue = Queue()
-        # Setting self.abort to True will kill all threads. Cannot be undone
-        self.abort = False
         # Counts the number of attempts to connect to socket.
         # Used to kill old connections
         self.connection_attempts: int = 0
         # Set timestamp for last update
         self.last_time = now()
+
+        # Watch for new tickers in queue
+        self.csv_thread: Thread = Thread(target=self.csv_loop)
+        # Constantly fetch new tickers
+        self.ticker_thread: Thread = Thread(target=self.ticker_loop, daemon=True)
+        # Make sure lines are being added to the spreadsheet
+        self.watchdog_thread: Thread = Thread(target=self.watchdog_loop)
+        # Add them all to superclass so they can be started/stopped
+        self.all_threads = [self.csv_thread, self.ticker_thread, self.watchdog_thread]
 
         if custom_symbol:
             self.symbol = custom_symbol
@@ -40,12 +50,19 @@ class Athena:
         else:
             self.interval = 1
 
-    def __restart_socket(self):
-        self.log.debug('Restarting socket...')
+    def restart_socket(self):
+        self.ticker_thread.join(timeout=5)
         self.connection_attempts += 1
-        Thread(target=self.ticker_loop, daemon=True).start()
+        self.ticker_thread = Thread(target=self.ticker_loop, daemon=True)
+        self.ticker_thread.start()
+        # Remove old socket connection
+        # self.all_threads.append()
+        self.log.debug('Restarting socket...')
+        # self.ticker_thread = new_thread
+        # self.ticker_thread.start()
 
     async def __subscribe(self, socket: Connection):
+        # TODO: Wrap in try/except
         '''
         Send a subscribeTicker message to the
         socket, and wait for a response
@@ -71,6 +88,7 @@ class Athena:
         server before giving up, defaults to 3 (optional)
         :return: A Ticker object
         '''
+        # TODO: Wrap in try/except
         final_result = None
         response = None
         while True:
@@ -79,7 +97,7 @@ class Athena:
                 response = await websocket.recv()
                 break
             except Exception as err:
-                self.log.error(f'[__get_response] Error while awaiting response: {err.__traceback__}')
+                self.alert_with_error(f'[__get_response] Error while awaiting response: {err.__traceback__}')
                 if request_attempts > attempt_threshold:
                     response = None
                     break
@@ -90,7 +108,7 @@ class Athena:
         if response:
             final_result = utils.handle_response(response).get('params')
         else:
-            self.log.error(f'[__get_response] No response received after {attempt_threshold} attempts')
+            self.alert_with_error(f'[__get_response] No response received after {attempt_threshold} attempts')
         if final_result:
             return Ticker(final_result)
         else:
@@ -104,6 +122,7 @@ class Athena:
         
         :param current_attempt: The current attempt number. Used to kill old connections.
         '''
+        # TODO: Wrap in try/except
         async with Connection(SOCKET_URI) as websocket:
             await self.__subscribe(websocket)
             self.log.debug(f'Starting scrape attempt {current_attempt}')
@@ -126,6 +145,10 @@ class Athena:
             asyncio.set_event_loop(loop)
             future = asyncio.ensure_future(self.scrape_coroutine(attempt))
             loop.run_until_complete(future)
+        except KeyboardInterrupt:
+            self.log.debug('Keyboard interrupt received. Aborting...')
+            loop.close()
+            self.abort = True
         except Exception as err:
             self.log.error(f'[ticker_loop] {err}\n{err.__traceback__}')
             loop.close()
@@ -144,6 +167,7 @@ class Athena:
         self.last_line = utils.get_newest_line(self.csv_path)
         self.last_time = now()
         self.log.debug('Running watchdog loop...')
+        # TODO: Wrap in try/except
         while not self.abort:
             self.log.debug('Running watchdog loop...')
             current_line = utils.get_newest_line(self.csv_path)
@@ -151,7 +175,7 @@ class Athena:
             if current_line == self.last_line and time_since_update > SOCKET_RESTART_TIMEOUT:
                 # TODO: Notify if several attempts don't work            
                 self.log.warn(f'No new data received for {SOCKET_RESTART_TIMEOUT} seconds. Restarting socket...')    
-                self.__restart_socket()
+                self.restart_socket()
             elif current_line != self.last_line:
                 self.last_line = current_line
                 self.last_time = now()
@@ -165,6 +189,7 @@ class Athena:
         then write the ticker to the csv file
         '''
         latest = None
+        # TODO: Wrap in try/except
         while not self.abort:
             self.log.debug('Running CSV loop...')
             if self.queue.qsize() > 0:
@@ -177,6 +202,7 @@ class Athena:
 
     def handle_commands(self):
         print(utils.scraper_startup_message)
+        # TODO: Wrap in try/except
         while True:
             string = input("Enter command: ")
             if string.lower() in ['exit', 'e']:
@@ -185,20 +211,14 @@ class Athena:
                 break
             elif string.lower() in ['restart', 'r']:
                 print(utils.scraper_restart_message)
-                self.__restart_socket()
+                self.restart_socket()
             elif string.lower() in ['status', 's']:
                 utils.print_status_message(self.last_time, self.connection_attempts)
             elif string.lower() in ['help', 'h']:
                 print(utils.scraper_startup_message)
 
     def run(self, headless: bool = False):
-        self.log.debug('Starting...')
-        # Watch for new tickers in queue
-        Thread(target=self.csv_loop).start()
-        # Constantly fetch new tickers
-        Thread(target=self.ticker_loop, daemon=True).start()
-        # Make sure lines are being added to the spreadsheet
-        Thread(target=self.watchdog_loop).start()
+        PrimordialChaos.run(self)
         if not headless:
             self.log.debug('Running in interactive mode...')
             self.handle_commands()

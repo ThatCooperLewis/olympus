@@ -3,11 +3,16 @@ from queue import Queue
 from time import sleep
 from typing import Tuple
 
+from cryptographer.primordial_chaos import PrimordialChaos
 from cryptographer.prometheus import Predict
-from cryptographer.utils.helper_objects import PredictionVector, PredictionQueue
+from cryptographer.utils.helper_objects import (PredictionQueue,
+                                                PredictionVector)
 from utils import Logger
+from threading import Thread
+from utils import DiscordWebhook
 
-class Delphi:
+
+class Delphi(PrimordialChaos):
 
     '''
     Make predictions based on current trends
@@ -21,7 +26,9 @@ class Delphi:
         iteration_length: int,
         prediction_queue: PredictionQueue,
     ) -> None:
+        super().__init__()
         self.log = Logger.setup(__name__)
+        self.discord = DiscordWebhook('Delphi')
         self.csv_path = csv_path
         self.tmp_csv_path = csv_path.replace('.csv', '_tmp.csv')
 
@@ -39,11 +46,13 @@ class Delphi:
             params=params
         )
 
-        self.abort = False  # can be used to shut down loop
         self.iterations = iteration_length  # how many prediction cycles
         self.delta_threshold = 0.0003  # When price changes this much, take 100% action
         self.interval_size = 1  # TODO CHANGE Seconds between price tickers & prediction cycles
         self.prediction_queue = prediction_queue
+
+        self.primary_thread: Thread = Thread(target=self.__threaded_loop)
+        self.all_threads = [self.primary_thread]
 
     def __get_current_data_from_csv(self) -> Tuple[float, int]:
         with open(self.csv_path, 'r') as file:
@@ -89,7 +98,7 @@ class Delphi:
             return -1
         return eval
 
-    def run_loop(self):
+    def __threaded_loop(self):
         self.log.debug('Starting loop')
         while not self.abort:
             current_price, timestamp = self.__get_current_data_from_csv()
@@ -125,4 +134,4 @@ if __name__ == "__main__":
         model_path='results/1617764061 - 0.0002/model.h5',
         params_path='results/1617764061 - 0.0002/params.json',
         iteration_length=3
-    ).run_loop()
+    ).run()
