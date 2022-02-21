@@ -18,15 +18,22 @@ class PrimordialChaos:
             thread.start()
     
     def join_threads(self):
+        '''
+        Wait for all active threads to finish
+        '''
         self.stop()
         self.log.debug('Joining threads...')
         if not self.all_threads:
             self.log.warning('join_threads called without any threads. Did you forget to add them to all_threads?')
             return
         for thread in self.all_threads:
-            thread.join(timeout=10)
+            if thread.is_alive():
+                thread.join(timeout=10)
 
     def stop(self):
+        '''
+        Notify all active threads to end their loops (does not wait for them to finish)
+        '''
         self.__check_log_status()
         self.log.debug('Aborting...')            
         self.abort = True

@@ -1,10 +1,11 @@
 from queue import Queue
 from threading import Thread
 from time import time as now
+from time import sleep
 
 from crosstower.socket_api import OrderListener, Trading
-from olympus import Athena, Delphi, Hermes, PredictionQueue
-from olympus.primordial_chaos import PrimordialChaos
+from olympus import Athena, Delphi, Hermes, PrimordialChaos
+from olympus.utils import PredictionQueue
 from utils import Logger
 
 # Constants
@@ -19,7 +20,7 @@ PREDICTION_ITERATIONS = 3
 PREDICTION_QUEUE_MAX_SIZE = 5
 
 
-class Zeus:
+class Zeus(PrimordialChaos):
 
     '''
     Initialize and watch everything
@@ -51,6 +52,8 @@ class Zeus:
 
         self.athena_thread = Thread(target=self.run_athena, daemon=True)
         self.hermes_thread = Thread(target=self.run_hermes, daemon=True)
+        self.delphi_thread = Thread(target=self.run_delphi, daemon=True)
+        self.all_threads = [self.athena_thread, self.hermes_thread, self.delphi_thread]
 
     # Thread Loops
 
@@ -68,9 +71,10 @@ class Zeus:
                 if time_since_update > ATHENA_SCRAPE_INTERVAL_SECONDS*3:
                     self.handle_timeout(self.athena)
                     break
+                sleep(5)
         except KeyboardInterrupt:
             self.log.info('Keyboard interrupt detected in run_athena, aborting')
-            self.abort_all()
+            self.stop()
 
     def run_hermes(self):
         '''
@@ -81,15 +85,29 @@ class Zeus:
         last_submission_count = self.hermes.status[1]
         try:
             while not self.abort:
-                submission_count = queue_size = self.hermes.status[1]
+                queue_size, submission_count = self.hermes.status
                 if queue_size > PREDICTION_QUEUE_MAX_SIZE and last_submission_count == submission_count:
                     self.handle_timeout(self.hermes)
                     break
                 else:
                     last_submission_count = submission_count
+                sleep(5)
         except KeyboardInterrupt:
             self.log.info('Keyboard interrupt detected in run_hermes, aborting')
-            self.abort_all()
+            self.stop()
+
+    def run_delphi(self):
+        self.log.info('Starting Delphi...')
+        self.delphi.run()
+        try:
+            while not self.abort:
+                if self.delphi.primary_thread.is_alive():
+                    self.handle_timeout(self.delphi)
+                    break
+                sleep(5)
+        except KeyboardInterrupt:
+            self.log.info('Keyboard interrupt detected in run_delphi, aborting')
+            self.stop()
 
     # Runtime error handling
 
@@ -104,7 +122,6 @@ class Zeus:
     '''
     Hello, future self.
     This is looking good
-    1) Setup Delphi thread here
     2) Figure out hermes buy percentage issue
     3) Override hermes with mock trading account here (or in a mock_zeus.py file)
     4) Get a 24/7 scraper running
@@ -114,23 +131,21 @@ class Zeus:
     Is Delphi handling the CSVs properly? 
     Does zeus need to let Athena run to fill enough data?
     Test cases for Prometheus?
-    How to format 24/7 scraper CSVs? ...SQL database??    
+    How to format 24/7 scraper CSVs? ...SQL database?? CSV on network drive?    
     '''
 
     # Management
 
-    def abort_all(self):
-        self.log.debug('Aborting all threads...')
-        self.athena.abort = True
-        self.hermes.abort = True
-        self.abort = True
+    def stop(self):
+        super().stop()
+        self.athena.stop()
+        self.hermes.stop()
+        self.delphi.stop()
         self.log.debug('Abort booleans flipped, waiting for threads to end...')
-        self.athena_thread.join()
-        self.hermes_thread.join()
+        self.join_threads()
 
-    def start(self):
-        self.athena_thread.start()
-        self.hermes_thread.start()
+    def run(self):
+        super().run()
         try:
             while not self.abort:
                 continue
@@ -141,4 +156,4 @@ class Zeus:
 
 if __name__ == "__main__":
     zeus = Zeus()
-    zeus.start()
+    zeus.run()
