@@ -1,7 +1,8 @@
 from time import sleep
 from unittest import TestCase
 
-from cryptographer.hermes import Hermes, PredictionVector
+from olympus import Hermes
+from olympus.utils import PredictionVector
 from mock import MockCrosstowerAPI as MockAPI
 
 from testing import utils

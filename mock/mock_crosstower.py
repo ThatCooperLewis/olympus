@@ -4,7 +4,7 @@ from typing import List
 
 from crosstower.models import Balance, Order
 from crosstower.rest_api import MarketData
-from cryptographer.hermes import CRYPTO_SYMBOL, FIAT_SYMBOL
+from olympus.hermes import CRYPTO_SYMBOL, FIAT_SYMBOL
 from websockets import connect as Connection
 
 

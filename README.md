@@ -1,4 +1,4 @@
-# Cryptographer
+# Olympus
 Bitcoin price approximation & trading
 
 ## Requirements
@@ -17,11 +17,11 @@ TODO - Crosstower API Setup, credentials.json
 
 ## Components
 
-### Crosstower
+### Crosstower API
 
 - TODO - SDK description
 
-### Cryptographer
+### The Olympians
 
 To make things a little more difficult for those who lack the sheer will to make this code work for themselves, I obscured all the components with Greek Mythology codewords
 

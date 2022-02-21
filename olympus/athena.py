@@ -8,7 +8,7 @@ from time import time as now
 from crosstower.config import DEFAULT_SYMBOL, SOCKET_URI
 from crosstower.models import Ticker
 from crosstower.socket_api import utils
-from cryptographer.primordial_chaos import PrimordialChaos
+from olympus.primordial_chaos import PrimordialChaos
 from utils import Logger, DiscordWebhook
 from websockets import connect as Connection
 

@@ -3,8 +3,8 @@ from threading import Thread
 from time import time as now
 
 from crosstower.socket_api import OrderListener, Trading
-from cryptographer import Athena, Delphi, Hermes, PredictionQueue
-from cryptographer.primordial_chaos import PrimordialChaos
+from olympus import Athena, Delphi, Hermes, PredictionQueue
+from olympus.primordial_chaos import PrimordialChaos
 from utils import Logger
 
 # Constants

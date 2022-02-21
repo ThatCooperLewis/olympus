@@ -1,15 +1,13 @@
 import json
 from queue import Queue
+from threading import Thread
 from time import sleep
 from typing import Tuple
 
-from cryptographer.primordial_chaos import PrimordialChaos
-from cryptographer.prometheus import Predict
-from cryptographer.utils.helper_objects import (PredictionQueue,
-                                                PredictionVector)
-from utils import Logger
-from threading import Thread
-from utils import DiscordWebhook
+from olympus.primordial_chaos import PrimordialChaos
+from olympus.prometheus import Predict
+from olympus.utils import PredictionQueue, PredictionVector
+from utils import DiscordWebhook, Logger
 
 
 class Delphi(PrimordialChaos):

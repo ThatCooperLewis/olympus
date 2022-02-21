@@ -1,7 +1,8 @@
 from unittest import TestCase
 import unittest
 from time import sleep
-from cryptographer import Delphi, PredictionQueue
+from olympus import Delphi
+from olympus.utils import PredictionQueue
 import testing.utils as utils
 from queue import Queue
 from threading import Thread

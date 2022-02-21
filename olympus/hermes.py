@@ -5,7 +5,7 @@ from typing import List, Tuple
 
 from crosstower.models import Order, Balance
 from crosstower.socket_api.private import OrderListener, Trading
-from cryptographer.utils.helper_objects import PredictionVector, PredictionQueue
+from olympus.utils import PredictionVector, PredictionQueue
 from utils import Logger
 '''
 
