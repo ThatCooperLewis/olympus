@@ -51,7 +51,9 @@ class Trading:
     def __init__(self, symbol: str = DEFAULT_SYMBOL, credentials_path: str = 'credentials.json'):
         self.symbol = symbol
         self.credentials_path = credentials_path
-        self.websocket: Connection = asyncio.get_event_loop().run_until_complete(
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        self.websocket: Connection = loop.run_until_complete(
             SocketAPI.get_authenticated_socket(credentials_path)
         )
 
