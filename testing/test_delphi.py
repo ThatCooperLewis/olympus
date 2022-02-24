@@ -1,7 +1,7 @@
 from unittest import TestCase
 import unittest
 from time import sleep
-from olympus import Delphi
+from olympus.delphi import Delphi
 from olympus.utils import PredictionQueue
 import testing.utils as utils
 from queue import Queue
