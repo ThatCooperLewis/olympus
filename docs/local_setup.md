@@ -24,9 +24,9 @@ This is a collection of instructions from [Nvidia's official docs](https://docs.
 
         gcc --version
 
-- If not, 
+- If not, install Ubuntu development tools
 
-        sudo apt install gcc
+        sudo apt install build-essential 
 
 - Install the correct linux kernel headers
 
@@ -74,7 +74,7 @@ If you don't have Python 3.10 & Postgres requirements installed:
     sudo apt install python3.10
     sudo apt install python3.10-venv
     # Postgres-Python adapter prerequisites
-    sudo apt install python3.10-dev libpq-dev gcc
+    sudo apt install python3.10-dev libpq-dev build-essential
 
 If python3.10 isn't found, its likely `sudo apt update` warns you that it `Could not resolve 'ppa.launchpad.net'`. Do this to fix, then install Python & Friends
 
