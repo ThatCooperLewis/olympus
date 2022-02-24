@@ -1,5 +1,5 @@
 from utils import Logger
-from olympus import Athena
+from olympus.athena import Athena
 
 class AthenaScraper:
 
