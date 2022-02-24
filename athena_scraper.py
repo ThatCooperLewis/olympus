@@ -5,7 +5,7 @@ class AthenaScraper:
 
     def __init__(self) -> None:
         self.log = Logger.setup(self.__class__.__name__)
-        self.athena = Athena(custom_interval=5)
+        self.athena = Athena(custom_interval=60)
 
     def run(self) -> None:
         self.athena.run(headless=True)
