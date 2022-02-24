@@ -9,7 +9,7 @@ from crosstower.config import DEFAULT_SYMBOL, SOCKET_URI
 from crosstower.models import Ticker
 from crosstower.socket_api import utils
 from olympus.primordial_chaos import PrimordialChaos
-from utils import Logger, DiscordWebhook
+from utils import Logger, DiscordWebhook, Postgres
 from websockets import connect as Connection
 
 # Number of seconds without any new data before attempt a socket reconnect
@@ -20,11 +20,14 @@ class Athena(PrimordialChaos):
     Scrape CrossTower API for crypto price history
     '''
 
-    def __init__(self, csv_path: str, custom_symbol: str = None, custom_interval: int = 1):
+    def __init__(self, custom_csv_path: str = None, custom_symbol: str = None, custom_interval: int = 1):
+        '''
+        If csv_path is None, default SQL connection will be used
+        '''
         super().__init__()
         self.log = Logger.setup(__name__)
         self.discord = DiscordWebhook('Athena')
-        self.csv_path = csv_path
+        self.csv_path = custom_csv_path
         self.queue = Queue()
         # Counts the number of attempts to connect to socket.
         # Used to kill old connections
@@ -32,14 +35,21 @@ class Athena(PrimordialChaos):
         # Set timestamp for last update
         self.last_time = now()
 
-        # Watch for new tickers in queue
-        self.csv_thread: Thread = Thread(target=self.csv_loop)
+        # Watch for new tickers in queue (either CSV or SQL)
+        if self.csv_path:
+            self.csv_thread: Thread = Thread(target=self.csv_loop)
+        else:
+            self.db = Postgres()
+            self.sql_thread: Thread = Thread(target=self.sql_loop)
         # Constantly fetch new tickers
         self.ticker_thread: Thread = Thread(target=self.ticker_loop, daemon=True)
         # Make sure lines are being added to the spreadsheet
         self.watchdog_thread: Thread = Thread(target=self.watchdog_loop)
         # Add them all to superclass so they can be started/stopped
-        self.all_threads = [self.csv_thread, self.ticker_thread, self.watchdog_thread]
+        if self.csv_path:
+            self.all_threads = [self.csv_thread, self.ticker_thread, self.watchdog_thread]
+        else:
+            self.all_threads = [self.sql_thread, self.ticker_thread, self.watchdog_thread]
 
         if custom_symbol:
             self.symbol = custom_symbol
@@ -164,12 +174,12 @@ class Athena(PrimordialChaos):
         :param interval: How often to check for updates
         :type interval: int
         '''
-        self.last_line = utils.get_newest_line(self.csv_path)
+        self.last_line = self.get_latest_row()
         self.last_time = now()
         self.log.debug('Running watchdog loop...')
         # TODO: Wrap in try/except
         while not self.abort:
-            current_line = utils.get_newest_line(self.csv_path)
+            current_line = self.get_latest_row()
             time_since_update = now() - self.last_time
             if current_line == self.last_line and time_since_update > SOCKET_RESTART_TIMEOUT:
                 # TODO: Notify if several attempts don't work            
@@ -199,6 +209,20 @@ class Athena(PrimordialChaos):
                         file.write(ticker.csv_line)
                         file.close()
 
+    def sql_loop(self):
+        """
+        Get the latest ticker from the queue, if it's been at least
+        self.interval seconds since the last ticker was inserted, insert it into the database
+        """
+        latest = None
+        self.log.debug('Running SQL loop...')
+        while not self.abort:
+            if self.queue.qsize() > 0:
+                ticker: Ticker = self.queue.get()
+                if not latest or (ticker.timestamp - latest) >= self.interval:
+                    latest = ticker.timestamp
+                    self.db.insert_ticker(ticker)
+
     def handle_commands(self):
         print(utils.scraper_startup_message)
         # TODO: Wrap in try/except
@@ -215,6 +239,17 @@ class Athena(PrimordialChaos):
                 utils.print_status_message(self.last_time, self.connection_attempts)
             elif string.lower() in ['help', 'h']:
                 print(utils.scraper_startup_message)
+
+    def get_latest_row(self):
+        if self.csv_path:
+            utils.get_newest_line(self.csv_path)
+        else:
+            psql = Postgres()
+            latest = psql.get_latest_rows(row_count=1)
+            if type(latest) is list and len(latest) > 0:
+                return latest[0]
+            else:
+                return None
 
     def run(self, headless: bool = False):
         PrimordialChaos.run(self)
