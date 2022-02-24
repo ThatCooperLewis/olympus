@@ -1,12 +1,12 @@
-from queue import Queue
 from threading import Thread
 from time import time as now
 from time import sleep
+from typing import List
 
 from crosstower.socket_api import OrderListener, Trading
 from olympus import Athena, Delphi, Hermes, PrimordialChaos
 from olympus.utils import PredictionQueue
-from utils import Logger
+from utils import Logger, DiscordWebhook
 
 # Constants
 
@@ -27,8 +27,11 @@ class Zeus(PrimordialChaos):
     '''
 
     def __init__(self) -> None:
+        super().__init__()
         self.abort = False
-        self.log = Logger.setup(__name__)
+        self.name = self.__class__.__name__
+        self.log = Logger.setup(self.name)
+        self.discord = DiscordWebhook(self.name)
         self.order_listener = OrderListener()
         self.trading_account = Trading()
         self.prediction_queue = PredictionQueue()
@@ -49,11 +52,20 @@ class Zeus(PrimordialChaos):
             iteration_length=PREDICTION_ITERATIONS,
             prediction_queue=self.prediction_queue
         )
+        self.all_gods: List[PrimordialChaos] = [
+            self.athena, 
+            self.hermes, 
+            self.delphi
+        ]
 
         self.athena_thread = Thread(target=self.run_athena, daemon=True)
         self.hermes_thread = Thread(target=self.run_hermes, daemon=True)
         self.delphi_thread = Thread(target=self.run_delphi, daemon=True)
-        self.all_threads = [self.athena_thread, self.hermes_thread, self.delphi_thread]
+        self.all_threads = [
+            self.athena_thread, 
+            self.hermes_thread, 
+            self.delphi_thread
+        ]
 
     # Thread Loops
 
@@ -74,7 +86,7 @@ class Zeus(PrimordialChaos):
                 sleep(5)
         except KeyboardInterrupt:
             self.log.info('Keyboard interrupt detected in run_athena, aborting')
-            self.stop()
+            self.join_threads()
 
     def run_hermes(self):
         '''
@@ -94,20 +106,20 @@ class Zeus(PrimordialChaos):
                 sleep(5)
         except KeyboardInterrupt:
             self.log.info('Keyboard interrupt detected in run_hermes, aborting')
-            self.stop()
+            self.join_threads()
 
     def run_delphi(self):
         self.log.info('Starting Delphi...')
         self.delphi.run()
         try:
             while not self.abort:
-                if self.delphi.primary_thread.is_alive():
+                if not self.delphi.primary_thread.is_alive():
                     self.handle_timeout(self.delphi)
                     break
                 sleep(5)
         except KeyboardInterrupt:
             self.log.info('Keyboard interrupt detected in run_delphi, aborting')
-            self.stop()
+            self.join_threads()
 
     # Runtime error handling
 
@@ -117,6 +129,18 @@ class Zeus(PrimordialChaos):
         else:
             self.log.error(f'{olympian.__class__.__name__} has timed out, aborting Zeus...')
         return 
+
+    '''
+    UPDATE 2/21
+
+    Delphi is formatting CSV properly!
+    ...but something is stopping the predictor from running
+    when some other thread is aborted, Delphi quickly populates the predictions.
+    Need to see what's holding it up. Maybe multiproccess it, since no other threads are touching that file?
+
+
+    '''
+
 
 
     '''
@@ -138,11 +162,9 @@ class Zeus(PrimordialChaos):
 
     def stop(self):
         super().stop()
-        self.athena.stop()
-        self.hermes.stop()
-        self.delphi.stop()
+        for god in self.all_gods:
+            god.stop()
         self.log.debug('Abort booleans flipped, waiting for threads to end...')
-        self.join_threads()
 
     def run(self):
         super().run()
@@ -151,7 +173,7 @@ class Zeus(PrimordialChaos):
                 continue
         except KeyboardInterrupt:
             self.log.info('Exiting...')
-            self.abort_all()
+            self.join_threads()
             exit(0)
 
 if __name__ == "__main__":

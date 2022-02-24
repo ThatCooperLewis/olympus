@@ -62,12 +62,15 @@ Update `$PATH` in either `~/.bashrc` or `~/.zshrc`
 
 ## Python Environment
 
-If you don't have Python 3.10 Installed:
+If you don't have Python 3.10 & Postgres requirements installed:
 
     sudo add-apt-repository ppa:deadsnakes/ppa
+    sudo apt update
+    # Python installation
     sudo apt install python3.10
-    sudo apt install python3.10-distutils
     sudo apt install python3.10-venv
+    # Postgres-Python adapter prerequisites
+    sudo apt install python3.10-dev libpq-dev
 
 If python3.10 isn't found, its likely `sudo apt update` warns you that it `Could not resolve 'ppa.launchpad.net'`. Do this to fix, then install Python & Friends
 
