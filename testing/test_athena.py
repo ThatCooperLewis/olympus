@@ -11,7 +11,7 @@ class TestAthena(TestCase):
 
     def setUp(self):
         self.filename = utils.create_blank_file()
-        self.athena = Athena(csv_path=self.filename)
+        self.athena = Athena(custom_csv_path=self.filename)
 
     def tearDown(self):
         self.athena = None
