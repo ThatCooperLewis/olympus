@@ -109,7 +109,7 @@ class Athena(PrimordialChaos):
                 break
             except Exception as err:
                 trace = traceback.format_exc()
-                self.alert_with_error(f'[__get_response] Error while awaiting response: {trace}')
+                self.log.debug(f'[__get_response] Error while awaiting response: {trace}')
                 if request_attempts > attempt_threshold:
                     response = None
                     break
