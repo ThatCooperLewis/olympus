@@ -1,5 +1,6 @@
 from email.errors import NonPrintableDefect
 import json
+import traceback
 
 import psycopg2 as psql
 # from psycopg2 import connection as psql_connection
@@ -56,8 +57,9 @@ class Postgres:
                 """
                 cursor.execute(query)
         except Exception as e:
-            self.log.error(e.__traceback__)
-            self.discord.send_alert(f"SQL Submission Error: {e.__traceback__}")
+            trace = traceback.format_exc()
+            self.log.error(trace)
+            self.discord.send_alert(f"SQL Submission Error: {trace}")
 
     def __get_postgres_config(self, config_path: str):
         with open(config_path) as json_file:

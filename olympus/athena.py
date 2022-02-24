@@ -4,6 +4,7 @@ from queue import Queue
 from threading import Thread
 from time import sleep
 from time import time as now
+import traceback
 
 from crosstower.config import DEFAULT_SYMBOL, SOCKET_URI
 from crosstower.models import Ticker
@@ -107,7 +108,8 @@ class Athena(PrimordialChaos):
                 response = await websocket.recv()
                 break
             except Exception as err:
-                self.alert_with_error(f'[__get_response] Error while awaiting response: {err.__traceback__}')
+                trace = traceback.format_exc()
+                self.alert_with_error(f'[__get_response] Error while awaiting response: {trace}')
                 if request_attempts > attempt_threshold:
                     response = None
                     break
@@ -160,7 +162,7 @@ class Athena(PrimordialChaos):
             loop.close()
             self.abort = True
         except Exception as err:
-            self.log.error(f'[ticker_loop] {err}\n{err.__traceback__}')
+            self.log.error(f'[ticker_loop] {err}\n{traceback.format_exc()}')
             loop.close()
             raise err
 
