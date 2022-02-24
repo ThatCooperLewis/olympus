@@ -1,6 +1,6 @@
 # Ubuntu 20.04 Installation Guide
 
-This is a collection of instructions from [Nvidia's official docs](https://docs.nvidia.com/cuda/cuda-installation-guide-linux/index.html).
+This is a collection of instructions from [Nvidia's official docs](https://docs.nvidia.com/cuda/cuda-installation-guide-linux/index.html). If setting up a machine without CUDA, skip to Python Environment.
 
 ## Requirements
 
@@ -23,6 +23,10 @@ This is a collection of instructions from [Nvidia's official docs](https://docs.
 - Ensure `gcc` is installed on your machine
 
         gcc --version
+
+- If not, 
+
+        sudo apt install gcc
 
 - Install the correct linux kernel headers
 
@@ -70,7 +74,7 @@ If you don't have Python 3.10 & Postgres requirements installed:
     sudo apt install python3.10
     sudo apt install python3.10-venv
     # Postgres-Python adapter prerequisites
-    sudo apt install python3.10-dev libpq-dev
+    sudo apt install python3.10-dev libpq-dev gcc
 
 If python3.10 isn't found, its likely `sudo apt update` warns you that it `Could not resolve 'ppa.launchpad.net'`. Do this to fix, then install Python & Friends
 
@@ -86,4 +90,7 @@ Setup virtual environment & install dependencies (in repo directory)
         
     python -m venv venv
     source venv/bin/activate
+
+If setting up a machine without CUDA capability, use `requirements-no-cuda.txt` instead
+
     pip install -r requirements.txt
