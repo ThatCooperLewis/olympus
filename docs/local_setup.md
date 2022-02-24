@@ -1,6 +1,6 @@
 # Ubuntu 20.04 Installation Guide
 
-This is a collection of instructions from [Nvidia's official docs](https://docs.nvidia.com/cuda/cuda-installation-guide-linux/index.html).
+This is a collection of instructions from [Nvidia's official docs](https://docs.nvidia.com/cuda/cuda-installation-guide-linux/index.html). If setting up a machine without CUDA, skip to Python Environment
 
 ## Requirements
 
@@ -86,4 +86,7 @@ Setup virtual environment & install dependencies (in repo directory)
         
     python -m venv venv
     source venv/bin/activate
+
+If setting up a machine without CUDA capability, use `requirements-no-cuda.txt` instead
+
     pip install -r requirements.txt
