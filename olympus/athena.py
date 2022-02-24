@@ -169,7 +169,6 @@ class Athena(PrimordialChaos):
         self.log.debug('Running watchdog loop...')
         # TODO: Wrap in try/except
         while not self.abort:
-            self.log.debug('Running watchdog loop...')
             current_line = utils.get_newest_line(self.csv_path)
             time_since_update = now() - self.last_time
             if current_line == self.last_line and time_since_update > SOCKET_RESTART_TIMEOUT:
@@ -190,8 +189,8 @@ class Athena(PrimordialChaos):
         '''
         latest = None
         # TODO: Wrap in try/except
+        self.log.debug('Running CSV loop...')
         while not self.abort:
-            self.log.debug('Running CSV loop...')
             if self.queue.qsize() > 0:
                 ticker: Ticker = self.queue.get()
                 if not latest or (ticker.timestamp - latest) >= self.interval:
