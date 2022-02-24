@@ -59,7 +59,11 @@ class Delphi(PrimordialChaos):
 
         tmp_rows = [rows[0]]
         for index in range(-100, 0):
-            tmp_rows.append(rows[index])
+            # Remove newlines
+            row = rows[index]
+            if index == -1:
+                row = row.strip()
+            tmp_rows.append(row)
 
         with open(self.tmp_csv_path, 'w+') as file:
             file.writelines(tmp_rows)
@@ -99,11 +103,14 @@ class Delphi(PrimordialChaos):
     def __threaded_loop(self):
         self.log.debug('Starting loop')
         while not self.abort:
+            self.log.debug('Starting iteration')
             current_price, timestamp = self.__get_current_data_from_csv()
             prediction_ts = timestamp
             predictions = []
+            self.log.debug('Got CSV data')
             
             for i in range(self.iterations):
+                self.log.debug(f'Starting iteration {i}')
                 prediction_ts += self.interval_size
                 predictions.append(self.predictor.run())
                 self.__add_prediction_to_csv(
@@ -121,6 +128,7 @@ class Delphi(PrimordialChaos):
                     timestamp=prediction_ts
                 )
             )
+            self.log.debug('Submitted prediction to queue')
 
             sleep(self.interval_size + self.iterations)
         self.log.debug('Exiting loop')
