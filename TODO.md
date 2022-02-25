@@ -1,4 +1,5 @@
 # Hermes trader
+0. BRUH. UPDATE IT TO SQL
 1. Resolve buy percentage issue in create_order
 2. Inject mock hermes into a mock zeus class
 
@@ -8,6 +9,7 @@
 1. Test cases for Predict() and any other classes used in non-training production
 
 # Other
+0. Make the scraper files use the zeus run() setup
 1. Make a config file that contains all random global vars
 2. Do something else with credentials.json 
 3. Improve discord logs - Use separate ones for scraper, order listener, predictor, etc

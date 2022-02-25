@@ -13,7 +13,7 @@ from utils import Logger, DiscordWebhook
 
 ATHENA_OUTPUT = 'run/athena.csv'
 ATHENA_SCRAPE_INTERVAL_SECONDS = 5
-
+# TODO: Move to config file
 TRADE_SYMBOL = 'BTCUSD'
 H5_MODEL = 'run/model.h5'
 PARAMS_JSON = 'run/params.json'
