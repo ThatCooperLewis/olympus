@@ -131,33 +131,6 @@ class Zeus(PrimordialChaos):
             self.log.error(f'{olympian.__class__.__name__} has timed out, aborting Zeus...')
         return 
 
-    '''
-    UPDATE 2/21
-
-    Delphi is formatting CSV properly!
-    ...but something is stopping the predictor from running
-    when some other thread is aborted, Delphi quickly populates the predictions.
-    Need to see what's holding it up. Maybe multiproccess it, since no other threads are touching that file?
-
-
-    '''
-
-
-
-    '''
-    Hello, future self.
-    This is looking good
-    2) Figure out hermes buy percentage issue
-    3) Override hermes with mock trading account here (or in a mock_zeus.py file)
-    4) Get a 24/7 scraper running
-    
-
-    Outstanding questions:
-    Is Delphi handling the CSVs properly? 
-    Does zeus need to let Athena run to fill enough data?
-    Test cases for Prometheus?
-    How to format 24/7 scraper CSVs? ...SQL database?? CSV on network drive?    
-    '''
 
     # Management
 
