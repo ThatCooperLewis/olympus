@@ -3,10 +3,14 @@ from threading import Thread
 from time import time as now
 from typing import List, Tuple
 
-from crosstower.models import Order, Balance
+from crosstower.models import Balance, Order
 from crosstower.socket_api.private import OrderListener, Trading
-from olympus.utils import PredictionVector, PredictionQueue
+
+from olympus.utils import PredictionQueue, PredictionVector
 from utils import Logger
+from utils.config import (CRYPTO_SYMBOL, FIAT_SYMBOL, MAX_TRADE_PERCENTAGE,
+                          TRADING_SYMBOL)
+
 '''
 
 - should we hodl when it drops? sell on the way down?
@@ -19,15 +23,6 @@ from utils import Logger
 - Need to make sure there's enough USD when buying, but the trade amount in Order() is exclusively BTC quantity
     - Use certain BTC price in prediction history? Based on how many prediction cycles?
 '''
-
-MAX_TRADE_PERCENTAGE = .2
-CRYPTO_SYMBOL = 'BTC_TR'
-FIAT_SYMBOL = 'USD'
-TRADING_SYMBOL = 'BTCUSD_TR'
-
-
-
-
 
 class Hermes:
 

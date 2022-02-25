@@ -1,11 +1,8 @@
 import requests
 import json
 from utils import Logger
+from utils.config import CREDENTIALS_FILE
 import random
-
-
-# TODO: Move config to a config file
-CREDENTIALS_FILE = 'credentials.json'
 
 class DiscordWebhook:
 
@@ -21,6 +18,8 @@ class DiscordWebhook:
             payload = {"username": self.name, "content": message}
             self.log.debug(f'Sending discord alert: {message}')
             _ = requests.post(self.url, data=payload)
+
+    # TODO: Allow for other webhooks for multiple channels
 
     def __get_webhook_url_from_json_file(self, file_path: str):
         with open(file_path) as json_file:

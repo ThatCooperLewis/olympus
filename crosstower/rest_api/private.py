@@ -7,7 +7,7 @@ from typing import List
 import requests
 
 from crosstower.rest_api.auth import Authentication
-from crosstower.config import DEFAULT_SYMBOL, REST_URL
+from utils.config import DEFAULT_SYMBOL, REST_URL
 from crosstower.models import Balance, Commission, Order
 
 

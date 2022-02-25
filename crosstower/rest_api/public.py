@@ -1,7 +1,7 @@
 from time import struct_time
 from typing import List
 
-from crosstower.config import DEFAULT_SYMBOL, REST_URL
+from utils.config import DEFAULT_SYMBOL, REST_URL
 from crosstower.models import Candle, Symbol, Ticker, Trade
 from requests import get
 

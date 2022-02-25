@@ -18,6 +18,7 @@ class TestDelphi(TestCase):
             iteration_length=3,
             prediction_queue=self.queue
         )
+        self.delphi.interval_size = 3
 
     def tearDown(self):
         self.delphi = None

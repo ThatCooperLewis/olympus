@@ -4,7 +4,7 @@ from queue import Queue
 from threading import Thread
 from typing import List
 
-from crosstower.config import DEFAULT_SYMBOL, SOCKET_URI
+from utils.config import DEFAULT_SYMBOL, SOCKET_URI
 from crosstower.models import Order, Balance
 from crosstower.socket_api import utils
 from crosstower.utils import aggregate_orders

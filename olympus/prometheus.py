@@ -19,13 +19,7 @@ from keras import Sequential
 from keras.callbacks import EarlyStopping, ModelCheckpoint
 from keras.layers import Activation, Bidirectional, Dense, Dropout, CuDNNLSTM
 
-# GLOBAL DEFAULTS
-DEFAULT_SEQ_LEN = 20
-DEFAULT_DROPOUT = 0.2
-DEFAULT_EPOCH_COUNT = 50 
-DEFAULT_TESTING_SPLIT = 0.95
-DEFAULT_VALIDATION_SPLIT = 0.2
-
+import utils.config as constants
 
 gpus = tf.config.experimental.list_physical_devices('GPU')
 if gpus:
@@ -57,11 +51,11 @@ class Model:
 
         # Tuning Knobs
         override_params = params.get('params', {})
-        self.seq_len = override_params.get('seq_len', DEFAULT_SEQ_LEN)
-        self.dropout = override_params.get('dropout', DEFAULT_DROPOUT)
-        self.epoch_count = override_params.get('epoch_count', DEFAULT_EPOCH_COUNT)
-        self.testing_split = override_params.get('testing_split', DEFAULT_TESTING_SPLIT)
-        self.validation_split = override_params.get('validation_split', DEFAULT_VALIDATION_SPLIT)
+        self.seq_len = override_params.get('seq_len', constants.SEQUENCE_LENGTH)
+        self.dropout = override_params.get('dropout', constants.DROPOUT)
+        self.epoch_count = override_params.get('epoch_count', constants.EPOCH_COUNT)
+        self.testing_split = override_params.get('testing_split', constants.TESTING_SPLIT)
+        self.validation_split = override_params.get('validation_split', constants.VALIDATION_SPLIT)
         self.window_size = self.seq_len - 1
         self.patience = int(self.epoch_count * .15)
 

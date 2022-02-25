@@ -1,7 +1,7 @@
 from typing import List
 from requests import Response
 
-from crosstower.config import REST_URL
+from utils.config import REST_URL
 from crosstower.models import Order
 
 

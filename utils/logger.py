@@ -1,5 +1,5 @@
 import logging
-
+from utils.config import LOGGING_LEVEL
 
 class Logger():
     '''
@@ -21,6 +21,5 @@ class Logger():
         console_format = logging.Formatter('%(asctime)s [%(name)s] %(levelname)s: %(message)s')
         console.setFormatter(console_format)
         logger.addHandler(console)
-        # TODO: _Move this to config file
-        logger.level = logging.INFO
+        logger.level = LOGGING_LEVEL
         return logger

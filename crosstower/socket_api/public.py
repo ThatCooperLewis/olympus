@@ -2,7 +2,7 @@ import asyncio
 import json
 from time import time as now
 
-from crosstower.config import DEFAULT_CURRENCY, DEFAULT_SYMBOL, SOCKET_URI
+from utils.config import DEFAULT_CURRENCY, DEFAULT_SYMBOL, SOCKET_URI
 from crosstower.models import Symbol
 from crosstower.socket_api import utils
 from websockets import connect as Connection

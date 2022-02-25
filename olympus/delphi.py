@@ -8,7 +8,7 @@ from olympus.primordial_chaos import PrimordialChaos
 from olympus.prometheus import Predict
 from olympus.utils import PredictionQueue, PredictionVector
 from utils import DiscordWebhook, Logger
-
+import utils.config as constants
 
 class Delphi(PrimordialChaos):
 
@@ -44,12 +44,11 @@ class Delphi(PrimordialChaos):
             params=params
         )
 
-        # TODO Move a lot of this to config file 
-        self.iterations = iteration_length  # how many prediction cycles
-        self.delta_threshold = 0.0003  # When price changes this much, take 100% action
-        self.interval_size = 1  # TODO CHANGE Seconds between price tickers & prediction cycles
-        self.prediction_queue = prediction_queue
+        self.iterations = constants.PREDICTION_ITERATION_COUNT
+        self.delta_threshold = constants.PREDICTION_DELTA_THRESHOLD
+        self.interval_size = constants.TICKER_INTERVAL
 
+        self.prediction_queue = prediction_queue
         self.primary_thread: Thread = Thread(target=self.__threaded_loop)
         self.all_threads = [self.primary_thread]
 

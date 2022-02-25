@@ -10,7 +10,7 @@ import requests
 from requests.auth import AuthBase
 
 import crosstower.utils as utils
-from crosstower.config import REST_URL
+from utils.config import REST_URL
 
 
 class __HS256__(AuthBase):

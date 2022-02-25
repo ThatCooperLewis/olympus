@@ -6,16 +6,12 @@ from time import sleep
 from time import time as now
 import traceback
 
-from crosstower.config import DEFAULT_SYMBOL, SOCKET_URI
+from utils.config import DEFAULT_SYMBOL, SOCKET_URI, SOCKET_TIMEOUT_INTERVAL_MULTIPLIER
 from crosstower.models import Ticker
 from crosstower.socket_api import utils
 from olympus.primordial_chaos import PrimordialChaos
 from utils import Logger, DiscordWebhook, Postgres
 from websockets import connect as Connection
-
-# Length of time without any new data before attempt a socket reconnect
-# self.interval * timeout_multiplier = seconds until reconnect
-SOCKET_TIMEOUT_INTERVAL_MULTIPLIER = 2
 
 class Athena(PrimordialChaos):
     '''

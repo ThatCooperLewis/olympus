@@ -10,9 +10,10 @@
 
 # Other
 0. Make the scraper files use the zeus run() setup
-1. Make a config file that contains all random global vars
+1. Make the config use nice capitalized classes for each category
 2. Do something else with credentials.json 
 3. Improve discord logs - Use separate ones for scraper, order listener, predictor, etc
+4. Test cases for scraper files?
 
 
 # Hermes listener Server Instance

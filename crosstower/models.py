@@ -1,7 +1,7 @@
 from time import mktime, strptime, struct_time
 from typing import List
 
-from crosstower.config import DEFAULT_SYMBOL
+from utils.config import DEFAULT_SYMBOL
 
 
 class Trade:
