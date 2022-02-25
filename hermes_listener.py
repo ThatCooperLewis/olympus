@@ -1,25 +1,26 @@
 from utils import Logger, DiscordWebhook
-from olympus.athena import Athena
+from olympus.hermes import Hermes
 
-class AthenaTickerScraper:
+class HermesOrderListener:
 
     def __init__(self) -> None:
         self.log = Logger.setup(self.__class__.__name__)
         self.discord = DiscordWebhook(self.__class__.__name__)
-        self.athena = Athena(custom_interval=60)
+        self.hermes = Hermes()
 
     # TODO: Use the run method from Zeus
 
     def run(self) -> None:
-        self.discord.send_alert("AthenaTickerScraper has started a new run.")
-        self.athena.run(headless=True)
+        self.discord.send_alert("HermesOrderListener has started a new run.")
+        self.hermes.start()
+
 
 if __name__ == '__main__':
-    scraper = AthenaTickerScraper()
-    scraper.run()
+    listener = HermesOrderListener()
+    listener.run()
     try:
         while True:
             pass
     except KeyboardInterrupt:
-        scraper.athena.stop()
-        scraper.log.debug('KeyboardInterrupt')
+        listener.hermes.stop()
+        listener.log.debug('KeyboardInterrupt')
