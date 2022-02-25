@@ -4,8 +4,11 @@
 
 # Prometheus
 1. Test cases for Predict() and any other classes used in non-training production
-# Postgres
-3. Look into making a secondary SQL table formatted to the correct timestamp interval. Do interval check every addition? Cronjob?
+
+# Other
+1. Make a config file that contains all random global vars
+2. Do something else with credentials.json 
+3. Improve discord logs - Use separate ones for scraper, order listener, predictor, etc
 
 
 # Hermes listener Server Instance
