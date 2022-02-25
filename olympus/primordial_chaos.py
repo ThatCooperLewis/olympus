@@ -24,7 +24,7 @@ class PrimordialChaos:
         self.stop()
         self.log.debug('Joining threads...')
         if not self.all_threads:
-            self.log.warning('join_threads called without any threads. Did you forget to add them to all_threads?')
+            self.log.warn('join_threads called without any threads. Did you forget to add them to all_threads?')
             return
         for thread in self.all_threads:
             if thread.is_alive():
