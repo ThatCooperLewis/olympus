@@ -13,11 +13,6 @@ ORDER_TABLE_NAME = 'order_feed'
 
 class Postgres:
 
-    '''
-    TODO:
-    - Handle multiple attempts, reconnecting between them
-    '''
-
     def __init__(self, ticker_table_override: str = None) -> None:
         # TODO: What the fuck is going on here? Use this elsewhere!
         self.ticker_table_name = ticker_table_override if ticker_table_override is not None else TICKER_TABLE_NAME

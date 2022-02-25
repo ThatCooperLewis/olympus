@@ -44,6 +44,7 @@ class Delphi(PrimordialChaos):
             params=params
         )
 
+        # TODO Move a lot of this to config file 
         self.iterations = iteration_length  # how many prediction cycles
         self.delta_threshold = 0.0003  # When price changes this much, take 100% action
         self.interval_size = 1  # TODO CHANGE Seconds between price tickers & prediction cycles

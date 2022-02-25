@@ -98,7 +98,6 @@ def validate_csv(input_csv: str, output_file: str, expected_interval: int, margi
     print(f"Bad gap count: {bad_count}")
 
 def reduce_csv(input_csv: str, output_csv: str, keep_count: int):
-    # TODO: Reducer keeps oldest row if now header row exists
     print("Status: Reading CSV...    ", end="\r")
     df = pd.read_csv(input_csv)
     print("Status: Discarding rows...", end="\r")
