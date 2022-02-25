@@ -2,7 +2,7 @@
 import json
 import os
 import uuid
-
+from crosstower.models import Ticker
 
 def count_rows_from_file(file_name: str) -> int:
     with open(file_name, 'r') as f:
@@ -33,3 +33,17 @@ def save_as_json(list: list) -> None:
 def get_json_from_file(file_name: str) -> list:
     with open(file_name, 'r') as f:
         return json.loads(f.read())
+
+def get_basic_ticker() -> Ticker:
+    return Ticker({
+        'symbol': 'BTCUSD',
+        'timestamp': '2010-01-01T00:00:00.000Z',
+        'bid': '1',
+        'ask': '2',
+        'last': '3',
+        'volume': '4',
+        'volumeQuote': '5',
+        'high': '6',
+        'low': '7',
+        'open': '8'
+    })

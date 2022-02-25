@@ -25,6 +25,7 @@ class TestAthena(TestCase):
         self.assertEqual(self.athena.interval, 1)
 
     def test_run_and_exit(self):
+        self.athena.timeout_threshold = 10
         self.athena.run(headless=True)
         sleep(5)
         # Test that the file is not empty
@@ -48,22 +49,12 @@ class TestAthena(TestCase):
     def test_csv_loop(self):
         thread = Thread(target=self.athena.csv_loop)
         thread.start()
-        test_ticker = Ticker({
-            'symbol': 'BTCUSD',
-            'timestamp': '2019-01-01T00:00:00.000Z',
-            'bid': '1',
-            'ask': '2',
-            'last': '3',
-            'volume': '4',
-            'high': '5',
-            'low': '6',
-            'open': '7'
-        })
-        self.assertEqual(test_ticker.csv_line, '2.0,1.0,3,6,5,7,4,None,1546329600\n')
+        test_ticker = utils.get_basic_ticker()
+        self.assertEqual(test_ticker.csv_line, '2.0,1.0,3,7,6,8,4,5,1262332800\n')
         self.athena.queue.put(test_ticker)
         sleep(7)
         self.assertEqual(utils.count_rows_from_file(self.filename), 1)
-        self.assertEqual(utils.get_first_row_from_file(self.filename),'2.0,1.0,3,6,5,7,4,None,1546329600\n')
+        self.assertEqual(utils.get_first_row_from_file(self.filename),'2.0,1.0,3,7,6,8,4,5,1262332800\n')
         self.athena.abort = True
         thread.join()
 

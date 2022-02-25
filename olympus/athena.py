@@ -114,7 +114,7 @@ class Athena(PrimordialChaos):
                     response = None
                     break
                 else:
-                    self.log.warning(f'[__get_response] Response timeout. Attempting to receive response again...')
+                    self.log.warn(f'[__get_response] Response timeout. Attempting to receive response again...')
                     request_attempts += 1
                     continue
         if response:
@@ -184,7 +184,7 @@ class Athena(PrimordialChaos):
                 time_since_update = now() - self.last_time
                 if current_line == self.last_line and time_since_update > self.timeout_threshold:
                     # TODO: Notify if several attempts don't work            
-                    self.log.warn(f'No new data received for {self.timeout_threshold} seconds. Restarting socket...')    
+                    self.log.debug(f'No new data received for {self.timeout_threshold} seconds. Restarting socket...')    
                     self.restart_socket()
                 elif current_line != self.last_line:
                     self.last_line = current_line
