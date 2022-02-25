@@ -73,7 +73,6 @@ class Athena(PrimordialChaos):
         # self.ticker_thread.start()
 
     async def __subscribe(self, socket: Connection):
-        # TODO: Wrap in try/except
         '''
         Send a subscribeTicker message to the
         socket, and wait for a response
@@ -99,7 +98,6 @@ class Athena(PrimordialChaos):
         server before giving up, defaults to 3 (optional)
         :return: A Ticker object
         '''
-        # TODO: Wrap in try/except
         final_result = None
         response = None
         while True:
@@ -134,7 +132,6 @@ class Athena(PrimordialChaos):
         
         :param current_attempt: The current attempt number. Used to kill old connections.
         '''
-        # TODO: Wrap in try/except
         async with Connection(SOCKET_URI) as websocket:
             await self.__subscribe(websocket)
             self.log.debug(f'Starting scrape attempt {current_attempt}')
@@ -162,7 +159,7 @@ class Athena(PrimordialChaos):
             loop.close()
             self.abort = True
         except Exception as err:
-            self.log.error(f'[ticker_loop] {err}\n{traceback.format_exc()}')
+            self.alert_with_error(f'[ticker_loop] {err}\n{traceback.format_exc()}')
             loop.close()
             raise err
 
@@ -176,21 +173,27 @@ class Athena(PrimordialChaos):
         :param interval: How often to check for updates
         :type interval: int
         '''
-        self.last_line = self.get_latest_row()
-        self.last_time = now()
-        self.log.debug('Running watchdog loop...')
-        # TODO: Wrap in try/except
-        while not self.abort:
-            current_line = self.get_latest_row()
-            time_since_update = now() - self.last_time
-            if current_line == self.last_line and time_since_update > SOCKET_RESTART_TIMEOUT:
-                # TODO: Notify if several attempts don't work            
-                self.log.warn(f'No new data received for {SOCKET_RESTART_TIMEOUT} seconds. Restarting socket...')    
-                self.restart_socket()
-            elif current_line != self.last_line:
-                self.last_line = current_line
-                self.last_time = now()
-            sleep(5)
+        try:
+            self.last_line = self.get_latest_row()
+            self.last_time = now()
+            self.log.debug('Running watchdog loop...')
+            while not self.abort:
+                current_line = self.get_latest_row()
+                time_since_update = now() - self.last_time
+                if current_line == self.last_line and time_since_update > SOCKET_RESTART_TIMEOUT:
+                    # TODO: Notify if several attempts don't work            
+                    self.log.warn(f'No new data received for {SOCKET_RESTART_TIMEOUT} seconds. Restarting socket...')    
+                    self.restart_socket()
+                elif current_line != self.last_line:
+                    self.last_line = current_line
+                    self.last_time = now()
+                sleep(5)
+        except KeyboardInterrupt:
+            self.log.debug('Keyboard interrupt received. Aborting...')
+            self.abort = True
+        except Exception as err:
+            self.alert_with_error(f'[watchdog_loop] {err}\n{traceback.format_exc()}')
+            raise err
 
     def csv_loop(self):
         '''
@@ -199,48 +202,68 @@ class Athena(PrimordialChaos):
         interval seconds away from the latest timestamp,
         then write the ticker to the csv file
         '''
-        latest = None
-        # TODO: Wrap in try/except
-        self.log.debug('Running CSV loop...')
-        while not self.abort:
-            if self.queue.qsize() > 0:
-                ticker: Ticker = self.queue.get()
-                if not latest or (ticker.timestamp - latest) >= self.interval:
-                    latest = ticker.timestamp
-                    with open(self.csv_path, 'a') as file:
-                        file.write(ticker.csv_line)
-                        file.close()
+        try:
+            latest = None
+            self.log.debug('Running CSV loop...')
+            while not self.abort:
+                if self.queue.qsize() > 0:
+                    ticker: Ticker = self.queue.get()
+                    if not latest or (ticker.timestamp - latest) >= self.interval:
+                        latest = ticker.timestamp
+                        with open(self.csv_path, 'a') as file:
+                            file.write(ticker.csv_line)
+                            file.close()
+        except KeyboardInterrupt:
+            self.log.debug('Keyboard interrupt received. Aborting...')
+            self.abort = True
+        except Exception as err:
+            self.alert_with_error(f'[csv_loop] {err}\n{traceback.format_exc()}')
+            raise err
 
     def sql_loop(self):
         """
         Get the latest ticker from the queue, if it's been at least
         self.interval seconds since the last ticker was inserted, insert it into the database
         """
-        latest = None
-        self.log.debug('Running SQL loop...')
-        while not self.abort:
-            if self.queue.qsize() > 0:
-                ticker: Ticker = self.queue.get()
-                if not latest or (ticker.timestamp - latest) >= self.interval:
-                    latest = ticker.timestamp
-                    self.db.insert_ticker(ticker)
+        try:
+            latest = None
+            self.log.debug('Running SQL loop...')
+            while not self.abort:
+                if self.queue.qsize() > 0:
+                    ticker: Ticker = self.queue.get()
+                    if not latest or (ticker.timestamp - latest) >= self.interval:
+                        latest = ticker.timestamp
+                        self.db.insert_ticker(ticker)
+        except KeyboardInterrupt:
+            self.log.debug('Keyboard interrupt received. Aborting...')
+            self.abort = True
+        except Exception as err:
+            self.alert_with_error(f'[sql_loop] {err}\n{traceback.format_exc()}')
+            raise err
+        
 
     def handle_commands(self):
         print(utils.scraper_startup_message)
-        # TODO: Wrap in try/except
-        while True:
-            string = input("Enter command: ")
-            if string.lower() in ['exit', 'e']:
-                print(utils.scraper_exit_message)
-                self.abort = True
-                break
-            elif string.lower() in ['restart', 'r']:
-                print(utils.scraper_restart_message)
-                self.restart_socket()
-            elif string.lower() in ['status', 's']:
-                utils.print_status_message(self.last_time, self.connection_attempts)
-            elif string.lower() in ['help', 'h']:
-                print(utils.scraper_startup_message)
+        try:
+            while True:
+                string = input("Enter command: ")
+                if string.lower() in ['exit', 'e']:
+                    print(utils.scraper_exit_message)
+                    self.abort = True
+                    break
+                elif string.lower() in ['restart', 'r']:
+                    print(utils.scraper_restart_message)
+                    self.restart_socket()
+                elif string.lower() in ['status', 's']:
+                    utils.print_status_message(self.last_time, self.connection_attempts)
+                elif string.lower() in ['help', 'h']:
+                    print(utils.scraper_startup_message)
+        except KeyboardInterrupt:
+            self.log.debug('Keyboard interrupt received. Aborting...')
+            self.abort = True
+        except Exception as err:
+            self.alert_with_error(f'[sql_loop] {err}\n{traceback.format_exc()}')
+            raise err
 
     def get_latest_row(self):
         if self.csv_path:
