@@ -3,45 +3,35 @@ import json
 import traceback
 
 import psycopg2 as psql
-# from psycopg2 import connection as psql_connection
-# from psycopg2 import cursor as psql_cursor
 
 from crosstower.models import Ticker
 from utils import Logger, DiscordWebhook
 
 
+TICKER_TABLE_NAME = 'ticker_feed'
+ORDER_TABLE_NAME = 'order_feed'
+
 class Postgres:
 
     '''
     TODO:
-    - Make sure the connection isn't lost over time
     - Handle multiple attempts, reconnecting between them
-    - Alerts if SQL query fails
-    - Add logging statements
     '''
 
-    # SUPER TODO: Hollllld up... athena already intervals? do we need it anyways? two separate intervals?
-    # TODO: Check latest timestamp of interval table, 
-    # if gap between timestamps is larger than interval, 
-    # then add this ticker to that tabl
-
-    def __init__(self) -> None:
+    def __init__(self, ticker_table_override: str = None) -> None:
+        # TODO: What the fuck is going on here? Use this elsewhere!
+        self.ticker_table_name = ticker_table_override if ticker_table_override is not None else TICKER_TABLE_NAME
         self.log = Logger.setup(self.__class__.__name__)
-        self.discord = DiscordWebhook(self.__class__.__name__)
+        self.discord = DiscordWebhook("Athena")
         config = self.__get_postgres_config('credentials.json')
         self.conn = psql.connect(f"dbname='{config['database']}' user='{config['user']}' host='{config['host']}' password='{config['password']}'")
+
     # Public Methods
 
     def get_latest_rows(self, row_count: int) -> list:
-        with PostgresCursor(self.conn) as cursor:
-            # TODO: How many columns should be returned here? Just the ones that are used?
-            if type(row_count) is not int:
-                raise Exception("row_count must be an integer")
-            query = f"""
-                SELECT timestamp, ask FROM ticker_feed ORDER BY timestamp DESC LIMIT {row_count}
-            """
-            cursor.execute(query)
-            result = cursor.fetchall()
+        # TODO: How many columns should be returned here? Just the ones that are used?
+        query = f"SELECT timestamp, ask FROM {self.ticker_table_name} ORDER BY timestamp DESC LIMIT {row_count}"
+        result = self.__query(query, True)
         if type(result) is list:
             result.reverse()
             return result
@@ -49,17 +39,9 @@ class Postgres:
             return []
 
     def insert_ticker(self, ticker: Ticker):
-        try:
-            with PostgresCursor(self.conn) as cursor:
-                query = f"""
-                    INSERT INTO ticker_feed (timestamp, ask, bid, last, low, high, open, volume, volume_quote) 
-                    VALUES ({ticker.timestamp}, {ticker.ask}, {ticker.bid}, {ticker.last}, {ticker.low}, {ticker.high}, {ticker.open}, {ticker.volume}, {ticker.volume_quote})
-                """
-                cursor.execute(query)
-        except Exception as e:
-            trace = traceback.format_exc()
-            self.log.error(trace)
-            self.discord.send_alert(f"SQL Submission Error: {trace}")
+        query = f"""INSERT INTO ticker_feed (timestamp, ask, bid, last, low, high, open, volume, volume_quote) 
+        VALUES ({ticker.timestamp}, {ticker.ask}, {ticker.bid}, {ticker.last}, {ticker.low}, {ticker.high}, {ticker.open}, {ticker.volume}, {ticker.volume_quote})"""
+        self.__query(query, False)
 
     def __get_postgres_config(self, config_path: str):
         with open(config_path) as json_file:
@@ -67,9 +49,33 @@ class Postgres:
             return data.get("postgres")
 
     def __reconnect(self):
+        self.log.debug("Attempting to reconnect...")
         config = self.__get_postgres_config('credentials.json')
         self.conn = psql.connect(f"dbname='{config['database']}' user='{config['user']}' host='{config['host']}' password='{config['password']}'")
 
+    def __query(self, query_str: str, fetch_result: bool):
+        result = None
+        attempt = 0
+        completed = False
+        while attempt < 3:
+            try:
+                with PostgresCursor(self.conn) as cursor:
+                    self.log.debug('Submitting query to Postgres: "%s"', query_str)
+                    cursor.execute(query_str)
+                    if fetch_result:
+                        result = cursor.fetchall()
+                completed = True
+                break
+            except:
+                message = f"**SQL Query Failed**: {query_str}\n{traceback.format_exc()}"
+                self.log.error(message)
+                self.discord.send_alert(message)
+                self.__reconnect()
+                attempt += 1
+                continue
+        if not completed:
+            raise Exception("Failed to submit query to Postgres after 3 attempts. Giving up.")
+        return result
 
 class PostgresCursor:
 
