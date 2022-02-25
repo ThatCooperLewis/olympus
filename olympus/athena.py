@@ -13,8 +13,9 @@ from olympus.primordial_chaos import PrimordialChaos
 from utils import Logger, DiscordWebhook, Postgres
 from websockets import connect as Connection
 
-# Number of seconds without any new data before attempt a socket reconnect
-SOCKET_RESTART_TIMEOUT = 20
+# Length of time without any new data before attempt a socket reconnect
+# self.interval * timeout_multiplier = seconds until reconnect
+SOCKET_TIMEOUT_INTERVAL_MULTIPLIER = 2
 
 class Athena(PrimordialChaos):
     '''
@@ -60,6 +61,7 @@ class Athena(PrimordialChaos):
             self.interval = custom_interval
         else:
             self.interval = 1
+        self.timeout_threshold = self.interval * SOCKET_TIMEOUT_INTERVAL_MULTIPLIER
 
     def restart_socket(self):
         self.ticker_thread.join(timeout=5)
@@ -180,9 +182,9 @@ class Athena(PrimordialChaos):
             while not self.abort:
                 current_line = self.get_latest_row()
                 time_since_update = now() - self.last_time
-                if current_line == self.last_line and time_since_update > SOCKET_RESTART_TIMEOUT:
+                if current_line == self.last_line and time_since_update > self.timeout_threshold:
                     # TODO: Notify if several attempts don't work            
-                    self.log.warn(f'No new data received for {SOCKET_RESTART_TIMEOUT} seconds. Restarting socket...')    
+                    self.log.warn(f'No new data received for {self.timeout_threshold} seconds. Restarting socket...')    
                     self.restart_socket()
                 elif current_line != self.last_line:
                     self.last_line = current_line
