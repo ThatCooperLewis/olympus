@@ -38,7 +38,7 @@ class Postgres:
             if type(row_count) is not int:
                 raise Exception("row_count must be an integer")
             query = f"""
-                SELECT timestamp, ask FROM crosstower_feed_testing ORDER BY timestamp DESC LIMIT {row_count}
+                SELECT timestamp, ask FROM ticker_feed ORDER BY timestamp DESC LIMIT {row_count}
             """
             cursor.execute(query)
             result = cursor.fetchall()
@@ -52,7 +52,7 @@ class Postgres:
         try:
             with PostgresCursor(self.conn) as cursor:
                 query = f"""
-                    INSERT INTO crosstower_feed_testing (timestamp, ask, bid, last, low, high, open, volume, volume_quote) 
+                    INSERT INTO ticker_feed (timestamp, ask, bid, last, low, high, open, volume, volume_quote) 
                     VALUES ({ticker.timestamp}, {ticker.ask}, {ticker.bid}, {ticker.last}, {ticker.low}, {ticker.high}, {ticker.open}, {ticker.volume}, {ticker.volume_quote})
                 """
                 cursor.execute(query)
