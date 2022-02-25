@@ -1,30 +1,36 @@
 import sys
 import unittest
 
-from testing import TestAthena, TestDelphi, TestHermes
+from testing import TestAthena, TestDelphi, TestHermes, TestPostgres
 
 if __name__ == '__main__':
     if len(sys.argv) > 1:
-        if sys.argv[1] == 'athena':
+        module = sys.argv[1]
+        if module == 'athena':
             suite = unittest.TestLoader().loadTestsFromTestCase(TestAthena)
             result = unittest.TextTestRunner(verbosity=2).run(suite)
-        elif sys.argv[1] == 'delphi':
+        elif module == 'delphi':
             suite = unittest.TestLoader().loadTestsFromTestCase(TestDelphi)
             result = unittest.TextTestRunner(verbosity=2).run(suite)
-        elif sys.argv[1] == 'hermes':
+        elif module == 'hermes':
             suite = unittest.TestLoader().loadTestsFromTestCase(TestHermes)
+            result = unittest.TextTestRunner(verbosity=2).run(suite)
+        elif module == 'postgres':
+            suite = unittest.TestLoader().loadTestsFromTestCase(TestPostgres)
             result = unittest.TextTestRunner(verbosity=2).run(suite)
         else:
             print('Unrecognized test suite. Please use one of the following:')
             print('\tathena')
             print('\tdelphi')
             print('\thermes')
+            print('\tpostgres')
             sys.exit(1)
     else:
         test_suites = [
             TestAthena,
             TestDelphi,
             TestHermes,
+            TestPostgres
         ]
         suite = unittest.TestSuite()
         for test_suite in test_suites:
