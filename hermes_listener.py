@@ -7,20 +7,20 @@ class HermesOrderListener:
         self.log = Logger.setup(self.__class__.__name__)
         self.discord = DiscordWebhook(self.__class__.__name__)
         self.hermes = Hermes()
+        self.abort = False
 
     # TODO: Use the run method from Zeus
 
-    def run(self) -> None:
+    def run(self):
         self.discord.send_alert("HermesOrderListener has started a new run.")
         self.hermes.start()
-
+        try:
+            while not self.abort:
+                pass
+        except KeyboardInterrupt:
+            self.abort = True
+            self.hermes.stop()
+            self.discord.send_alert("HermesOrderListener has stopped (KeyboardInterrupt).")
 
 if __name__ == '__main__':
-    listener = HermesOrderListener()
-    listener.run()
-    try:
-        while True:
-            pass
-    except KeyboardInterrupt:
-        listener.hermes.stop()
-        listener.log.debug('KeyboardInterrupt')
+    HermesOrderListener().run()
