@@ -1,5 +1,5 @@
 # Hermes trader
-0. BRUH. UPDATE IT TO SQL
+0. BRUH. UPDATE IT TO SQL & PrimordialChaos
 1. Resolve buy percentage issue in create_order
 2. Inject mock hermes into a mock zeus class
 
