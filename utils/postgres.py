@@ -6,20 +6,16 @@ import psycopg2 as psql
 
 from crosstower.models import Ticker
 from utils import Logger, DiscordWebhook
-
-
-TICKER_TABLE_NAME = 'ticker_feed'
-ORDER_TABLE_NAME = 'order_feed'
+from utils.config import POSTGRES_TICKER_TABLE_NAME, POSTGRES_ORDER_TABLE_NAME, CREDENTIALS_FILE
 
 class Postgres:
 
     def __init__(self, ticker_table_override: str = None) -> None:
         # TODO: What the fuck is going on here? Use this elsewhere!
-        self.ticker_table_name = ticker_table_override if ticker_table_override is not None else TICKER_TABLE_NAME
+        self.ticker_table_name = ticker_table_override if ticker_table_override is not None else POSTGRES_TICKER_TABLE_NAME
         self.log = Logger.setup(self.__class__.__name__)
-        self.discord = DiscordWebhook("Athena")
-        config = self.__get_postgres_config('credentials.json')
-        self.conn = psql.connect(f"dbname='{config['database']}' user='{config['user']}' host='{config['host']}' password='{config['password']}'")
+        self.discord = DiscordWebhook("Postgres")
+        self.__setup_connection()
 
     # Public Methods
 
@@ -61,17 +57,17 @@ class Postgres:
             if message:
                 self.discord.send_alert(message)
             raise Exception("Failed to submit query to Postgres after 3 attempts. Giving up.")
-        return result
+        return result        
 
-    def __get_postgres_config(self, config_path: str):
-        with open(config_path) as json_file:
+    def __setup_connection(self):
+        with open(CREDENTIALS_FILE) as json_file:
             data: dict = json.load(json_file)
-            return data.get("postgres")
-
+            config = data.get("postgres")
+        self.conn = psql.connect(f"dbname='{config['database']}' user='{config['user']}' host='{config['host']}' password='{config['password']}'")
+    
     def __reconnect(self):
         self.log.debug("Attempting to reconnect...")
-        config = self.__get_postgres_config('credentials.json')
-        self.conn = psql.connect(f"dbname='{config['database']}' user='{config['user']}' host='{config['host']}' password='{config['password']}'")
+        self.__setup_connection()
 
 
 class PostgresCursor:

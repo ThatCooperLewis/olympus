@@ -6,6 +6,12 @@ LOGGING_LEVEL = logging.INFO
 CREDENTIALS_FILE = 'credentials.json'
 '''Contains API keys, webhook URLs, PSQL connection, etc. See readme.md for more information.'''
 
+# Postgres
+
+POSTGRES_TICKER_TABLE_NAME = 'ticker_feed'
+
+POSTGRES_ORDER_TABLE_NAME = 'order_feed'
+
 # Scraping
 
 TICKER_INTERVAL = 60  # seconds
