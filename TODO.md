@@ -12,7 +12,7 @@
 1. Make the config use nice capitalized classes for each category
 2. Do something else with credentials.json 
 3. Improve discord logs - Use separate ones for scraper, order listener, predictor, etc
-4. Test cases for scraper files?
+4. Test cases for scraper/listener files?
 
 # Docker
 1. Should we containerize this shit? Apparently there's a cuda docker?
