@@ -45,11 +45,12 @@ class Trade:
 
 class Order:
 
-    def __init__(self, data: dict) -> None:
-        self._data = data
+    def __init__(self, data: dict, uuid: str = None) -> None:
+        self._data: dict = data
+        self.uuid: str = uuid
 
     @classmethod
-    def create(cls, quantity: float, side: str, symbol, order_type: str = 'market', time_in_force: str = 'GTC', price: float = None, stop_price: float = None):
+    def create(cls, quantity: float, side: str, symbol, order_type: str = 'market', time_in_force: str = 'GTC', price: float = None, stop_price: float = None, uuid: str = None):
         # TODO: Expand to GTD orders at some point. Requires timestamp parsing
         '''
         Create a new order
@@ -70,6 +71,8 @@ class Order:
             Order price. Required for `limit` types
         stop_price : float
             Required for `stopLimit` and `stopMarket` orders
+        uuid : str
+            Internal app use only. Not used by the API.
 
         Returns
         ----------
@@ -106,7 +109,7 @@ class Order:
 
         if bad_args:
             raise Exception("Bad args passed to Order.create(), check types")
-        return Order(order_data)
+        return Order(order_data, uuid)
 
     @property
     def dict(self) -> dict:
