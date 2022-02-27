@@ -1,5 +1,4 @@
 # Hermes trader
-0. BRUH. UPDATE IT TO SQL & PrimordialChaos
 1. Resolve buy percentage issue in create_order
 2. Inject mock hermes into a mock zeus class
 
@@ -15,14 +14,10 @@
 3. Improve discord logs - Use separate ones for scraper, order listener, predictor, etc
 4. Test cases for scraper files?
 
+# Docker
+1. Should we containerize this shit? Apparently there's a cuda docker?
+2. If so, we can create temporary postgres databases. This would let us enforce proper SQL schema files
 
-# Hermes listener Server Instance
-
-- SQL table for incoming orders
-- All info into separate keys
-- can even include data blobs from previous objects (prediction history, etc)
-- rasppi will watch db and change order_status key to different states (QUEUED, PROCESSING, COMPLETED)
-- add timestamp column
 
 Hermes followup
 
