@@ -29,7 +29,7 @@ class TestAthena(TestCase):
     def test_run_and_exit(self):
         self.athena.timeout_threshold = 10
         self.athena.run(headless=True)
-        sleep(5)
+        sleep(4)
         # Test that the file is not empty
         self.assertTrue(utils.count_rows_from_file(self.filename) > 1)
         self.athena.abort = True
@@ -37,13 +37,13 @@ class TestAthena(TestCase):
 
         # Test that the file is unchanged after quitting
         row_count = utils.count_rows_from_file(self.filename)
-        sleep(2)
+        sleep(1)
         self.assertEqual(row_count, utils.count_rows_from_file(self.filename))
 
     def test_ticker_loop(self):
         thread = Thread(target=self.athena.ticker_loop, daemon=True)
         thread.start()
-        sleep(5)
+        sleep(2)
         self.assertTrue(self.athena.queue.qsize() > 0)
         self.athena.abort = True
         thread.join()
@@ -54,7 +54,7 @@ class TestAthena(TestCase):
         test_ticker = utils.get_basic_ticker()
         self.assertEqual(test_ticker.csv_line, '2.0,1.0,3,7,6,8,4,5,1262332800\n')
         self.athena.queue.put(test_ticker)
-        sleep(7)
+        sleep(3)
         self.assertEqual(utils.count_rows_from_file(self.filename), 1)
         self.assertEqual(utils.get_first_row_from_file(self.filename),'2.0,1.0,3,7,6,8,4,5,1262332800\n')
         self.athena.abort = True
@@ -67,7 +67,7 @@ class TestAthena(TestCase):
         thread.start()
         test_ticker = utils.get_basic_ticker()
         self.athena.queue.put(test_ticker)
-        sleep(7)
+        sleep(3)
         result = self.athena.postgres.get_latest_tickers(1)[0]
         self.assertEqual(result.timestamp, test_ticker.timestamp)
         self.athena.abort = True
@@ -80,16 +80,16 @@ class TestAthena(TestCase):
         self.athena.run(headless=True)
         sleep(2)
         self.athena.join_threads()
-        sleep(5)
+        sleep(3)
         for thread in self.athena.all_threads:
             self.assertFalse(thread.is_alive())
 
     def test_restart_and_stop(self):
         self.athena.run(headless=True)
-        sleep(3)
+        sleep(2)
         old = utils.count_rows_from_file(self.filename)
         self.athena.restart_socket()
-        sleep(3)
+        sleep(2)
         new = utils.count_rows_from_file(self.filename)
         self.assertNotEqual(old, new)
         self.athena.stop()
