@@ -43,12 +43,12 @@ class TestDelphi(TestCase):
         self.delphi.run()
         # Wait for the queue to fill up.
         for i in range(5):
-            sleep(5)
+            sleep(3)
             if self.queue.size > 0:
                 break
         self.assertTrue(self.queue.size > 0)
         self.delphi.stop()
-        sleep(5)
+        sleep(3)
         self.assertEqual(utils.count_rows_from_file(self.delphi.tmp_csv_path), 104)
 
     def test_superclass(self):
