@@ -8,6 +8,7 @@ from olympus import Athena, Hermes, PrimordialChaos
 from olympus.delphi import Delphi
 from olympus.utils import PredictionQueue
 from utils import Logger, DiscordWebhook
+import utils.config as constants
 
 # Constants
 
@@ -17,7 +18,6 @@ ATHENA_SCRAPE_INTERVAL_SECONDS = 5
 TRADE_SYMBOL = 'BTCUSD'
 H5_MODEL = 'run/model.h5'
 PARAMS_JSON = 'run/params.json'
-PREDICTION_ITERATIONS = 3
 PREDICTION_QUEUE_MAX_SIZE = 5
 
 
@@ -50,7 +50,7 @@ class Zeus(PrimordialChaos):
             csv_path=ATHENA_OUTPUT, 
             model_path=H5_MODEL,
             params_path=PARAMS_JSON,
-            iteration_length=PREDICTION_ITERATIONS,
+            iteration_length=constants.PREDICTION_ITERATION_COUNT,
             prediction_queue=self.prediction_queue
         )
         self.all_gods: List[PrimordialChaos] = [
