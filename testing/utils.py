@@ -3,6 +3,14 @@ import json
 import os
 import uuid
 from crosstower.models import Ticker, Order
+from olympus.utils import PredictionVector
+from utils import Postgres
+
+class PostgresTesting(Postgres):
+
+    # Expose query method for testing
+    def query(self, query_str: str, fetch_result: bool):
+        return self._query(query_str, fetch_result)
 
 def count_rows_from_file(file_name: str) -> int:
     with open(file_name, 'r') as f:
@@ -55,4 +63,18 @@ def get_basic_order() -> Order:
         'quantity': '1',
         'side': 'BUY',
         'status': 'QUEUED'
-    })
+    }, uuid=uuid.uuid4().hex)
+
+def get_basic_prediction() -> PredictionVector:
+    return PredictionVector(
+        weight=-1,
+        predictions=[
+            46842.47,
+            46842.47,
+            46842.47,
+            46842.47,
+            46842.47,
+            46400.00
+        ],
+        timestamp=123467890
+    )

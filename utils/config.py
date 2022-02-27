@@ -13,17 +13,31 @@ CREDENTIALS_FILE = 'credentials.json'
 POSTGRES_TICKER_TABLE_NAME = 'ticker_feed'
 '''The name of the pSQL table that stores live ticker data.'''
 
+POSTGRES_TICKER_COLUMNS = '(timestamp, ask, bid, last, low, high, open, volume, volume_quote)'
+'''The columns of the pSQL table that stores live ticker data. Used for sql insert queries.'''
+
 POSTGRES_ORDER_TABLE_NAME = 'order_feed'
 '''The name of the pSQL table that stores order data & history.'''
 
-POSTGRES_ORDER_STATUS_QUEUED = 'QUEUED'
-'''The postgres.order_feed status of an order that has been queued for execution.'''
+POSTGRES_ORDER_COLUMNS = '(timestamp, quantity, side, status, uuid)'
+'''The columns of the pSQL table that stores order data & history. Used for sql insert queries.'''
 
-POSTGRES_ORDER_STATUS_PROCESSING = 'PROCESSING'
-'''The postgres.order_feed status of an order that is currently being processed.'''
+POSTGRES_PREDICTION_TABLE_NAME = 'prediction_feed'
+'''The name of the pSQL table that stores prediction data & history.'''
 
-POSTGRES_ORDER_STATUS_COMPLETE = 'COMPLETE'
+POSTGRES_PREDICTION_COLUMNS = '(timestamp, prediction_timestamp, prediction_weight, prediction_history, status, uuid)'
+'''The columns of the pSQL table that stores prediction data & history. Used for sql insert queries.'''
+
+POSTGRES_STATUS_QUEUED = 'QUEUED'
+'''The postgres.order_feed status of a prediction that has been queued for order.'''
+
+POSTGRES_STATUS_PROCESSING = 'PROCESSING'
+'''The postgres.order_feed status of a prediction/order that is currently being processed.'''
+
+POSTGRES_STATUS_COMPLETE = 'COMPLETE'
 '''The postgres.order_feed status of an order that has been completed.'''
+
+POSTGRES_ALLOWED_STATUSES = [POSTGRES_STATUS_QUEUED, POSTGRES_STATUS_PROCESSING, POSTGRES_STATUS_COMPLETE]
 
 ################# Scraping #################
 

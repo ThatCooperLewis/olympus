@@ -2,14 +2,18 @@ import asyncio
 import json
 from queue import Queue
 from threading import Thread
+from time import sleep
 from typing import List
+import traceback
+from collections.abc import Callable
 
-from utils.config import DEFAULT_SYMBOL, SOCKET_URI
-from crosstower.models import Order, Balance
+from crosstower.models import Balance, Order
 from crosstower.socket_api import utils
 from crosstower.utils import aggregate_orders
 from websockets import connect as Connection
-from utils import Logger
+
+from utils import Logger, DiscordWebhook
+from utils.config import DEFAULT_SYMBOL, SOCKET_URI, POSTGRES_STATUS_PROCESSING, POSTGRES_STATUS_COMPLETE
 
 
 class SocketAPI:
@@ -127,6 +131,7 @@ class OrderListener:
 
     def __init__(self, credentials_path: str = 'credentials.json', websocket_override=None) -> None:
         self.log = Logger.setup(self.__class__.__name__)
+        self.discord = DiscordWebhook(self.__class__.__name__)
         self.__socket: SocketAPI = SocketAPI
         if websocket_override:
             self.__socket = websocket_override 
@@ -140,11 +145,18 @@ class OrderListener:
             socket = await self.__socket.get_authenticated_socket(self.__creds_path)
             while not self.__quit:
                 if self.__queue.qsize() > 0:
-                    order: Order = self.__queue.get()
-                    await self.__socket.request(socket, 'newOrder', order.dict)
+                    order_object: OrderListenerObject = self.__queue.get()
+                    order_object.on_submission()
+                    await self.__socket.request(socket, 'newOrder', order_object.order.dict)
+                    order_object.on_complete()
+                    sleep(1)
             self.log.debug('self.__orders_coroutine() is quitting')
         except KeyboardInterrupt:
             self.log.debug('KeyboardInterrupt during orders coroutine')
+            pass
+        except Exception as e:
+            self.log.error(f'Exception in order executor coroutine: {traceback.format_exc()}')
+            self.discord.send_alert(f'Exception in order executor coroutine: {traceback.format_exc()}')
             pass
 
     def __wait_loop(self):
@@ -156,13 +168,17 @@ class OrderListener:
             loop.run_forever()
         except KeyboardInterrupt:
             self.__quit = True
+        except Exception:
+            self.log.error(f'Exception in order __wait_loop: {traceback.format_exc()}')
+            self.discord.send_alert(f'Exception in order __wait_loop: {traceback.format_exc()}')
         finally:
             print('Closing')
             loop.close()
 
-    def submit_order(self, order: Order):
+    def submit_order(self, order: Order, on_submission: Callable[[Order], None], on_complete: Callable[[Order], None]):
         """Put `Order` in queue for execution"""
-        self.__queue.put(order)
+        order_object = OrderListenerObject(order, on_submission, on_complete)
+        self.__queue.put(order_object)
 
     def start(self):
         self.__thread.start()
@@ -172,3 +188,20 @@ class OrderListener:
 
     def is_running(self):
         return self.__thread.is_alive()
+
+
+class OrderListenerObject:
+    
+    def __init__(self, order: Order, on_submission: Callable[[Order], None] = None, on_complete: Callable[[Order], None] = None):
+        '''Container for Order object, along with callbacks for submission (before API response) and completion (after API response)'''
+        self.order = order
+        self.__on_submission: Callable[[Order], None] = on_submission
+        self.__on_complete: Callable[[Order], None] = on_complete
+        
+    def on_submission(self):
+        if self.__on_submission:
+            self.__on_submission(self.order)
+        
+    def on_complete(self):
+        if self.on_complete:
+            self.__on_complete(self.order)

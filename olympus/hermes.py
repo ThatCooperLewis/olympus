@@ -2,14 +2,15 @@ from queue import Queue
 from threading import Thread
 from time import time as now
 from typing import List, Tuple
+import traceback
 
 from crosstower.models import Balance, Order
 from crosstower.socket_api.private import OrderListener, Trading
 
 from olympus.utils import PredictionQueue, PredictionVector
-from utils import Logger
+from utils import Logger, DiscordWebhook, Postgres
 from utils.config import (CRYPTO_SYMBOL, FIAT_SYMBOL, MAX_TRADE_PERCENTAGE,
-                          TRADING_SYMBOL)
+                          TRADING_SYMBOL, POSTGRES_STATUS_PROCESSING, POSTGRES_STATUS_COMPLETE)
 
 '''
 
@@ -32,8 +33,10 @@ class Hermes:
 
     def __init__(self, override_orderListener: OrderListener = None, override_tradingAccount: Trading = None, override_predictionQueue: PredictionQueue = None) -> None:
         self.log = Logger.setup(__name__)
+        self.discord = DiscordWebhook(self.__class__.__name__)
+        self.postgres = Postgres()
         self.abort = False
-        self.__orders = []
+        self.__orders: List[Order] = []
         self.__thread: Thread = Thread(target=self.__main_loop, args=())
         self.submitted_order_count = 0 # Used for tracking activity status
         if override_orderListener:
@@ -141,7 +144,7 @@ class Hermes:
             self.log.error('Buy order failed, insufficient funds.\nFiat Balance: {}\nPredicted Price: {}\nTrade Quantity: {}'.format(
                 fiat_balance, predicted_price, trade_quantity))
             return None
-        return Order.create(trade_quantity, side, TRADING_SYMBOL)
+        return Order.create(trade_quantity, side, TRADING_SYMBOL, uuid=prediction.uuid)
         # also check total account balance to determine portion
 
     def __submit_order(self, order: Order):
@@ -153,24 +156,33 @@ class Hermes:
         :param order: The order that was just submitted
         :type order: Order
         '''
+        submitted = self.__order_status_processing
+        completed = self.__order_status_complete
         if len(self.__orders) == 0:
             self.log.debug('No orders in list, adding new order')
             self.__orders.append(order)
-            self.order_listener.submit_order(order)
+            self.postgres.insert_order(order)
+            self.order_listener.submit_order(order, submitted, completed)
         elif self.__orders[-1].side == order.side:
             self.log.debug('Same direction as last order, adding to list')
             self.__orders.append(order)
-            self.order_listener.submit_order(order)
+            self.order_listener.submit_order(order, submitted, completed)
         elif self.__orders[-1].side != order.side:
             self.log('Opposite direction as last order, summing & inversing past orders')
             total_quantity = 0
             for order in self.__orders:
                 total_quantity += order.quantity
             order.quantity += total_quantity
-            self.order_listener.submit_order(order)
+            self.order_listener.submit_order(order, submitted, completed)
             self.__orders = []
         self.log.debug(
             f'Executed order: {order.side} {order.symbol} {order.quantity}')
+
+    def __order_status_processing(self, order: Order):
+        self.postgres.update_order_status(order.uuid, POSTGRES_STATUS_PROCESSING)
+        
+    def __order_status_complete(self, order: Order):
+        self.postgres.update_order_status(order.uuid, POSTGRES_STATUS_COMPLETE)
 
     def __main_loop(self):
         '''
@@ -190,5 +202,9 @@ class Hermes:
                         self.__submit_order(order)
         except KeyboardInterrupt:
             self.log.debug('Keyboard interrupt received, aborting')
+            self.abort()
+        except Exception:
+            self.log.error(f'Error in main loop: {traceback.format_exc()}')
+            self.discord.send_alert(f'Error in main loop: {traceback.format_exc()}')
             self.abort()
         self.log.debug('Exiting loop')
