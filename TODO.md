@@ -18,6 +18,8 @@
 1. Should we containerize this shit? Apparently there's a cuda docker?
 2. If so, we can create temporary postgres databases. This would let us enforce proper SQL schema files
 
+# Mock
+1. Introduce Logger to mock classes, replace print statements
 
 Hermes followup
 
