@@ -22,7 +22,7 @@ class Postgres:
     def get_latest_rows(self, row_count: int) -> list:
         # TODO: How many columns should be returned here? Just the ones that are used?
         query = f"SELECT timestamp, ask FROM {self.ticker_table_name} ORDER BY timestamp DESC LIMIT {row_count}"
-        result = self.query(query, True)
+        result = self._query(query, True)
         if type(result) is list:
             result.reverse()
             return result
@@ -32,9 +32,9 @@ class Postgres:
     def insert_ticker(self, ticker: Ticker):
         query = f"""INSERT INTO {self.ticker_table_name} (timestamp, ask, bid, last, low, high, open, volume, volume_quote) 
         VALUES ({ticker.timestamp}, {ticker.ask}, {ticker.bid}, {ticker.last}, {ticker.low}, {ticker.high}, {ticker.open}, {ticker.volume}, {ticker.volume_quote})"""
-        self.query(query, False)
+        self._query(query, False)
 
-    def query(self, query_str: str, fetch_result: bool):
+    def _query(self, query_str: str, fetch_result: bool):
         result = None
         attempt = 0
         completed = False
@@ -69,6 +69,12 @@ class Postgres:
         self.log.debug("Attempting to reconnect...")
         self.__setup_connection()
 
+
+class PostgresTesting(Postgres):
+
+    # Expose query method for testing
+    def query(self, query_str: str, fetch_result: bool):
+        return self._query(query_str, fetch_result)
 
 class PostgresCursor:
 

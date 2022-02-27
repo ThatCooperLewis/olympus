@@ -1,7 +1,7 @@
 from unittest import TestCase
 from unittest.mock import Mock
 
-from utils import Postgres
+from utils import PostgresTesting
 from testing import utils
 from mock import MockDiscord
 
@@ -11,7 +11,7 @@ class TestPostgres(TestCase):
 
     def setUp(self):
         # TODO: This is dangerous. Make a separate DB for testing.
-        self.postgres: Postgres = Postgres(ticker_table_override=POSTGRES_TEST_TICKER_TABLE)
+        self.postgres: PostgresTesting = PostgresTesting(ticker_table_override=POSTGRES_TEST_TICKER_TABLE)
         self.postgres.discord = MockDiscord('Postgres')
     
     def tearDown(self):
