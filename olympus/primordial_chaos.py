@@ -44,5 +44,5 @@ class PrimordialChaos:
         self.discord.send_alert(error_message)
 
     def __check_log_status(self):
-        if type(self.log) is not logging.Logger or type(self.discord) is not DiscordWebhook:
+        if not self.log or not self.discord:
             raise NotImplementedError('Logger or DiscordWebhook not set')
