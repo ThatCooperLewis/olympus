@@ -3,7 +3,8 @@ import unittest
 from time import sleep
 from olympus import Athena
 from threading import Thread
-import testing.utils as utils 
+import testing.utils as utils
+import testing.config as constants
 from crosstower.models import Ticker
 
 
@@ -57,6 +58,22 @@ class TestAthena(TestCase):
         self.assertEqual(utils.get_first_row_from_file(self.filename),'2.0,1.0,3,7,6,8,4,5,1262332800\n')
         self.athena.abort = True
         thread.join()
+        
+    def test_sql_loop(self):
+        self.athena.csv_path = None
+        self.athena.postgres = utils.PostgresTesting.setUp()
+        thread = Thread(target=self.athena.sql_loop)
+        thread.start()
+        test_ticker = utils.get_basic_ticker()
+        self.athena.queue.put(test_ticker)
+        sleep(7)
+        result = self.athena.postgres.get_latest_tickers(1)[0]
+        self.assertEqual(result.timestamp, test_ticker.timestamp)
+        self.athena.abort = True
+        thread.join()
+        self.athena.postgres.tearDown()
+        self.athena.postgres = None
+        self.athena.csv_path = self.filename
 
     def test_superclass(self):
         self.athena.run(headless=True)

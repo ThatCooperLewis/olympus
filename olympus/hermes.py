@@ -1,16 +1,15 @@
-from queue import Queue
-from threading import Thread
-from time import time as now
-from typing import List, Tuple
 import traceback
+from threading import Thread
+from typing import List, Tuple
 
 from crosstower.models import Balance, Order
 from crosstower.socket_api.private import OrderListener, Trading
+from utils import DiscordWebhook, Logger, Postgres
+import utils.config as constants
 
-from olympus.utils import PredictionQueue, PredictionVector
-from utils import Logger, DiscordWebhook, Postgres
-from utils.config import (CRYPTO_SYMBOL, FIAT_SYMBOL, MAX_TRADE_PERCENTAGE,
-                          TRADING_SYMBOL, POSTGRES_STATUS_PROCESSING, POSTGRES_STATUS_COMPLETE)
+from olympus.helper_objects import PredictionVector
+from olympus.helper_objects.prediction_queue import \
+    PredictionQueueDB as PredictionQueue
 
 '''
 
@@ -105,7 +104,7 @@ class Hermes:
         :return: The quantity of the asset to be traded.
         '''
         self.log.debug('Parsing quantity for prediction vector: {}'.format(prediction))
-        percentage = MAX_TRADE_PERCENTAGE * abs(prediction.weight)
+        percentage = constants.MAX_TRADE_PERCENTAGE * abs(prediction.weight)
         order_quantity = percentage * balance
         return order_quantity
 
@@ -118,9 +117,9 @@ class Hermes:
         :return: The balances of crypto and fiat.
         '''
         for balance in balances:
-            if balance.currency == FIAT_SYMBOL:
+            if balance.currency == constants.FIAT_SYMBOL:
                 fiat_balance = balance.available
-            elif balance.currency == CRYPTO_SYMBOL:
+            elif balance.currency == constants.CRYPTO_SYMBOL:
                 crypto_balance = balance.available
         return crypto_balance, fiat_balance
 
@@ -144,7 +143,7 @@ class Hermes:
             self.log.error('Buy order failed, insufficient funds.\nFiat Balance: {}\nPredicted Price: {}\nTrade Quantity: {}'.format(
                 fiat_balance, predicted_price, trade_quantity))
             return None
-        return Order.create(trade_quantity, side, TRADING_SYMBOL, uuid=prediction.uuid)
+        return Order.create(trade_quantity, side, constants.TRADING_SYMBOL, uuid=prediction.uuid)
         # also check total account balance to determine portion
 
     def __submit_order(self, order: Order):
@@ -179,10 +178,10 @@ class Hermes:
             f'Executed order: {order.side} {order.symbol} {order.quantity}')
 
     def __order_status_processing(self, order: Order):
-        self.postgres.update_order_status(order.uuid, POSTGRES_STATUS_PROCESSING)
+        self.postgres.update_order_status(order.uuid, constants.POSTGRES_STATUS_PROCESSING)
         
     def __order_status_complete(self, order: Order):
-        self.postgres.update_order_status(order.uuid, POSTGRES_STATUS_COMPLETE)
+        self.postgres.update_order_status(order.uuid, constants.POSTGRES_STATUS_COMPLETE)
 
     def __main_loop(self):
         '''
@@ -193,18 +192,19 @@ class Hermes:
         try:
             while not self.abort:
                 if self.__prediction_queue.size > 0:
-                    prediction: PredictionVector = self.__prediction_queue.get()
+                    prediction = self.__prediction_queue.get()
                     self.log.debug('Got prediction from queue')
                     balances = self.trading_account.get_trading_balance(
-                        [CRYPTO_SYMBOL, FIAT_SYMBOL])
+                        [constants.CRYPTO_SYMBOL, constants.FIAT_SYMBOL])
                     order = self.__create_order(prediction, balances)
                     if order:
                         self.__submit_order(order)
+                    self.__prediction_queue.close(prediction)
         except KeyboardInterrupt:
             self.log.debug('Keyboard interrupt received, aborting')
-            self.abort()
+            self.abort = True
         except Exception:
             self.log.error(f'Error in main loop: {traceback.format_exc()}')
             self.discord.send_alert(f'Error in main loop: {traceback.format_exc()}')
-            self.abort()
+            self.abort = True
         self.log.debug('Exiting loop')

@@ -6,7 +6,7 @@ from typing import List
 from crosstower.socket_api import OrderListener, Trading
 from olympus import Athena, Hermes, PrimordialChaos
 from olympus.delphi import Delphi
-from olympus.utils import PredictionQueue
+from olympus.helper_objects. prediction_queue import PredictionQueueDB as PredictionQueue
 from utils import Logger, DiscordWebhook
 import utils.config as constants
 
@@ -25,6 +25,9 @@ class Zeus(PrimordialChaos):
 
     '''
     Initialize and watch everything
+    
+    # TODO: Isolation of processes has made this class semi-obsolete
+            Might as well scrap it for parts        
     '''
 
     def __init__(self) -> None:

@@ -4,7 +4,7 @@ from typing import List
 
 from crosstower.models import Balance, Order
 from crosstower.rest_api import MarketData
-from olympus.hermes import CRYPTO_SYMBOL, FIAT_SYMBOL
+from utils.config import CRYPTO_SYMBOL, FIAT_SYMBOL
 from websockets import connect as Connection
 
 # TODO: Add logger, zero-balance logic

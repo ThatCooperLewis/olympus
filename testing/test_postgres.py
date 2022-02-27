@@ -14,17 +14,11 @@ class TestPostgres(TestCase):
 
     def setUp(self):
         # TODO: This is dangerous. Make a separate DB for testing.
-        self.postgres: PostgresTesting = PostgresTesting(
-            ticker_table_override=constants.POSTGRES_TEST_TICKER_TABLE, 
-            order_table_override=constants.POSTGRES_TEST_ORDER_TABLE,
-            prediction_table_override=constants.POSTGRES_TEST_PREDICTION_TABLE
-        )
+        self.postgres: PostgresTesting = PostgresTesting.setUp()
         self.postgres.discord = MockDiscord('Postgres')
     
     def tearDown(self):
-        self.postgres.query(f'DELETE FROM {constants.POSTGRES_TEST_TICKER_TABLE}', fetch_result=False)
-        self.postgres.query(f'DELETE FROM {constants.POSTGRES_TEST_ORDER_TABLE}', fetch_result=False)
-        self.postgres.query(f'DELETE FROM {constants.POSTGRES_TEST_PREDICTION_TABLE}', fetch_result=False)
+        self.postgres.tearDown()
         self.postgres.conn.close()
         self.postgres = None
     
@@ -48,7 +42,7 @@ class TestPostgres(TestCase):
     def test_insert_order(self):
         order = utils.get_basic_order()
         self.postgres.insert_order(order)
-        rows = self.postgres.get_outstanding_orders()
+        rows = self.postgres.get_queued_orders()
         self.assertEqual(len(rows), 1)
         first_order = rows[0]
         self.assertAlmostEqual(first_order.timestamp, now(), delta=3)
@@ -65,7 +59,7 @@ class TestPostgres(TestCase):
         first_prediction = rows[0]
         self.assertAlmostEqual(first_prediction.timestamp, now(), delta=3)
         self.assertEqual(first_prediction.prediction_timestamp, prediction.timestamp)
-        self.assertEqual(first_prediction.prediction_weight, prediction.weight)
+        self.assertEqual(first_prediction.weight, prediction.weight)
         self.assertEqual(first_prediction.uuid, prediction.uuid)
         self.assertEqual(first_prediction.status, 'QUEUED')
         self.assertEqual(str(first_prediction.prediction_history[0]), str(prediction.prediction_history[0]))
@@ -81,10 +75,10 @@ class TestPostgres(TestCase):
     def test_update_order(self):
         order = utils.get_basic_order()
         self.postgres.insert_order(order)
-        rows = self.postgres.get_outstanding_orders()
+        rows = self.postgres.get_queued_orders()
         self.assertEqual(len(rows), 1)
         self.postgres.update_order_status(order.uuid, 'PROCESSING')
-        rows = self.postgres.get_outstanding_orders()
+        rows = self.postgres.get_queued_orders()
         self.assertEqual(len(rows), 0)
         
     def test_update_prediction(self):

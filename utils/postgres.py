@@ -5,7 +5,7 @@ from typing import List
 
 import psycopg2 as psql
 from crosstower.models import Order, Ticker
-from olympus.utils import PredictionVector
+from olympus.helper_objects import PredictionVector
 
 from utils import DiscordWebhook, Logger
 import utils.config as constants
@@ -54,8 +54,10 @@ class PostgresPredictionVector:
     def __init__(self, data: tuple) -> None:
         self.timestamp: int = data[0]
         self.prediction_timestamp: int = data[1]
-        self.prediction_weight: float = data[2]
-        self.prediction_history: List[float] = data[3]
+        self.weight: float = float(data[2])
+        self.prediction_history: List[float] = []
+        for prediction in data[3]:
+            self.prediction_history.append(float(prediction))
         self.status: str = data[4]
         self.uuid: str = data[5]
 
@@ -105,7 +107,8 @@ class Postgres:
         else:
             return []
 
-    def get_outstanding_orders(self) -> List[PostgresOrder]:
+    # TODO: make this name like the prediction one
+    def get_queued_orders(self) -> List[PostgresOrder]:
         """
         Get all the orders that have not been processed.
         :return: A list of Order objects

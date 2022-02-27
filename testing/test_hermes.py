@@ -4,7 +4,8 @@ from unittest import TestCase
 from mock import MockCrosstowerAPI as MockAPI
 from mock import MockDiscord
 from olympus import Hermes
-from olympus.utils import PredictionVector
+from olympus.helper_objects import PredictionVector
+from olympus.helper_objects.prediction_queue import PredictionQueueDB
 
 from testing import config, utils
 from testing.utils import PostgresTesting
@@ -24,20 +25,22 @@ class TestHermes(TestCase):
             }
         ])
         self.mock_api = MockAPI(self.params_file)
-        self.hermes = Hermes(
-            override_orderListener=self.mock_api.listener,
-            override_tradingAccount=self.mock_api.trading
-        )
-        self.hermes.discord = MockDiscord('Postgres')
-        self.hermes.postgres = PostgresTesting(
+        self.postgres = PostgresTesting(
             ticker_table_override=config.POSTGRES_TEST_TICKER_TABLE, 
             order_table_override=config.POSTGRES_TEST_ORDER_TABLE,
             prediction_table_override=config.POSTGRES_TEST_PREDICTION_TABLE
         )
+        self.prediction_queue = PredictionQueueDB(override_postgres=self.postgres)
+        self.hermes = Hermes(
+            override_orderListener=self.mock_api.listener,
+            override_tradingAccount=self.mock_api.trading,
+            override_predictionQueue=self.prediction_queue,
+        )
+        self.hermes.discord = MockDiscord('Postgres')
+        self.hermes.postgres = self.postgres
 
     def tearDown(self):
-        postgres: PostgresTesting = self.hermes.postgres
-        postgres.query(f'DELETE FROM {config.POSTGRES_TEST_ORDER_TABLE}', fetch_result=False)
+        self.postgres.tearDown()
         self.hermes = None
         utils.delete_file(self.params_file)
 
@@ -67,11 +70,23 @@ class TestHermes(TestCase):
         self.hermes.submit_prediction_to_queue(prediction)
         sleep(5)
         self.hermes.stop()
-        order_rows = self.hermes.postgres.get_outstanding_orders()
+        order_rows = self.hermes.postgres.get_queued_orders()
         self.assertEqual(len(order_rows), 0)
         test_postgres: PostgresTesting = self.hermes.postgres
         completed_rows = test_postgres.query(f"SELECT * FROM {config.POSTGRES_TEST_ORDER_TABLE} WHERE status = 'COMPLETE'", fetch_result=True)
         self.assertEqual(len(completed_rows), 1)
         self.assertEqual(completed_rows[0][4], prediction.uuid)
 
+    def test_prediction_queue_db(self):
+        self.hermes.start()
+        prediction = utils.get_basic_prediction()
+        self.hermes.submit_prediction_to_queue(prediction)
+        sleep(5)
+        self.hermes.stop()
+        postgres: PostgresTesting = self.hermes.postgres
+        rows = postgres.query(f'SELECT * FROM {config.POSTGRES_TEST_PREDICTION_TABLE}', fetch_result=True)
+        self.assertEqual(len(rows), 1)
+        self.assertEqual(rows[0][4], 'COMPLETE')
+        self.assertEqual(rows[0][5], prediction.uuid)
+        
     # TODO: Add stacking order test

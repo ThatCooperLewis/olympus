@@ -1,16 +1,21 @@
-from unittest import TestCase
-import unittest
-from time import sleep
-from olympus.delphi import Delphi
-from olympus.utils import PredictionQueue
-import testing.utils as utils
 from queue import Queue
 from threading import Thread
+from time import sleep
+from unittest import TestCase
+
+from olympus.delphi import Delphi
+from olympus.helper_objects.prediction_queue import \
+    PredictionQueueDB as PredictionQueue
+
+import testing.utils as utils
+from testing.utils import PostgresTesting
+import testing.config as constants
 
 class TestDelphi(TestCase):
 
     def setUp(self):
-        self.queue = PredictionQueue()
+        self.postgres = PostgresTesting.setUp()
+        self.queue = PredictionQueue(override_postgres=self.postgres)
         self.delphi = Delphi(
             csv_path='testing/test_files/test_data.csv',
             model_path='testing/test_files/test_model.h5',
@@ -22,6 +27,7 @@ class TestDelphi(TestCase):
 
     def tearDown(self):
         self.delphi = None
+        self.postgres.tearDown()
         utils.delete_file('testing/test_files/test_data_tmp.csv')
 
     def test_init(self):

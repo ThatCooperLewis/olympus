@@ -3,14 +3,28 @@ import json
 import os
 import uuid
 from crosstower.models import Ticker, Order
-from olympus.utils import PredictionVector
+from olympus.helper_objects import PredictionVector
 from utils import Postgres
+import testing.config as constants
 
 class PostgresTesting(Postgres):
 
     # Expose query method for testing
     def query(self, query_str: str, fetch_result: bool):
         return self._query(query_str, fetch_result)
+    
+    def tearDown(self):
+        self._query(f'DELETE FROM {constants.POSTGRES_TEST_ORDER_TABLE}', fetch_result=False)
+        self._query(f'DELETE FROM {constants.POSTGRES_TEST_PREDICTION_TABLE}', fetch_result=False)
+        self._query(f'DELETE FROM {constants.POSTGRES_TEST_TICKER_TABLE}', fetch_result=False)
+    
+    @classmethod
+    def setUp(cls):
+        return cls(
+            ticker_table_override=constants.POSTGRES_TEST_TICKER_TABLE,
+            order_table_override=constants.POSTGRES_TEST_ORDER_TABLE,
+            prediction_table_override=constants.POSTGRES_TEST_PREDICTION_TABLE
+        )
 
 def count_rows_from_file(file_name: str) -> int:
     with open(file_name, 'r') as f:

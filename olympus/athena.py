@@ -37,7 +37,7 @@ class Athena(PrimordialChaos):
         if self.csv_path:
             self.csv_thread: Thread = Thread(target=self.csv_loop)
         else:
-            self.db = Postgres()
+            self.postgres = Postgres()
             self.sql_thread: Thread = Thread(target=self.sql_loop)
         # Constantly fetch new tickers
         self.ticker_thread: Thread = Thread(target=self.ticker_loop, daemon=True)
@@ -231,7 +231,7 @@ class Athena(PrimordialChaos):
                     ticker: Ticker = self.queue.get()
                     if not latest or (ticker.timestamp - latest) >= self.interval:
                         latest = ticker.timestamp
-                        self.db.insert_ticker(ticker)
+                        self.postgres.insert_ticker(ticker)
         except KeyboardInterrupt:
             self.log.debug('Keyboard interrupt received. Aborting...')
             self.abort = True

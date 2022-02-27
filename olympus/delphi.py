@@ -4,11 +4,15 @@ from threading import Thread
 from time import sleep
 from typing import Tuple
 
+import utils.config as constants
+from utils import DiscordWebhook, Logger
+
+from olympus.helper_objects import PredictionVector
+from olympus.helper_objects.prediction_queue import \
+    PredictionQueueDB as PredictionQueue
 from olympus.primordial_chaos import PrimordialChaos
 from olympus.prometheus import Predict
-from olympus.utils import PredictionQueue, PredictionVector
-from utils import DiscordWebhook, Logger
-import utils.config as constants
+
 
 class Delphi(PrimordialChaos):
 
