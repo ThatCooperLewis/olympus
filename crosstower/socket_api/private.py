@@ -172,7 +172,7 @@ class OrderListener:
             self.log.error(f'Exception in order __wait_loop: {traceback.format_exc()}')
             self.discord.send_alert(f'Exception in order __wait_loop: {traceback.format_exc()}')
         finally:
-            print('Closing')
+            self.log.debug('Closing')
             loop.close()
 
     def submit_order(self, order: Order, on_submission: Callable[[Order], None], on_complete: Callable[[Order], None]):
