@@ -2,14 +2,15 @@ import traceback
 from threading import Thread
 from typing import List, Tuple
 
+import utils.config as constants
 from crosstower.models import Balance, Order
 from crosstower.socket_api.private import OrderListener, Trading
 from utils import DiscordWebhook, Logger, Postgres
-import utils.config as constants
 
 from olympus.helper_objects import PredictionVector
 from olympus.helper_objects.prediction_queue import \
     PredictionQueueDB as PredictionQueue
+from olympus.primordial_chaos import PrimordialChaos
 
 '''
 
@@ -24,13 +25,14 @@ from olympus.helper_objects.prediction_queue import \
     - Use certain BTC price in prediction history? Based on how many prediction cycles?
 '''
 
-class Hermes:
+class Hermes(PrimordialChaos):
 
     '''
     Calculate order amounts based on predictions
     '''
 
     def __init__(self, override_orderListener: OrderListener = None, override_tradingAccount: Trading = None, override_predictionQueue: PredictionQueue = None) -> None:
+        super().__init__()
         self.log = Logger.setup(__name__)
         self.discord = DiscordWebhook(self.__class__.__name__)
         self.postgres = Postgres()
@@ -54,24 +56,15 @@ class Hermes:
             self.__prediction_queue: PredictionQueue = override_predictionQueue
         else:
             self.__prediction_queue: PredictionQueue = PredictionQueue()
+        self.all_threads = [self.order_listener, self.__thread]
 
     # Public
 
-    def start(self):
-        '''
-        Run in the background, waiting for new ticker submissions
-        '''
-        self.log.debug('Starting Hermes...')
-        self.order_listener.start()
-        self.__thread.start()
-
     def stop(self):
-        '''
-        Notify all active threads to end their loops
-        '''
-        self.log.debug('Stopping Hermes...')
-        self.abort = True
-        self.order_listener.end()
+        # Reverse thread list so they shut down in the right order
+        self.all_threads.reverse()
+        super().stop()
+        self.all_threads.reverse()
 
     def submit_prediction_to_queue(self, queue_object: PredictionVector):
         '''
@@ -204,7 +197,6 @@ class Hermes:
             self.log.debug('Keyboard interrupt received, aborting')
             self.abort = True
         except Exception:
-            self.log.error(f'Error in main loop: {traceback.format_exc()}')
-            self.discord.send_alert(f'Error in main loop: {traceback.format_exc()}')
-            self.abort = True
+            self.alert_with_error('Error in main loop', traceback.format_exc())
+            self.stop()
         self.log.debug('Exiting loop')

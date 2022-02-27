@@ -6,13 +6,14 @@ from threading import Thread
 import testing.utils as utils
 import testing.config as constants
 from crosstower.models import Ticker
-
+from mock import MockDiscord
 
 class TestAthena(TestCase):
 
     def setUp(self):
         self.filename = utils.create_blank_file()
         self.athena = Athena(custom_csv_path=self.filename)
+        self.athena.discord = MockDiscord('TestAthena')
 
     def tearDown(self):
         self.athena = None

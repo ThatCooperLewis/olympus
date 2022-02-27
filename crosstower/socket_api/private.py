@@ -164,8 +164,8 @@ class OrderListener:
             self.log.debug('Starting order listener')
             loop = asyncio.new_event_loop()
             asyncio.set_event_loop(loop)
-            asyncio.ensure_future(self.__orders_coroutine())
-            loop.run_forever()
+            future = asyncio.ensure_future(self.__orders_coroutine())
+            loop.run_until_complete(future)
         except KeyboardInterrupt:
             self.__quit = True
         except Exception:
@@ -180,13 +180,19 @@ class OrderListener:
         order_object = OrderListenerObject(order, on_submission, on_complete)
         self.__queue.put(order_object)
 
+    # Make the whole class behave like a thread
+
     def start(self):
         self.__thread.start()
 
     def end(self):
         self.__quit = True
 
-    def is_running(self):
+    def join(self, timeout: int =None):
+        self.__quit = True
+        self.__thread.join(timeout=timeout)
+
+    def is_alive(self):
         return self.__thread.is_alive()
 
 

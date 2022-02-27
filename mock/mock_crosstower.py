@@ -111,9 +111,10 @@ class MockAPI:
     As of 9.7.2021, this is equipped to override the necessary params for Hermes 
     '''
 
-    def __init__(self, balance_sheet_path: str) -> None:
+    def __init__(self, balance_sheet_path: str, mock_discord) -> None:
         self.__balance_sheet = MockBalanceSheet(balance_sheet_path)
         self.trading = MockTrading(self.__balance_sheet)
         self.listener = OrderListener(
             websocket_override=MockSocket(self.__balance_sheet))
+        self.listener.discord = mock_discord
         return

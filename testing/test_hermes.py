@@ -24,7 +24,7 @@ class TestHermes(TestCase):
                 "available": 5
             }
         ])
-        self.mock_api = MockAPI(self.params_file)
+        self.mock_api = MockAPI(self.params_file, MockDiscord('MockAPIOrderListener'))
         self.postgres = PostgresTesting(
             ticker_table_override=config.POSTGRES_TEST_TICKER_TABLE, 
             order_table_override=config.POSTGRES_TEST_ORDER_TABLE,
@@ -50,7 +50,7 @@ class TestHermes(TestCase):
         self.assertEqual(self.hermes.trading_account, self.mock_api.trading)
 
     def test_submit(self):
-        self.hermes.start()
+        self.hermes.run()
         self.hermes.submit_prediction_to_queue(utils.get_basic_prediction())
         sleep(5)
         self.hermes.stop()
@@ -59,13 +59,17 @@ class TestHermes(TestCase):
         self.assertEqual(balances[1]['available'], 4.0)
 
     def test_run(self):
-        self.hermes.start()
+        self.hermes.run()
         self.assertEqual(self.hermes.abort, False)
         self.hermes.stop()
         self.assertEqual(self.hermes.abort, True)
+        self.hermes.join_threads()
+        sleep(3)
+        for thread in self.hermes.all_threads:
+            self.assertFalse(thread.is_alive())
 
     def test_order_status_update(self):
-        self.hermes.start()
+        self.hermes.run()
         prediction = utils.get_basic_prediction()
         self.hermes.submit_prediction_to_queue(prediction)
         sleep(5)
@@ -78,7 +82,7 @@ class TestHermes(TestCase):
         self.assertEqual(completed_rows[0][4], prediction.uuid)
 
     def test_prediction_queue_db(self):
-        self.hermes.start()
+        self.hermes.run()
         prediction = utils.get_basic_prediction()
         self.hermes.submit_prediction_to_queue(prediction)
         sleep(5)

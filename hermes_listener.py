@@ -13,7 +13,7 @@ class HermesOrderListener:
 
     def run(self):
         self.discord.send_alert("HermesOrderListener has started a new run.")
-        self.hermes.start()
+        self.hermes.run()
         try:
             while not self.abort:
                 pass

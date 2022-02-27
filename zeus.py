@@ -97,7 +97,7 @@ class Zeus(PrimordialChaos):
         Run Hermes in the background
         '''
         self.log.info('Starting Hermes...')
-        self.hermes.start()
+        self.hermes.run()
         last_submission_count = self.hermes.status[1]
         try:
             while not self.abort:
