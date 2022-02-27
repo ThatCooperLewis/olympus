@@ -2,7 +2,7 @@
 import json
 import os
 import uuid
-from crosstower.models import Ticker
+from crosstower.models import Ticker, Order
 
 def count_rows_from_file(file_name: str) -> int:
     with open(file_name, 'r') as f:
@@ -46,4 +46,13 @@ def get_basic_ticker() -> Ticker:
         'high': '6',
         'low': '7',
         'open': '8'
+    })
+
+def get_basic_order() -> Order:
+    return Order({
+        'symbol': 'BTCUSD',
+        'timestamp': '2010-01-01T00:00:00.000Z',
+        'quantity': '1',
+        'side': 'BUY',
+        'status': 'QUEUED'
     })

@@ -172,18 +172,18 @@ class Athena(PrimordialChaos):
         :type interval: int
         '''
         try:
-            self.last_line = self.get_latest_row()
+            self.last_ticker = self.get_latest_ticker()
             self.last_time = now()
             self.log.debug('Running watchdog loop...')
             while not self.abort:
-                current_line = self.get_latest_row()
+                current_ticker = self.get_latest_ticker()
                 time_since_update = now() - self.last_time
-                if current_line == self.last_line and time_since_update > self.timeout_threshold:
+                if current_ticker == self.last_ticker and time_since_update > self.timeout_threshold:
                     # TODO: Notify if several attempts don't work            
                     self.log.debug(f'No new data received for {self.timeout_threshold} seconds. Restarting socket...')    
                     self.restart_socket()
-                elif current_line != self.last_line:
-                    self.last_line = current_line
+                elif current_ticker != self.last_ticker:
+                    self.last_ticker = current_ticker
                     self.last_time = now()
                 sleep(5)
         except KeyboardInterrupt:
@@ -263,12 +263,12 @@ class Athena(PrimordialChaos):
             self.alert_with_error(f'[sql_loop] {err}\n{traceback.format_exc()}')
             raise err
 
-    def get_latest_row(self):
+    def get_latest_ticker(self):
         if self.csv_path:
             utils.get_newest_line(self.csv_path)
         else:
             psql = Postgres()
-            latest = psql.get_latest_rows(row_count=1)
+            latest = psql.get_latest_tickers(row_count=1)
             if type(latest) is list and len(latest) > 0:
                 return latest[0]
             else:
