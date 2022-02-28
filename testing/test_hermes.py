@@ -79,6 +79,7 @@ class TestHermes(TestCase):
         test_postgres: PostgresTesting = self.hermes.postgres
         completed_rows = test_postgres.query(f"SELECT * FROM {config.POSTGRES_TEST_ORDER_TABLE} WHERE status = 'COMPLETE'", fetch_result=True)
         self.assertEqual(len(completed_rows), 1)
+        self.assertEqual(self.hermes.submitted_order_count, 1)
         self.assertEqual(completed_rows[0][4], prediction.uuid)
 
     def test_prediction_queue_db(self):

@@ -157,8 +157,8 @@ class Hermes(PrimordialChaos):
             order.quantity += total_quantity
             self.order_listener.submit_order(order, submitted, completed)
             self.__orders = []
-        self.log.debug(
-            f'Executed order: {order.side} {order.symbol} {order.quantity}')
+        self.log.debug(f'Executed order: {order.side} {order.symbol} {order.quantity}')
+        self.submitted_order_count += 1
 
     def __order_status_processing(self, order: Order):
         self.postgres.update_order_status(order.uuid, constants.POSTGRES_STATUS_PROCESSING)
