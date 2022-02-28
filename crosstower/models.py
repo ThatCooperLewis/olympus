@@ -311,10 +311,6 @@ class Ticker:
 
     @property
     def csv_line(self) -> str:
-        utc_time = strptime(
-            self._data.get('timestamp'),
-            "%Y-%m-%dT%H:%M:%S.%fZ"
-        )
         return f"{self.ask},{self.bid},{self.last},{self.low},{self.high},{self.open},{self.volume},{self.volume_quote},{self.timestamp}\n"
 
     @property
