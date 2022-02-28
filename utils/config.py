@@ -102,3 +102,6 @@ PREDICTION_DELTA_THRESHOLD = 0.0003
 
 PREDICTION_ITERATION_COUNT = 3
 '''The number of prediction cycles to run before stopping & submitting prediction.'''
+
+PREDICTION_QUEUE_MAX_SIZE = 5
+'''The maximum number of queued predictions before alerting'''

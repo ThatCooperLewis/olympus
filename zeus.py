@@ -27,7 +27,7 @@ class Zeus(PrimordialChaos):
     Initialize and watch everything
     
     # TODO: Isolation of processes has made this class semi-obsolete
-            Might as well scrap it for parts        
+            Might as well scrap it for parts, or have it be the parent class to the scrapers        
     '''
 
     def __init__(self) -> None:
