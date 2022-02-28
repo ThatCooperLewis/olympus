@@ -33,20 +33,17 @@ class Athena(PrimordialChaos):
         # Set timestamp for last update
         self.last_time = now()
 
-        # Watch for new tickers in queue (either CSV or SQL)
-        if self.csv_path:
-            self.csv_thread: Thread = Thread(target=self.csv_loop)
-        else:
-            self.postgres = Postgres()
-            self.sql_thread: Thread = Thread(target=self.sql_loop)
         # Constantly fetch new tickers
         self.ticker_thread: Thread = Thread(target=self.ticker_loop, daemon=True)
         # Make sure lines are being added to the spreadsheet
         self.watchdog_thread: Thread = Thread(target=self.watchdog_loop)
         # Add them all to superclass so they can be started/stopped
         if self.csv_path:
+            self.csv_thread: Thread = Thread(target=self.csv_loop)
             self.all_threads = [self.csv_thread, self.ticker_thread, self.watchdog_thread]
         else:
+            self.postgres = Postgres()
+            self.sql_thread: Thread = Thread(target=self.sql_loop)
             self.all_threads = [self.sql_thread, self.ticker_thread, self.watchdog_thread]
 
         if custom_symbol:
@@ -60,15 +57,11 @@ class Athena(PrimordialChaos):
         self.timeout_threshold = self.interval * SOCKET_TIMEOUT_INTERVAL_MULTIPLIER
 
     def restart_socket(self):
+        self.log.debug('Restarting socket...')
         self.ticker_thread.join(timeout=5)
         self.connection_attempts += 1
         self.ticker_thread = Thread(target=self.ticker_loop, daemon=True)
         self.ticker_thread.start()
-        # Remove old socket connection
-        # self.all_threads.append()
-        self.log.debug('Restarting socket...')
-        # self.ticker_thread = new_thread
-        # self.ticker_thread.start()
 
     async def __subscribe(self, socket: Connection):
         '''

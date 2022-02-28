@@ -38,25 +38,15 @@ class Hermes(PrimordialChaos):
         self.postgres = Postgres()
         self.abort = False
         self.__orders: List[Order] = []
-        self.__thread: Thread = Thread(target=self.__main_loop, args=())
+        self.__main_thread: Thread = Thread(target=self.__main_loop, args=())
         self.submitted_order_count = 0 # Used for tracking activity status
-        if override_orderListener:
-            self.log.debug('Overriding order listener')
-            self.order_listener: OrderListener = override_orderListener
-        else:
-            self.order_listener: OrderListener = OrderListener()
-
-        if override_tradingAccount:
-            self.log.debug('Overriding trading account')
-            self.trading_account: Trading = override_tradingAccount
-        else:
-            self.trading_account: Trading = Trading()
-
-        if override_predictionQueue:
-            self.__prediction_queue: PredictionQueue = override_predictionQueue
-        else:
-            self.__prediction_queue: PredictionQueue = PredictionQueue()
-        self.all_threads = [self.order_listener, self.__thread]
+        
+        self.order_listener: OrderListener = override_orderListener if override_orderListener is not None else OrderListener()
+        self.trading_account: Trading = override_tradingAccount if override_tradingAccount else Trading()
+        self.prediction_queue: PredictionQueue = override_predictionQueue if override_predictionQueue else PredictionQueue(self.postgres)
+        
+        # Order listener is not itself a thread, but is a wrapper for a thread
+        self.all_threads = [self.order_listener, self.__main_thread]
 
     # Public
 
@@ -70,18 +60,18 @@ class Hermes(PrimordialChaos):
         '''
         Submit a new PredictionVector to the queue, starting a new order process
         '''
-        self.__prediction_queue.put(queue_object)
+        self.prediction_queue.put(queue_object)
     
     @property
     def status(self) -> Tuple[int, int]:
         '''
         Returns the size of the prediction queue, and the total number of orders submitted. 
         '''
-        return self.__prediction_queue.size, self.submitted_order_count
+        return self.prediction_queue.size, self.submitted_order_count
 
     @property
     def queue(self) -> PredictionQueue:
-        return self.__prediction_queue
+        return self.prediction_queue
 
     # Private
 
@@ -184,15 +174,15 @@ class Hermes(PrimordialChaos):
         self.log.debug('Starting loop')
         try:
             while not self.abort:
-                if self.__prediction_queue.size > 0:
-                    prediction = self.__prediction_queue.get()
+                if self.prediction_queue.size > 0:
+                    prediction = self.prediction_queue.get()
                     self.log.debug('Got prediction from queue')
                     balances = self.trading_account.get_trading_balance(
                         [constants.CRYPTO_SYMBOL, constants.FIAT_SYMBOL])
                     order = self.__create_order(prediction, balances)
                     if order:
                         self.__submit_order(order)
-                    self.__prediction_queue.close(prediction)
+                    self.prediction_queue.close(prediction)
         except KeyboardInterrupt:
             self.log.debug('Keyboard interrupt received, aborting')
             self.abort = True
