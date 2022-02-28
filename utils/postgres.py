@@ -82,13 +82,13 @@ class Postgres:
 
     def insert_order(self, order: Order):
         query = f"""INSERT INTO {self.order_table_name} {constants.POSTGRES_ORDER_COLUMNS}
-        VALUES ({now()}, {order.quantity}, '{order.side}', '{constants.POSTGRES_STATUS_QUEUED}', '{order.uuid}')"""
+        VALUES ({int(now())}, {order.quantity}, '{order.side}', '{constants.POSTGRES_STATUS_QUEUED}', '{order.uuid}')"""
         self._query(query, False)
 
     def insert_prediction_vector(self, prediction_vector: PredictionVector):
         history = self.__convert_prediction_history_to_string(prediction_vector.prediction_history)
         query = f"""INSERT INTO {self.prediction_table_name} {constants.POSTGRES_PREDICTION_COLUMNS}
-        VALUES ({now()}, {prediction_vector.timestamp}, {prediction_vector.weight}, {history}, '{constants.POSTGRES_STATUS_QUEUED}', '{prediction_vector.uuid}')"""
+        VALUES ({int(now())}, {prediction_vector.timestamp}, {prediction_vector.weight}, {history}, '{constants.POSTGRES_STATUS_QUEUED}', '{prediction_vector.uuid}')"""
         self._query(query, False)
 
     # Public Methods - SELECT

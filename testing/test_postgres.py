@@ -45,7 +45,7 @@ class TestPostgres(TestCase):
         rows = self.postgres.get_queued_orders()
         self.assertEqual(len(rows), 1)
         first_order = rows[0]
-        self.assertAlmostEqual(first_order.timestamp, now(), delta=3)
+        self.assertAlmostEqual(first_order.timestamp, int(now()), delta=3)
         self.assertEqual(first_order.quantity, order.quantity)
         self.assertEqual(first_order.side, order.side)
         self.assertEqual(first_order.status, 'QUEUED')
@@ -57,7 +57,7 @@ class TestPostgres(TestCase):
         rows = self.postgres.get_queued_predictions()
         self.assertEqual(len(rows), 1)
         first_prediction = rows[0]
-        self.assertAlmostEqual(first_prediction.timestamp, now(), delta=3)
+        self.assertAlmostEqual(first_prediction.timestamp, int(now()), delta=3)
         self.assertEqual(first_prediction.prediction_timestamp, prediction.timestamp)
         self.assertEqual(first_prediction.weight, prediction.weight)
         self.assertEqual(first_prediction.uuid, prediction.uuid)
