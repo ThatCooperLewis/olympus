@@ -47,6 +47,9 @@ TICKER_INTERVAL = 60  # seconds
 SOCKET_TIMEOUT_INTERVAL_MULTIPLIER = 2
 '''Multiplies the TICKER_INTERVAL for length of time without any new data from ticker scraper before we attempt a socket reconnect'''
 
+DEFAULT_CSV_HEADERS = 'price,bid,last,low,high,open,volume,volumeQuote,timestamp\n'
+'''The default headers to use when creating a new ticker/prediction CSV file'''
+
 ################# Trading #################
 
 MAX_TRADE_PERCENTAGE = .2
