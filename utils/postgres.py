@@ -29,25 +29,26 @@ class PostgresCursor:
 class PostgresOrder:
 
     def __init__(self, data: tuple) -> None:
-        self.timestamp: int = data[0]
-        self.quantity: float = data[1]
-        self.side: str = data[2]
-        self.status: str = data[3]
-        self.uuid: str = data[4]
+        self.timestamp: int = int(data[0])
+        self.quantity: float = float(data[1])
+        self.side: str = str(data[2])
+        self.status: str = str(data[3])
+        self.uuid: str = str(data[4])
 
 
 class PostgresTicker:
 
     def __init__(self, data: tuple) -> None:
-        self.timestamp: int = data[0]
-        self.ask: float = data[1]
-        self.bid: float = data[2]
-        self.last: float = data[3]
-        self.low: float = data[4]
-        self.high: float = data[5]
-        self.open: float = data[6]
-        self.volume: float = data[7]
-        self.volume_quote: float = data[8]
+        self.timestamp: int = int(data[0])
+        self.ask: float = float(data[1])
+        self.bid: float = float(data[2])
+        self.last: float = float(data[3])
+        self.low: float = float(data[4])
+        self.high: float = float(data[5])
+        self.open: float = float(data[6])
+        self.volume: float = float(data[7])
+        self.volume_quote: float = float(data[8])
+        self.csv_line: str = f"{self.ask},{self.bid},{self.last},{self.low},{self.high},{self.open},{self.volume},{self.volume_quote},{self.timestamp}\n"
 
 class PostgresPredictionVector:
 
@@ -99,7 +100,7 @@ class Postgres:
         :param row_count: The number of rows to return
         :return: A list of PostgresTicker objects
         """
-        query = f"SELECT * FROM {self.ticker_table_name} ORDER BY timestamp DESC LIMIT {row_count}"
+        query = f"SELECT * FROM {self.ticker_table_name} ORDER BY timestamp ASC LIMIT {row_count}"
         result = self._query(query, True)
         if type(result) is list:
             result.reverse()
