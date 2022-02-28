@@ -3,9 +3,10 @@ from queue import Queue
 from threading import Thread
 from time import sleep
 from typing import Tuple
+from uuid import uuid4
 
 import utils.config as constants
-from utils import DiscordWebhook, Logger
+from utils import DiscordWebhook, Logger, Postgres
 
 from olympus.helper_objects import PredictionVector
 from olympus.helper_objects.prediction_queue import \
@@ -22,20 +23,31 @@ class Delphi(PrimordialChaos):
 
     def __init__(
         self,
-        csv_path: str,
         model_path: str,
         params_path: str,
-        iteration_length: int,
-        prediction_queue: PredictionQueue,
+        override_sql_mode_with_csv_path: str = None,
+        override_prediction_queue: PredictionQueue = None,
+        override_iteration_length: int = None,
     ) -> None:
         super().__init__()
         self.log = Logger.setup(__name__)
         self.discord = DiscordWebhook('Delphi')
-        self.csv_path = csv_path
-        self.tmp_csv_path = csv_path.replace('.csv', '_tmp.csv')
+        if override_sql_mode_with_csv_path:
+            # CSV MODE
+            # Instead of generating a CSV from the SQL database, use a local CSV
+            self.sql_mode = False
+            self.postgres = None
+            self.csv_path = override_sql_mode_with_csv_path
+            self.tmp_csv_path = self.__generate_tmp_filename(include_original_name=self.csv_path)
+        else:
+            # SQL MODE
+            # Generate data for the tmp CSV using the SQL database
+            self.postgres = Postgres()
+            self.sql_mode = True
+            self.tmp_csv_path = self.__generate_tmp_filename()
 
         with open(params_path) as file:
-            params = json.load(file)
+            params: dict = json.load(file)
             self.seq_len = params.get('seq_len')
             if not self.seq_len:
                 self.log.error('No seq_len in params file')
@@ -48,38 +60,65 @@ class Delphi(PrimordialChaos):
             params=params
         )
 
-        self.iterations = constants.PREDICTION_ITERATION_COUNT
+        self.iterations = override_iteration_length if override_iteration_length else constants.PREDICTION_ITERATION_COUNT
         self.delta_threshold = constants.PREDICTION_DELTA_THRESHOLD
         self.interval_size = constants.TICKER_INTERVAL
 
-        self.prediction_queue = prediction_queue
-        self.primary_thread: Thread = Thread(target=self.__threaded_loop)
+        self.prediction_queue: PredictionQueue = override_prediction_queue if override_prediction_queue else PredictionQueue(override_postgres=self.postgres)
+        self.abort = False
+        self.primary_thread: Thread = Thread(target=self.__primary_loop)
         self.all_threads = [self.primary_thread]
 
-    def __get_current_data_from_csv(self) -> Tuple[float, int]:
+    def __fetch_new_data_from_csv(self) -> Tuple[float, int]:
         with open(self.csv_path, 'r') as file:
             rows = file.readlines()
             file.close()
 
-        tmp_rows = [rows[0]]
+        tmp_rows = [constants.DEFAULT_CSV_HEADERS]
         for index in range(-100, 0):
             # Remove newlines
-            row = rows[index]
-            if index == -1:
-                row = row.strip()
+            row = rows[index].strip() if index == -1 else rows[index]
             tmp_rows.append(row)
 
+        self.__create_tmp_csv_with_lines(tmp_rows)
+
+        latest_ticker = tmp_rows[-1]
+        latest_price = float(latest_ticker.split(',')[0])
+        latest_timestamp = int(latest_ticker.split(',')[-1])
+
+        return latest_price, latest_timestamp
+    
+    def __fetch_new_data_from_psql(self) -> Tuple[float, int]:
+        rows = self.postgres.get_latest_tickers(row_count=100)
+        tmp_rows = [constants.DEFAULT_CSV_HEADERS]
+        
+        for index, ticker in enumerate(rows):
+            row = ticker.csv_line.strip() if index == len(rows) - 1 else ticker.csv_line
+            tmp_rows.append(row)
+        
+        self.__create_tmp_csv_with_lines(tmp_rows)
+        latest_ticker = rows[-1]
+        return latest_ticker.ask, latest_ticker.timestamp
+
+    def __latest_data_handler(self) -> Tuple[float, int]:
+        if self.sql_mode:
+            return self.__fetch_new_data_from_psql()
+        else:
+            return self.__fetch_new_data_from_csv()
+
+    def __generate_tmp_filename(self, include_original_name: str = None) -> str:
+        short_uuid = uuid4().hex[:8] 
+        if include_original_name:
+            return include_original_name.replace('.csv', f'_tmp_{short_uuid}.csv')
+        else:
+            return 'delphi_tmp_' + short_uuid + '.csv'
+
+    def __create_tmp_csv_with_lines(self, lines: list):
         with open(self.tmp_csv_path, 'w+') as file:
-            file.writelines(tmp_rows)
+            file.writelines(lines)
             file.close()
 
-        last_row = tmp_rows[-1]
-        price = float(last_row.split(',')[0])
-        timestamp = int(last_row.split(',')[-1])
-
-        return price, timestamp
-
-    def __add_prediction_to_csv(self, prediction: float, timestamp: int):
+    def __add_prediction_to_tmp_csv(self, prediction: float, timestamp: int):
         with open(self.tmp_csv_path, 'a') as file:
             # Training model only cares about first column
             file.write(
@@ -104,24 +143,24 @@ class Delphi(PrimordialChaos):
             return -1
         return eval
 
-    def __threaded_loop(self):
+    def __primary_loop(self):
         self.log.debug('Starting loop')
         while not self.abort:
             self.log.debug('Starting iteration')
-            current_price, timestamp = self.__get_current_data_from_csv()
-            prediction_ts = timestamp
             predictions = []
-            self.log.debug('Got CSV data')
+            current_price, timestamp = self.__latest_data_handler()
+            self.log.debug('Got latest data')
             
             for i in range(self.iterations):
                 self.log.debug(f'Starting iteration {i}')
-                prediction_ts += self.interval_size
-                predictions.append(self.predictor.run())
-                self.__add_prediction_to_csv(
+                timestamp += self.interval_size
+                predictions.append(self.predictor.make_prediction())
+                self.__add_prediction_to_tmp_csv(
                     prediction=round(predictions[i], 2),
-                    timestamp=prediction_ts
+                    timestamp=timestamp
                 )
-
+                
+            self.log.debug('Finished iterations, adding to PredictionQueue')
             self.prediction_queue.put(
                 PredictionVector(
                     weight=self.__weigh_price_delta_against_threshold(
@@ -129,19 +168,21 @@ class Delphi(PrimordialChaos):
                         current=current_price
                     ),
                     predictions=predictions,
-                    timestamp=prediction_ts
+                    timestamp=timestamp
                 )
             )
             self.log.debug('Submitted prediction to queue')
 
+            # TODO: Handle this by checking time since last prediction
             sleep(self.interval_size + self.iterations)
         self.log.debug('Exiting loop')
 
 
 if __name__ == "__main__":
-    Delphi(
-        csv_path='crosstower-btc.csv',
-        model_path='results/1617764061 - 0.0002/model.h5',
-        params_path='results/1617764061 - 0.0002/params.json',
-        iteration_length=3
-    ).run()
+    pass
+    # Delphi(
+    #     csv_path='crosstower-btc.csv',
+    #     model_path='results/1617764061 - 0.0002/model.h5',
+    #     params_path='results/1617764061 - 0.0002/params.json',
+    #     iteration_length=3
+    # ).run()

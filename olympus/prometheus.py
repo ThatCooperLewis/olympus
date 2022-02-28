@@ -210,7 +210,11 @@ class Model:
 
 class Predict(Model):
 
-    def run(self) -> float:
+    def make_prediction(self) -> float:
+        '''
+        Process the latest data from CSV and make a prediction.
+        Returns the prediction as a float.
+        '''
         self.intake_preprocess()
         result = self.predict()[0][0]
         return float(result)

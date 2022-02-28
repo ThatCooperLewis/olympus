@@ -1,6 +1,7 @@
 from queue import Queue
 from threading import Thread
 from time import sleep
+from time import time as now
 from unittest import TestCase
 
 from olympus.delphi import Delphi
@@ -17,39 +18,70 @@ class TestDelphi(TestCase):
         self.postgres = PostgresTesting.setUp()
         self.queue = PredictionQueue(override_postgres=self.postgres)
         self.delphi = Delphi(
-            csv_path='testing/test_files/test_data.csv',
             model_path='testing/test_files/test_model.h5',
             params_path='testing/test_files/test_params.json',
-            iteration_length=3,
-            prediction_queue=self.queue
+            override_sql_mode_with_csv_path='testing/test_files/test_data.csv',
+            override_prediction_queue=self.queue,
+            override_iteration_length=3
         )
         self.delphi.interval_size = 3
 
     def tearDown(self):
+        utils.delete_file(self.delphi.tmp_csv_path)
         self.delphi = None
         self.postgres.tearDown()
-        utils.delete_file('testing/test_files/test_data_tmp.csv')
 
     def test_init(self):
         self.assertEqual(self.delphi.csv_path, 'testing/test_files/test_data.csv')
-        self.assertEqual(self.delphi.tmp_csv_path, 'testing/test_files/test_data_tmp.csv')
+        self.assertEqual(self.delphi.tmp_csv_path[:32], 'testing/test_files/test_data_tmp')
+        self.assertEqual(self.delphi.tmp_csv_path[-4:], '.csv')
         self.assertEqual(self.delphi.iterations, 3)
-        self.assertEqual(self.delphi.abort, False)
-        self.assertEqual(self.delphi.predictor.csv_path, 'testing/test_files/test_data_tmp.csv')
+        self.assertFalse(self.delphi.abort)
+        self.assertEqual(self.delphi.predictor.csv_path[:32], 'testing/test_files/test_data_tmp')
         self.assertEqual(self.delphi.seq_len, 18)
+        self.assertFalse(self.delphi.sql_mode)
         self.assertEqual(self.delphi.delta_threshold, 0.0003)
+
+    def test_sql_init(self):
+        sql_delphi = Delphi(
+            model_path='testing/test_files/test_model.h5',
+            params_path='testing/test_files/test_params.json',
+            override_prediction_queue=self.queue,
+            override_iteration_length=3
+        )
+        self.assertTrue(sql_delphi.sql_mode)
+        self.assertFalse(sql_delphi.abort)
+        self.assertEqual(len(sql_delphi.tmp_csv_path), 23)
+        utils.delete_file(sql_delphi.tmp_csv_path)
 
     def test_run_loop(self):
         self.delphi.run()
-        # Wait for the queue to fill up.
-        for i in range(5):
-            sleep(3)
-            if self.queue.size > 0:
-                break
+        self.__wait_for_queue_to_fill()
         self.assertTrue(self.queue.size > 0)
         self.delphi.stop()
         sleep(3)
         self.assertEqual(utils.count_rows_from_file(self.delphi.tmp_csv_path), 104)
+        self.assertEqual(self.__get_first_line_from_file(self.delphi.tmp_csv_path), 'price,bid,last,low,high,open,volume,volumeQuote,timestamp\n')
+
+    def test_run_loop_sql_mode(self):
+        self.delphi.sql_mode = True
+        self.delphi.postgres = PostgresTesting(
+            ticker_table_override=None, # Utilize real tickers
+            order_table_override=constants.POSTGRES_TEST_ORDER_TABLE,
+            prediction_table_override=constants.POSTGRES_TEST_PREDICTION_TABLE
+        )
+        self.delphi.run()
+        self.__wait_for_queue_to_fill()
+        self.assertTrue(self.queue.size > 0)
+        self.delphi.stop()
+        postgres: PostgresTesting = self.delphi.postgres
+        predictions_in_db = postgres.get_queued_predictions()
+        prediction = predictions_in_db[0]
+        self.assertEqual(len(predictions_in_db), 1)
+        self.assertEqual(prediction.status, 'QUEUED')
+        self.assertAlmostEqual(prediction.timestamp, int(now()), delta=3)
+        self.assertEqual(utils.count_rows_from_file(self.delphi.tmp_csv_path), 104)
+        self.assertEqual(self.__get_first_line_from_file(self.delphi.tmp_csv_path), 'price,bid,last,low,high,open,volume,volumeQuote,timestamp\n')
 
     def test_superclass(self):
         self.delphi.run()
@@ -57,3 +89,14 @@ class TestDelphi(TestCase):
         self.delphi.join_threads()
         sleep(5)
         self.assertFalse(self.delphi.primary_thread.is_alive())
+
+    def __get_first_line_from_file(self, filename: str):
+        with open(filename, 'r') as file:
+            return file.readline()
+
+    def __wait_for_queue_to_fill(self):
+        for i in range(5):
+            sleep(3)
+            if self.queue.size > 0:
+                return
+        self.fail("Queue did not fill after 15 seconds")
