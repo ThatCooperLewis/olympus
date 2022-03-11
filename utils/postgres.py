@@ -100,7 +100,7 @@ class Postgres:
         :param row_count: The number of rows to return
         :return: A list of PostgresTicker objects
         """
-        query = f"SELECT * FROM {self.ticker_table_name} ORDER BY timestamp ASC LIMIT {row_count}"
+        query = f"SELECT * FROM {self.ticker_table_name} ORDER BY timestamp DESC LIMIT {row_count}"
         result = self._query(query, True)
         if type(result) is list:
             result.reverse()
@@ -126,6 +126,18 @@ class Postgres:
         query = f"""SELECT * FROM {self.prediction_table_name} WHERE status = 'QUEUED' ORDER BY timestamp ASC"""
         result = self._query(query, True)
         return list(map(self.__convert_result_to_prediction, result))
+    
+    def get_ticker_count_for_last_hour(self) -> int:
+        """
+        Get the number of tickers in the last hour
+        :return: The number of tickers in the last hour
+        """
+        latest_timestamp = self.get_latest_tickers(1)[0].timestamp
+        print(f'latest_timestamp: {latest_timestamp}')
+        print(f'first_timestamp: {latest_timestamp - 3600}')
+        query = f"""SELECT COUNT(*) FROM ticker_feed WHERE timestamp > {latest_timestamp - 3600}"""
+        result = self._query(query, True)
+        return result[0][0]
 
     # Public Methods - UPDATE
 
