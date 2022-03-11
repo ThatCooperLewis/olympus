@@ -8,8 +8,6 @@ class TickerScraper:
         self.discord = DiscordWebhook(self.__class__.__name__)
         self.athena = Athena(custom_interval=60)
 
-    # TODO: Use the run method from Zeus
-
     def run(self) -> None:
         self.discord.send_status("TickerScraper has started a new run.")
         self.athena.run(headless=True)

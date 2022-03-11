@@ -12,8 +12,8 @@ class TickerMonitor:
 
     def __init__(self) -> None:
         self.postgres = Postgres()
-        self.discord = DiscordWebhook('AthenaMonitor')
-        self.log = Logger.setup("AthenaMonitor")
+        self.discord = DiscordWebhook('TickerMonitor')
+        self.log = Logger.setup("TickerMonitor")
         self.interval_multiplier_threshhold = 2
         self.abort = False
 
@@ -64,5 +64,5 @@ if __name__ == "__main__":
         monitor.stop()
         monitor.log.debug('KeyboardInterrupt')
     except Exception as e:
-        discord = DiscordWebhook('AthenaMonitor')
+        discord = DiscordWebhook('TickerMonitor')
         discord.send_alert(f"Something has gone horribly wrong: {e}")
