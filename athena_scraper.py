@@ -11,7 +11,7 @@ class TickerScraper:
     # TODO: Use the run method from Zeus
 
     def run(self) -> None:
-        self.discord.send_alert("TickerScraper has started a new run.")
+        self.discord.send_status("TickerScraper has started a new run.")
         self.athena.run(headless=True)
 
 if __name__ == '__main__':
