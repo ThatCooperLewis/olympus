@@ -1,7 +1,7 @@
 from unittest import TestCase
 import unittest
 from time import sleep
-from olympus import Athena
+from olympus.athena import Athena
 from threading import Thread
 import testing.utils as utils
 import testing.config as constants

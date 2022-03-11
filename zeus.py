@@ -4,7 +4,9 @@ from time import sleep
 from typing import List
 
 from crosstower.socket_api import OrderListener, Trading
-from olympus import Athena, Hermes, PrimordialChaos
+from olympus.athena import Athena
+from olympus.hermes import Hermes
+from olympus import PrimordialChaos
 from olympus.delphi import Delphi
 from olympus.helper_objects. prediction_queue import PredictionQueueDB as PredictionQueue
 from utils import Logger, DiscordWebhook

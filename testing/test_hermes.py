@@ -3,7 +3,7 @@ from unittest import TestCase
 
 from mock import MockCrosstowerAPI as MockAPI
 from mock import MockDiscord
-from olympus import Hermes
+from olympus.hermes import Hermes
 from olympus.helper_objects import PredictionVector
 from olympus.helper_objects.prediction_queue import PredictionQueueDB
 
