@@ -1,7 +1,7 @@
 from utils import Logger, DiscordWebhook
 from olympus.athena import Athena
 
-class AthenaTickerScraper:
+class TickerScraper:
 
     def __init__(self) -> None:
         self.log = Logger.setup(self.__class__.__name__)
@@ -11,11 +11,11 @@ class AthenaTickerScraper:
     # TODO: Use the run method from Zeus
 
     def run(self) -> None:
-        self.discord.send_alert("AthenaTickerScraper has started a new run.")
+        self.discord.send_alert("TickerScraper has started a new run.")
         self.athena.run(headless=True)
 
 if __name__ == '__main__':
-    scraper = AthenaTickerScraper()
+    scraper = TickerScraper()
     scraper.run()
     try:
         while True:
