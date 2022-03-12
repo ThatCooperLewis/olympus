@@ -6,7 +6,7 @@ from olympus.primordial_chaos import PrimordialChaos
 from utils import DiscordWebhook, Logger
 
 
-class HermesOrderListener:
+class OrderListener:
 
     def __init__(self) -> None:
         self.log = Logger.setup(self.__class__.__name__)
@@ -14,12 +14,11 @@ class HermesOrderListener:
         self.hermes = Hermes()
         self.abort = False
 
-    # TODO: Use the run method from Zeus
-
     def run(self):
-        self.discord.send_alert("HermesOrderListener has started a new run.")
+        self.discord.send_alert("OrderListener has started a new run.")
         self.hermes.run()
         last_submission_count = self.hermes.status[1]
+        # TODO: move this to monitor service
         try:
             while not self.abort:
                 queue_size, submission_count = self.hermes.status
@@ -32,7 +31,7 @@ class HermesOrderListener:
         except KeyboardInterrupt:
             self.abort = True
             self.hermes.stop()
-            self.discord.send_alert("HermesOrderListener has stopped (KeyboardInterrupt).")
+            self.discord.send_alert("OrderListener has stopped (KeyboardInterrupt).")
 
     # TODO: Move to shared class.... maybe have this conform to Zeus?
     def handle_timeout(self, olympian: PrimordialChaos):
@@ -43,4 +42,4 @@ class HermesOrderListener:
         return 
 
 if __name__ == '__main__':
-    HermesOrderListener().run()
+    OrderListener().run()
