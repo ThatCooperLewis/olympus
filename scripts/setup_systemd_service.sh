@@ -8,16 +8,20 @@
 
 
 # Move and set permissions
-sudo cp -rf services/systemd etc/systemd/system/$1
-sudo chmod 644 etc/systemd/system/$1
+echo "Moving service to /etc/systemd/system..."
+sudo cp -rf services/systemd etc/systemd/systemd/$1
+sudo chmod 644 etc/systemd/systemd/$1
 
+echo "Stopping old service..."
+sudo systemctl stop $1
 
 # Configure systemd
+echo "Configuring systemd..."
 sudo systemctl daemon-reload
 sudo systemctl start $1
 sudo systemctl enable $1
 
 
-# Wait for startup and check status
+echo "Waiting for initialization..."
 sleep 5
 sudo systemctl status $1
