@@ -16,11 +16,15 @@ echo "Stopping old service..."
 sudo systemctl stop $1
 
 # Configure systemd
-echo "Configuring systemd..."
+echo "Calling daemon-reload..."
 sudo systemctl daemon-reload
+
+echo "Starting service..."
 sudo systemctl start $1
 sudo systemctl enable $1
 
 echo "Waiting for initialization..."
 sleep 5
 sudo systemctl status $1
+
+echo "Done. New service started & enabled."
