@@ -7,7 +7,6 @@
 # ./scripts/setup_systemd_service.sh test.service
 
 
-# Move and set permissions
 echo "Moving service to /etc/systemd/system..."
 sudo cp -rf services/systemd/$1 /etc/systemd/system/$1
 sudo chmod 644 /etc/systemd/system/$1
@@ -15,7 +14,6 @@ sudo chmod 644 /etc/systemd/system/$1
 echo "Stopping old service..."
 sudo systemctl stop $1
 
-# Configure systemd
 echo "Calling daemon-reload..."
 sudo systemctl daemon-reload
 
