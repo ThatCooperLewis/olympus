@@ -21,7 +21,6 @@ sudo systemctl daemon-reload
 sudo systemctl start $1
 sudo systemctl enable $1
 
-
 echo "Waiting for initialization..."
 sleep 5
 sudo systemctl status $1
