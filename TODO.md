@@ -35,19 +35,16 @@ Hermes followup
 
 
 
-UPDATE 3/10
-
-Pi's are nearing perfection
-Scraper needs to be converted to Service
-https://linuxconfig.org/how-to-run-script-on-startup-on-ubuntu-20-04-focal-fossa-server-desktop
-
-Monitor needs to be setup also
-TINY BUT NEEDED TODOS BEFORE MAKING SERVICE
-- Rename files away from athena nomenclature
-- Rename 'startup' folder to 'scripts' 
 - How easy would it be to log errors to file?
-- What would it take to run a nested file? Can we get these athena_ files in their own spot? meta script?
-- Get git commit in "starting" status update
 
+UPDATE 3/12
+- Apple TV needs to be setup, put monitors on that
+
+1. RaspPi 4 8GB - Postgres Server
+2. RaspPi 4 2GB - Hermes Order Maker
+3. RaspPi 3 - Athena Scraper
+4. Apple TV - DB Monitor 
 
 Hermes listener script is after this
+Then, make the ticker_monitor be a general DB monitor
+Change hostnames of pi's to match, as well as the pi aliases (ssh-postgres, ssh-athena, ssh-monitor)
