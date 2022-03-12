@@ -9,8 +9,8 @@
 
 # Move and set permissions
 echo "Moving service to /etc/systemd/system..."
-sudo cp -rf services/systemd/$1 etc/systemd/system/$1
-sudo chmod 644 etc/systemd/system/$1
+sudo cp -rf services/systemd/$1 /etc/systemd/system/$1
+sudo chmod 644 /etc/systemd/system/$1
 
 echo "Stopping old service..."
 sudo systemctl stop $1
