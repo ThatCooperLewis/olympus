@@ -1,5 +1,6 @@
 from utils import Logger, DiscordWebhook
 from olympus.athena import Athena
+import subprocess
 
 class TickerScraper:
 
@@ -9,7 +10,8 @@ class TickerScraper:
         self.athena = Athena(custom_interval=60)
 
     def run(self) -> None:
-        self.discord.send_status("TickerScraper has started a new run.")
+        hash = subprocess.check_output(['git', 'rev-parse', '--short', 'HEAD']).decode('ascii').strip()
+        self.discord.send_status(f"TickerScraper has started a new run. (Git hash: `{hash}`)")
         self.athena.run(headless=True)
 
 if __name__ == '__main__':

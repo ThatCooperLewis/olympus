@@ -2,7 +2,7 @@ from utils import Postgres, DiscordWebhook, Logger
 from utils.config import TICKER_INTERVAL, STATUS_UPDATE_INTERVAL
 from time import time as now
 from time import sleep
-
+import subprocess
 
 class TickerMonitor:
 
@@ -18,7 +18,8 @@ class TickerMonitor:
         self.abort = False
 
     def run(self):
-        self.discord.send_status("TickerMonitor has started a new run.")
+        hash = subprocess.check_output(['git', 'rev-parse', '--short', 'HEAD']).decode('ascii').strip()
+        self.discord.send_status(f"TickerMonitor has started a new run. (Git hash: `{hash}`)")
         self.log.debug("TickerMonitor has started a new run.")
         last_good_ticker = self.postgres.get_latest_tickers(1)[0]
         last_good_time: int = now()
