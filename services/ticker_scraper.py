@@ -13,13 +13,13 @@ class TickerScraper:
         hash = subprocess.check_output(['git', 'rev-parse', '--short', 'HEAD']).decode('ascii').strip()
         self.discord.send_status(f"TickerScraper has started a new run. (Git hash: `{hash}`)")
         self.athena.run(headless=True)
+        try:
+            while True:
+                pass
+        except KeyboardInterrupt:
+            scraper.athena.stop()
+            scraper.log.debug('KeyboardInterrupt')
 
 if __name__ == '__main__':
     scraper = TickerScraper()
     scraper.run()
-    try:
-        while True:
-            pass
-    except KeyboardInterrupt:
-        scraper.athena.stop()
-        scraper.log.debug('KeyboardInterrupt')
