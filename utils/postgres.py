@@ -77,6 +77,8 @@ class Postgres:
 
     def insert_ticker(self, ticker: Ticker):
         self.log.debug(f"Inserting ticker with timestamp: {ticker.timestamp}")
+        handler_count = self.log.handlers.__len__()
+        self.log.debug(f"Handler count: {handler_count}")
         query = f"""INSERT INTO {self.ticker_table_name} {constants.POSTGRES_TICKER_COLUMNS}
         VALUES ({ticker.timestamp}, {ticker.ask}, {ticker.bid}, {ticker.last}, {ticker.low}, {ticker.high}, {ticker.open}, {ticker.volume}, {ticker.volume_quote})"""
         self._query(query, False)
