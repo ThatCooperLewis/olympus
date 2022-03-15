@@ -44,7 +44,7 @@ UPDATE 3/12
 2. RaspPi 4 2GB - Hermes Order Maker
 3. RaspPi 3 - Athena Scraper
 4. Apple TV - DB Monitor 
-
 Hermes listener script is after this
 Then, make the ticker_monitor be a general DB monitor
 Change hostnames of pi's to match, as well as the pi aliases (ssh-postgres, ssh-athena, ssh-monitor)
+maybe have main branch be "autodeploying"? alias on servers have the service reboot after a git pull?
