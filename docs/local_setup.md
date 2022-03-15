@@ -83,8 +83,9 @@ If python3.10 isn't found, its likely `sudo apt update` warns you that it `Could
 
 Ensure `pip` and `python` are aliased to 3.10 in either `~/.bashrc` or `~/.zshrc`
 
-    alias python="python3.10"
-    alias pip="python3.10 -m pip"
+    echo "alias python=\"python3.10\"" >> ~/.bashrc
+    echo "alias pip=\"python3.10 -m pip\"" >> ~/.bashrc
+    source ~/.bashrc
 
 Setup virtual environment & install dependencies (in repo directory)
         
