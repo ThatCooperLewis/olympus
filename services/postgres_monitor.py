@@ -29,7 +29,8 @@ class PostgresMonitor:
         self.last_good_ticker_count: List[Ticker] = self.postgres.get_ticker_count()
         self.last_good_ticker_time: int = now()
         
-        self.last_good_queued_order: Order = self.postgres.get_queued_orders()[-1]
+        queued_orders = self.postgres.get_queued_orders()
+        self.last_good_queued_order: Order = queued_orders[-1] if queued_orders else None
         self.last_good_queued_order_time: int = now()
 
         self.start_time = now()
@@ -44,8 +45,8 @@ class PostgresMonitor:
             except KeyboardInterrupt:
                 self.log.debug('KeyboardInterrupt')
                 self.abort = True
-            except:
-                self.log.error("Unknown error.")
+            except Exception as e:
+                self.log.error(f"Unknown error: {e}")
                 sleep(TICKER_INTERVAL)
 
     def stop(self):
@@ -76,6 +77,9 @@ class PostgresMonitor:
             
     def __order_check(self):
         queued_orders = self.postgres.get_queued_orders()
+        if not queued_orders:
+            self.log.debug("No queued orders, continuing..")
+            return
         latest_queued_order = queued_orders[-1]
         latest_time = now()
         if latest_queued_order.uuid == self.last_good_queued_order.uuid:
