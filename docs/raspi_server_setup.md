@@ -1,4 +1,4 @@
-# RaspPi Server Installation
+# Raspberry Pi Server Installation
 
 Similar to the local setup guide, this is a walkthrough of vanilla ubuntu server -> functioning services.
 
@@ -30,4 +30,4 @@ Similar to the local setup guide, this is a walkthrough of vanilla ubuntu server
 
 ### Enable desired service
 
-    ./scripts/setup_systemd_service.sh service_name.service
+    ./scripts/setup_systemd_service.sh service_name.serviceolym
