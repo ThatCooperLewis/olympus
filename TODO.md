@@ -46,5 +46,6 @@ UPDATE 3/12
 4. Apple TV - DB Monitor 
 Hermes listener script is after this
 Then, make the ticker_monitor be a general DB monitor
-Change hostnames of pi's to match, as well as the pi aliases (ssh-postgres, ssh-athena, ssh-monitor)
 maybe have main branch be "autodeploying"? alias on servers have the service reboot after a git pull?
+- OrderListener already setup, gotta move the monitoring to the Monitor service though 
+Change hostnames of pi's to match function, as well as the pi cli aliases (ssh-postgres, ssh-athena, ssh-monitor)
