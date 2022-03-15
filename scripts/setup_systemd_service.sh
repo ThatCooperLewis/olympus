@@ -6,8 +6,8 @@
 # Append with service name
 # ./scripts/setup_systemd_service.sh test.service
 
-
-echo "Moving service to /etc/systemd/system..."
+echo "Note: Root access required to run service/systemctl"
+echo "Moving service to /etc/systemd/system"
 sudo cp -rf services/systemd/$1 /etc/systemd/system/$1
 sudo chmod 644 /etc/systemd/system/$1
 
