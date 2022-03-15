@@ -260,8 +260,7 @@ class Athena(PrimordialChaos):
         if self.csv_path:
             utils.get_newest_line(self.csv_path)
         else:
-            psql = Postgres()
-            latest = psql.get_latest_tickers(row_count=1)
+            latest = self.postgres.get_latest_tickers(row_count=1)
             if type(latest) is list and len(latest) > 0:
                 return latest[0]
             else:
