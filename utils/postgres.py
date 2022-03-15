@@ -108,6 +108,11 @@ class Postgres:
         else:
             return []
 
+    def get_ticker_count(self):
+        query = f"SELECT COUNT(*) FROM {self.ticker_table_name}"
+        result = self._query(query, True)
+        return result[0][0]
+
     # TODO: make this name like the prediction one
     def get_queued_orders(self) -> List[PostgresOrder]:
         """
@@ -133,8 +138,6 @@ class Postgres:
         :return: The number of tickers in the last hour
         """
         latest_timestamp = self.get_latest_tickers(1)[0].timestamp
-        print(f'latest_timestamp: {latest_timestamp}')
-        print(f'first_timestamp: {latest_timestamp - 3600}')
         query = f"""SELECT COUNT(*) FROM ticker_feed WHERE timestamp > {latest_timestamp - 3600}"""
         result = self._query(query, True)
         return result[0][0]
