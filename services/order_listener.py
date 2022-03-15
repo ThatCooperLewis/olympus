@@ -1,10 +1,9 @@
 from time import sleep
-
 import utils.config as constants
 from olympus.hermes import Hermes
 from olympus.primordial_chaos import PrimordialChaos
 from utils import DiscordWebhook, Logger
-
+import subprocess
 
 class OrderListener:
 
@@ -15,31 +14,15 @@ class OrderListener:
         self.abort = False
 
     def run(self):
-        self.discord.send_alert("OrderListener has started a new run.")
+        hash = subprocess.check_output(['git', 'rev-parse', '--short', 'HEAD']).decode('ascii').strip()
+        self.discord.send_alert(f"OrderListener has started a new run. (Git hash: `{hash}`)")
         self.hermes.run()
-        last_submission_count = self.hermes.status[1]
-        # TODO: move this to monitor service
         try:
-            while not self.abort:
-                queue_size, submission_count = self.hermes.status
-                if queue_size > constants.PREDICTION_QUEUE_MAX_SIZE and  last_submission_count == submission_count:
-                    self.handle_timeout(self.hermes)
-                    break
-                else:
-                    last_submission_count = submission_count
-                sleep(5)
+            while True:
+                pass
         except KeyboardInterrupt:
-            self.abort = True
             self.hermes.stop()
-            self.discord.send_alert("OrderListener has stopped (KeyboardInterrupt).")
-
-    # TODO: Move to shared class.... maybe have this conform to Zeus?
-    def handle_timeout(self, olympian: PrimordialChaos):
-        if olympian.abort:
-            self.log.debug(f'{olympian.__class__.__name__} has been aborted, ending loop')
-        else:
-            self.log.error(f'{olympian.__class__.__name__} has timed out, aborting Zeus...')
-        return 
+            self.log.debug('KeyboardInterrupt')
 
 if __name__ == '__main__':
     OrderListener().run()

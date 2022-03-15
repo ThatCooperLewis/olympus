@@ -1,5 +1,5 @@
 from matplotlib.axis import Tick
-from services import TickerMonitor, TickerScraper, OrderListener
+from services import PostgresMonitor, TickerScraper, OrderListener
 from utils import DiscordWebhook
 import sys
 
@@ -7,7 +7,7 @@ def get_service(service_name: str):
     if service_name == 'scraper':
         return TickerScraper()
     elif service_name == 'monitor':
-        return TickerMonitor()
+        return PostgresMonitor()
     elif service_name == 'orders':
         return OrderListener()
     return None

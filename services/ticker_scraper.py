@@ -17,8 +17,8 @@ class TickerScraper:
             while True:
                 pass
         except KeyboardInterrupt:
-            scraper.athena.stop()
-            scraper.log.debug('KeyboardInterrupt')
+            self.athena.stop()
+            self.log.debug('KeyboardInterrupt')
 
 if __name__ == '__main__':
     scraper = TickerScraper()

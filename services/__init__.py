@@ -1,3 +1,3 @@
-from services.ticker_monitor import TickerMonitor
+from services.postgres_monitor import PostgresMonitor
 from services.ticker_scraper import TickerScraper
 from services.order_listener import OrderListener
