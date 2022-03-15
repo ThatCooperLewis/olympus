@@ -76,16 +76,19 @@ class Postgres:
     # Public Methods - INSERT
 
     def insert_ticker(self, ticker: Ticker):
+        self.log.debug(f"Inserting ticker with timestamp: {ticker.timestamp}")
         query = f"""INSERT INTO {self.ticker_table_name} {constants.POSTGRES_TICKER_COLUMNS}
         VALUES ({ticker.timestamp}, {ticker.ask}, {ticker.bid}, {ticker.last}, {ticker.low}, {ticker.high}, {ticker.open}, {ticker.volume}, {ticker.volume_quote})"""
         self._query(query, False)
 
     def insert_order(self, order: Order):
+        self.log.debug(f"Inserting order with uuid: {order.uuid}")
         query = f"""INSERT INTO {self.order_table_name} {constants.POSTGRES_ORDER_COLUMNS}
         VALUES ({int(now())}, {order.quantity}, '{order.side}', '{constants.POSTGRES_STATUS_QUEUED}', '{order.uuid}')"""
         self._query(query, False)
 
     def insert_prediction_vector(self, prediction_vector: PredictionVector):
+        self.log.debug(f"Inserting prediction vector with uuid: {prediction_vector.uuid}")
         history = self.__convert_prediction_history_to_string(prediction_vector.prediction_history)
         query = f"""INSERT INTO {self.prediction_table_name} {constants.POSTGRES_PREDICTION_COLUMNS}
         VALUES ({int(now())}, {prediction_vector.timestamp}, {prediction_vector.weight}, {history}, '{constants.POSTGRES_STATUS_QUEUED}', '{prediction_vector.uuid}')"""
@@ -181,7 +184,8 @@ class Postgres:
         while attempt < 3:
             try:
                 with PostgresCursor(self.conn) as cursor:
-                    self.log.debug('Submitting query to Postgres: "%s"', query_str)
+                    # Too noisy
+                    # self.log.debug('Submitting query to Postgres: "%s"', query_str)
                     cursor.execute(query_str)
                     if fetch_result:
                         result = cursor.fetchall()
