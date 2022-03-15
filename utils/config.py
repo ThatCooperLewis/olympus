@@ -2,8 +2,14 @@ import logging
 
 ################# General #################
 
-LOGGING_LEVEL = logging.INFO
-'''Tells the logging module to only report messages of a certain level (INFO, DEBUG, ERROR).'''
+STREAM_LOGGING_LEVEL = logging.INFO
+'''Tells the logging module to stream messages of a certain level to the CLI (INFO, DEBUG, ERROR).'''
+
+FILE_LOGGING_LEVEL = logging.DEBUG
+'''Tells the logging module to log a certain level to local file (INFO, DEBUG, ERROR).'''
+
+LOGGING_FILENAME = 'debug-log.txt'
+'''The name of the file to send logs.'''
 
 CREDENTIALS_FILE = 'credentials.json'
 '''Contains API keys, webhook URLs, PSQL connection, etc. See readme.md for more information.'''

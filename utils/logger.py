@@ -1,5 +1,5 @@
 import logging
-from utils.config import LOGGING_LEVEL
+from utils.config import STREAM_LOGGING_LEVEL, FILE_LOGGING_LEVEL, LOGGING_FILENAME
 
 class Logger():
     '''
@@ -17,9 +17,20 @@ class Logger():
         :return: A logger object.
         '''
         logger = logging.getLogger(category_str)
+
+        # Setup CLI logging stream
         console = logging.StreamHandler()
         console_format = logging.Formatter('%(asctime)s [%(name)s] %(levelname)s: %(message)s')
         console.setFormatter(console_format)
+        console.setLevel(STREAM_LOGGING_LEVEL)
         logger.addHandler(console)
-        logger.level = LOGGING_LEVEL
+
+        # Setup file logging
+        file_format = logging.Formatter('%(asctime)s [%(name)s] %(levelname)s: %(message)s')
+        file_handler = logging.FileHandler(LOGGING_FILENAME)
+        file_handler.setFormatter(file_format)
+        file_handler.setLevel(FILE_LOGGING_LEVEL)
+        logger.addHandler(file_handler)
+        logger.level = FILE_LOGGING_LEVEL
+
         return logger

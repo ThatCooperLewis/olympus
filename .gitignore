@@ -23,6 +23,7 @@ results/
 
 # Runtime files
 run/
+debug-log.txt
 
 # IDE
 .vscode
