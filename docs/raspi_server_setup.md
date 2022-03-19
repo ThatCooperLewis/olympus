@@ -19,7 +19,7 @@ Similar to the local setup guide, this is a walkthrough of vanilla ubuntu server
 ### Add aliases to .bashrc
 
     echo "alias python=\"python3.10\"" >> ~/.bashrc
-    echo "alias python=\"python3.10 -m pip\"" >> ~/.bashrc
+    echo "alias pip=\"python3.10 -m pip\"" >> ~/.bashrc
     source ~/.bashrc
 
 ### Setup Python Environment
