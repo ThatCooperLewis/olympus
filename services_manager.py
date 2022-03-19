@@ -1,4 +1,3 @@
-from matplotlib.axis import Tick
 from services import PostgresMonitor, TickerScraper, OrderListener
 from utils import DiscordWebhook
 import sys
