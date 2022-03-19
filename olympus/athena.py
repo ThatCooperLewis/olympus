@@ -13,6 +13,9 @@ from olympus.primordial_chaos import PrimordialChaos
 from utils import Logger, DiscordWebhook, Postgres
 from websockets import connect as Connection
 
+class ConnectionException(Exception):
+    pass
+
 class Athena(PrimordialChaos):
     '''
     Scrape CrossTower API for crypto price history
@@ -91,8 +94,8 @@ class Athena(PrimordialChaos):
         '''
         final_result = None
         response = None
+        request_attempts = 0
         while True:
-            request_attempts = 0
             try:
                 response = await websocket.recv()
                 break
@@ -109,25 +112,33 @@ class Athena(PrimordialChaos):
         if response:
             final_result = utils.handle_response(response).get('params')
         else:
-            self.alert_with_error(f'[__get_response] No response received after {attempt_threshold} attempts')
+            self.alert_with_error(f'[__get_response] No response received after {attempt_threshold} attempts. Creating a new connection...')
         if final_result:
             return Ticker(final_result)
         else:
             self.log.debug('[__get_response] No final_result received from response (This is okay. Probably means no new data)')
         return None
 
-    async def scrape_coroutine(self, current_attempt):
+    async def scrape_coroutine(self, connection_attempt: int, coroutine_restart_attempt: int = 0):
         '''
         This function is a asynchronous. It creates a connection to the websocket, subscribes to the ticker channel, 
         and then waits for a response from the websocket. If the response is a ticker, it is put into the queue
         
-        :param current_attempt: The current attempt number. Used to kill old connections.
+        :param connection_attempt: The current attempt number. Used to kill old connections.
         '''
+        if coroutine_restart_attempt > 5:
+            self.alert_with_error('[scrape_coroutine] Too many coroutine restarts. Killing coroutine...')
+            return
         async with Connection(SOCKET_URI) as websocket:
             await self.__subscribe(websocket)
-            self.log.debug(f'Starting scrape attempt {current_attempt}')
-            while not self.abort and self.connection_attempts == current_attempt:
-                ticker = await self.__get_response(websocket)
+            self.log.debug(f'Starting scrape attempt {connection_attempt}, coroutine attempt {coroutine_restart_attempt}')
+            while not self.abort and self.connection_attempts == connection_attempt:
+                try:
+                    ticker = await self.__get_response(websocket)
+                except ConnectionException:
+                    self.log.debug('[scrape_coroutine] ConnectionException raised. Restarting socket...')
+                    self.scrape_coroutine(coroutine_restart_attempt+1)
+                    break
                 if not ticker:
                     continue
                 self.queue.put(ticker)
