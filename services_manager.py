@@ -19,7 +19,7 @@ if __name__ == "__main__":
             service.run()
         else:
             print('Invalid service name.')
-            print('Usage: python3 services_manager.py <scraper|monitor>')
+            print('Usage: python3 services_manager.py <scraper|monitor|orders>')
             exit(1)
     except KeyboardInterrupt:
         discord.send_status('KeyboardInterrupt halted service')

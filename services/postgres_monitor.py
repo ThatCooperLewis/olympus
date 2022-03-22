@@ -98,6 +98,7 @@ class PostgresMonitor:
             try:
                 self.discord.send_status(
                     f"**PostgresMonitor has been running for {(now() - self.start_time) / 60} minutes.**"
+                    # TODO: Order status
                     + f"\nTotal ticker count: {self.postgres.get_ticker_count()}"
                     + f"\nLatest ticker timestamp: {self.postgres.get_latest_tickers(1)[0].timestamp}"
                     + f"\nTickers stored in last hour: {self.postgres.get_ticker_count_for_last_hour()}"

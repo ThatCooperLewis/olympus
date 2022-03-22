@@ -14,6 +14,7 @@ class MarketData:
         return
 
     async def request(self, method: str, params: dict):
+        # TODO: I'm pretty this is unused, maybe because it reopens a connection every time? Maybe optional connection override?
         async with Connection(SOCKET_URI) as websocket:
             data = {
                 "method": method,

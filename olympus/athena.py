@@ -130,6 +130,16 @@ class Athena(PrimordialChaos):
         if coroutine_restart_attempt > 5:
             self.alert_with_error('[scrape_coroutine] Too many coroutine restarts. Killing coroutine...')
             return
+        
+        '''
+        HELLO FUTURE COOPER
+        Two central things here:
+        websockets might suck
+        websocket-client might be better? and its synchronous?
+        Refactor to sync methods might be necessary here
+        https://stackoverflow.com/questions/52692736/how-to-manually-close-a-websocket
+        '''
+        try_again = False
         async with Connection(SOCKET_URI) as websocket:
             await self.__subscribe(websocket)
             self.log.debug(f'Starting scrape attempt {connection_attempt}, coroutine attempt {coroutine_restart_attempt}')
@@ -138,12 +148,14 @@ class Athena(PrimordialChaos):
                     ticker = await self.__get_response(websocket)
                 except ConnectionException:
                     self.log.debug('[scrape_coroutine] ConnectionException raised. Restarting socket...')
-                    self.scrape_coroutine(coroutine_restart_attempt+1)
+                    try_again = True
                     break
                 if not ticker:
                     continue
                 self.queue.put(ticker)
-            return
+        if try_again:
+            self.scrape_coroutine(self.connection_attempts, coroutine_restart_attempt+1)
+
 
     def ticker_loop(self):
         '''

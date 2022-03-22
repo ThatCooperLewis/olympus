@@ -1,5 +1,6 @@
 import logging
 from utils.config import STREAM_LOGGING_LEVEL, FILE_LOGGING_LEVEL, LOGGING_FILENAME
+import subprocess
 
 class Logger():
     '''
@@ -34,3 +35,7 @@ class Logger():
         logger.level = FILE_LOGGING_LEVEL
 
         return logger
+    
+    @classmethod
+    def git_hash(cls):
+        return subprocess.check_output(['git', 'rev-parse', '--short', 'HEAD']).decode('ascii').strip()

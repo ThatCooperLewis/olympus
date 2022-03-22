@@ -29,23 +29,21 @@ Hermes followup
     UPDATE 2/21
 
     Delphi is formatting CSV properly!
-    ...but something is stopping the predictor from running
+    ...but something is stopping/slowing the predictor from running
     when some other thread is aborted, Delphi quickly populates the predictions.
     Need to see what's holding it up. Maybe multiproccess it, since no other threads are touching that file?
 
 
 
-- How easy would it be to log errors to file?
 
 UPDATE 3/12
 - Apple TV needs to be setup, put monitors on that
 
 1. RaspPi 4 8GB - Postgres Server
 2. RaspPi 4 2GB - Hermes Order Maker
-3. RaspPi 3 - Athena Scraper
+3. OrangePi - Athena Scraper
 4. Apple TV - DB Monitor 
-Hermes listener script is after this
-Then, make the ticker_monitor be a general DB monitor
+5. Windows NAS as WSL - Prediction Engine
+
 maybe have main branch be "autodeploying"? alias on servers have the service reboot after a git pull?
-- OrderListener already setup, gotta move the monitoring to the Monitor service though 
 Change hostnames of pi's to match function, as well as the pi cli aliases (ssh-postgres, ssh-athena, ssh-monitor)

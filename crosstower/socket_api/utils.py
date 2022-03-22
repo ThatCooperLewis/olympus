@@ -2,6 +2,8 @@ import json
 import os
 from time import strftime, localtime
 
+# TODO: Move this all to a correct spot, shouldn't be inside API
+
 def handle_response(response: str):
     response = json.loads(response)
     if response.get('error'):

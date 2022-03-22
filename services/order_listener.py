@@ -1,9 +1,5 @@
-from time import sleep
-import utils.config as constants
 from olympus.hermes import Hermes
-from olympus.primordial_chaos import PrimordialChaos
 from utils import DiscordWebhook, Logger
-import subprocess
 
 class OrderListener:
 
@@ -14,8 +10,7 @@ class OrderListener:
         self.abort = False
 
     def run(self):
-        hash = subprocess.check_output(['git', 'rev-parse', '--short', 'HEAD']).decode('ascii').strip()
-        self.discord.send_alert(f"OrderListener has started a new run. (Git hash: `{hash}`)")
+        self.discord.send_alert(f"OrderListener has started a new run. (Git hash: `{Logger.git_hash()}`)")
         self.hermes.run()
         try:
             while True:
