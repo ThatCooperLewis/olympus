@@ -8,6 +8,7 @@ Similar to the local setup guide, this is a walkthrough of vanilla ubuntu server
     eval "$(ssh-agent -s)"
     ssh-add ~/.ssh/id_ed25519
     cat ~/.ssh/id_ed25519.pub
+    git clone git@github.com:ThatCooperLewis/olympus.git
 
 ### Install Python 3.10
 
@@ -24,6 +25,7 @@ Similar to the local setup guide, this is a walkthrough of vanilla ubuntu server
 
 ### Setup Python Environment
 
+    cd olympus
     python -m venv venv
     source venv/bin/activate
     pip install -r requirements-no-cuda.txt

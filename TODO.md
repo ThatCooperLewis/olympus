@@ -36,14 +36,18 @@ Hermes followup
 
 
 
-UPDATE 3/12
-- Apple TV needs to be setup, put monitors on that
-
 1. RaspPi 4 8GB - Postgres Server
 2. RaspPi 4 2GB - Hermes Order Maker
-3. OrangePi - Athena Scraper
-4. Apple TV - DB Monitor 
+3. OrangePi - DB Monitor
+4. RaspPi 3 - Athena Scraper 
 5. Windows NAS as WSL - Prediction Engine
 
 maybe have main branch be "autodeploying"? alias on servers have the service reboot after a git pull?
 Change hostnames of pi's to match function, as well as the pi cli aliases (ssh-postgres, ssh-athena, ssh-monitor)
+
+
+IP list
+192.168.0.20    pi-postgres     Postgres Server     Raspi 4B    8GB
+192.168.0.23    pi-monitor      DB Monitor          OrangePi    1GB
+192.168.0.24    pi-hermes       Hermes              Raspi 4B    2GB
+192.168.0.21    pi-athena       Athena Scraper      Raspi 3B    1GB
