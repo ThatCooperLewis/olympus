@@ -43,7 +43,7 @@ class TestAthena(TestCase):
     def test_ticker_loop(self):
         thread = Thread(target=self.athena.ticker_loop, daemon=True)
         thread.start()
-        sleep(2)
+        sleep(5)
         self.assertTrue(self.athena.queue.qsize() > 0)
         self.athena.abort = True
         thread.join()
