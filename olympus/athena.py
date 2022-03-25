@@ -121,32 +121,30 @@ class Athena(PrimordialChaos):
             self.log.debug('[__get_response] No final_result received from response (This is okay. Probably means no new data)')
         return None
 
-    def __ticker_loop_attempt(self, connection_attempt: int, coroutine_restart_attempt: int = 0):
+    def __ticker_loop_attempt(self, connection_attempt: int, socket_restart_attempt: int = 0):
         '''
         This function is a asynchronous. It creates a connection to the websocket, subscribes to the ticker channel, 
         and then waits for a response from the websocket. If the response is a ticker, it is put into the queue
         
         :param connection_attempt: The current attempt number. Used to kill old connections.
         '''
-        if coroutine_restart_attempt > 5:
-            self.alert_with_error('[__ticker_loop_attempt] Too many coroutine restarts. Killing coroutine...')
-            self.abort = True
-            return
-        try_again = False
         self.__subscribe()
-        self.log.debug(f'Starting scrape attempt {connection_attempt}, coroutine attempt {coroutine_restart_attempt}')
+        self.log.debug(f'Starting scrape attempt {connection_attempt}, coroutine attempt {socket_restart_attempt}')
         while not self.abort and self.connection_attempts == connection_attempt:
+            if socket_restart_attempt > 5:
+                self.alert_with_error('[__ticker_loop_attempt] Too many coroutine restarts. Killing coroutine...')
+                self.abort = True
+                return
             try:
                 ticker = self.__get_response()
             except ConnectionException:
                 self.log.debug('[__ticker_loop_attempt] ConnectionException raised. Restarting socket...')
-                try_again = True
-                break
+                socket_restart_attempt += 1
+                self.websocket.reconnect()
+                continue
             if not ticker:
                 continue
             self.queue.put(ticker)
-        if try_again:
-            self.__ticker_loop_attempt(self.connection_attempts, coroutine_restart_attempt+1)
 
 
     def ticker_loop(self):
@@ -156,6 +154,7 @@ class Athena(PrimordialChaos):
         '''
         try:
             self.log.debug('Starting ticker loop...')
+            # TODO: Just move this method into here
             self.__ticker_loop_attempt(int(self.connection_attempts))
         except KeyboardInterrupt:
             self.log.debug('Keyboard interrupt received. Aborting...')
