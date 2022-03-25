@@ -6,7 +6,7 @@ from utils.config import DEFAULT_CURRENCY, DEFAULT_SYMBOL, SOCKET_URI
 from crosstower.models import Symbol
 from crosstower.socket_api import utils
 from websockets import connect as Connection
-
+from websocket import create_connection, WebSocket
 
 class MarketData:
 
@@ -43,3 +43,41 @@ class MarketData:
         return Symbol(symbol)
 
 
+class TickerWebsocket:
+
+    def __init__(self, symbol: str = DEFAULT_SYMBOL, uri: str = SOCKET_URI) -> None:
+        self.symbol = symbol
+        self.uri = uri
+        self.connection: WebSocket = None
+
+    def subscribe(self) -> bool:
+        '''
+        Starts subscription to ticker stream, returns True if successful
+        '''
+        self.connection = create_connection(self.uri)
+        self.connection.send(json.dumps({
+            "method": "subscribeTicker",
+            "params": {"symbol": self.symbol},
+            "id": int(now())
+        }))
+        result = self.connection.recv()
+        return json.loads(result).get('result')
+
+    def reconnect(self) -> bool:
+        '''
+        Closes existing socket connection, if it exists, and attempts to reconnect.
+        Returns True if successful.
+        '''
+        if self.connection:
+            self.connection.close()
+        return self.subscribe()
+
+    def get_ticker(self) -> str:
+        '''
+        Synchronously retrieves ticker data from the queue.
+        '''
+        return self.connection.recv()
+
+    def stop(self) -> None:
+        self.connection.close()
+    

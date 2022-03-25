@@ -1,17 +1,18 @@
-import asyncio
-import json
+import traceback
 from queue import Queue
 from threading import Thread
 from time import sleep
 from time import time as now
-import traceback
 
-from utils.config import DEFAULT_SYMBOL, SOCKET_URI, SOCKET_TIMEOUT_INTERVAL_MULTIPLIER
 from crosstower.models import Ticker
 from crosstower.socket_api import utils
+from crosstower.socket_api.public import TickerWebsocket
+from utils import DiscordWebhook, Logger, Postgres
+from utils.config import (DEFAULT_SYMBOL, SOCKET_TIMEOUT_INTERVAL_MULTIPLIER,
+                          SOCKET_URI)
+
 from olympus.primordial_chaos import PrimordialChaos
-from utils import Logger, DiscordWebhook, Postgres
-from websockets import connect as Connection
+
 
 class ConnectionException(Exception):
     pass
@@ -35,6 +36,8 @@ class Athena(PrimordialChaos):
         self.connection_attempts: int = 0
         # Set timestamp for last update
         self.last_time = now()
+
+        self.websocket = TickerWebsocket(DEFAULT_SYMBOL, SOCKET_URI)
 
         # Constantly fetch new tickers
         self.ticker_thread: Thread = Thread(target=self.ticker_loop, daemon=True)
@@ -66,7 +69,7 @@ class Athena(PrimordialChaos):
         self.ticker_thread = Thread(target=self.ticker_loop, daemon=True)
         self.ticker_thread.start()
 
-    async def __subscribe(self, socket: Connection):
+    def __subscribe(self):
         '''
         Send a subscribeTicker message to the
         socket, and wait for a response
@@ -75,14 +78,12 @@ class Athena(PrimordialChaos):
         :type socket: Connection
         '''
         self.log.debug('Subscribing to socket...')
-        data = {
-            "method": "subscribeTicker",
-            "params": {"symbol": self.symbol},
-            "id": int(now())
-        }
-        await socket.send(json.dumps(data))
+        success = self.websocket.subscribe()
+        if not success:
+            self.alert_with_error('[__subscribe] Failed to subscribe to socket')
+            raise ConnectionException
 
-    async def __get_response(self, websocket: Connection, attempt_threshold = 3) -> Ticker:
+    def __get_response(self, attempt_threshold = 3) -> Ticker:
         '''
         It takes a websocket, and attempts to receive a response from it. If it receives a response, it
         parses it and returns a Ticker object. If it doesn't receive a response, it returns None
@@ -97,7 +98,7 @@ class Athena(PrimordialChaos):
         request_attempts = 0
         while True:
             try:
-                response = await websocket.recv()
+                response = self.websocket.get_ticker()
                 break
             except Exception as err:
                 trace = traceback.format_exc()
@@ -120,7 +121,7 @@ class Athena(PrimordialChaos):
             self.log.debug('[__get_response] No final_result received from response (This is okay. Probably means no new data)')
         return None
 
-    async def scrape_coroutine(self, connection_attempt: int, coroutine_restart_attempt: int = 0):
+    def __ticker_loop_attempt(self, connection_attempt: int, coroutine_restart_attempt: int = 0):
         '''
         This function is a asynchronous. It creates a connection to the websocket, subscribes to the ticker channel, 
         and then waits for a response from the websocket. If the response is a ticker, it is put into the queue
@@ -128,33 +129,24 @@ class Athena(PrimordialChaos):
         :param connection_attempt: The current attempt number. Used to kill old connections.
         '''
         if coroutine_restart_attempt > 5:
-            self.alert_with_error('[scrape_coroutine] Too many coroutine restarts. Killing coroutine...')
+            self.alert_with_error('[__ticker_loop_attempt] Too many coroutine restarts. Killing coroutine...')
+            self.abort = True
             return
-        
-        '''
-        HELLO FUTURE COOPER
-        Two central things here:
-        websockets might suck
-        websocket-client might be better? and its synchronous?
-        Refactor to sync methods might be necessary here
-        https://stackoverflow.com/questions/52692736/how-to-manually-close-a-websocket
-        '''
         try_again = False
-        async with Connection(SOCKET_URI) as websocket:
-            await self.__subscribe(websocket)
-            self.log.debug(f'Starting scrape attempt {connection_attempt}, coroutine attempt {coroutine_restart_attempt}')
-            while not self.abort and self.connection_attempts == connection_attempt:
-                try:
-                    ticker = await self.__get_response(websocket)
-                except ConnectionException:
-                    self.log.debug('[scrape_coroutine] ConnectionException raised. Restarting socket...')
-                    try_again = True
-                    break
-                if not ticker:
-                    continue
-                self.queue.put(ticker)
+        self.__subscribe()
+        self.log.debug(f'Starting scrape attempt {connection_attempt}, coroutine attempt {coroutine_restart_attempt}')
+        while not self.abort and self.connection_attempts == connection_attempt:
+            try:
+                ticker = self.__get_response()
+            except ConnectionException:
+                self.log.debug('[__ticker_loop_attempt] ConnectionException raised. Restarting socket...')
+                try_again = True
+                break
+            if not ticker:
+                continue
+            self.queue.put(ticker)
         if try_again:
-            self.scrape_coroutine(self.connection_attempts, coroutine_restart_attempt+1)
+            self.__ticker_loop_attempt(self.connection_attempts, coroutine_restart_attempt+1)
 
 
     def ticker_loop(self):
@@ -164,18 +156,14 @@ class Athena(PrimordialChaos):
         '''
         try:
             self.log.debug('Starting ticker loop...')
-            loop = asyncio.new_event_loop()
-            attempt = int(self.connection_attempts)
-            asyncio.set_event_loop(loop)
-            future = asyncio.ensure_future(self.scrape_coroutine(attempt))
-            loop.run_until_complete(future)
+            self.__ticker_loop_attempt(int(self.connection_attempts))
         except KeyboardInterrupt:
             self.log.debug('Keyboard interrupt received. Aborting...')
-            loop.close()
             self.abort = True
+            self.websocket.stop()
         except Exception as err:
             self.alert_with_error(f'[ticker_loop] {err}\n{traceback.format_exc()}')
-            loop.close()
+            self.websocket.stop()
             raise err
 
     def watchdog_loop(self):
@@ -189,11 +177,11 @@ class Athena(PrimordialChaos):
         :type interval: int
         '''
         try:
-            self.last_ticker = self.get_latest_ticker()
+            self.last_ticker = self.__get_latest_local_ticker()
             self.last_time = now()
             self.log.debug('Running watchdog loop...')
             while not self.abort:
-                current_ticker = self.get_latest_ticker()
+                current_ticker = self.__get_latest_local_ticker()
                 time_since_update = now() - self.last_time
                 if current_ticker == self.last_ticker and time_since_update > self.timeout_threshold:
                     # TODO: Notify if several attempts don't work            
@@ -255,7 +243,6 @@ class Athena(PrimordialChaos):
         except Exception as err:
             self.alert_with_error(f'[sql_loop] {err}\n{traceback.format_exc()}')
             raise err
-        
 
     def handle_commands(self):
         print(utils.scraper_startup_message)
@@ -280,7 +267,7 @@ class Athena(PrimordialChaos):
             self.alert_with_error(f'[sql_loop] {err}\n{traceback.format_exc()}')
             raise err
 
-    def get_latest_ticker(self):
+    def __get_latest_local_ticker(self):
         if self.csv_path:
             utils.get_newest_line(self.csv_path)
         else:
