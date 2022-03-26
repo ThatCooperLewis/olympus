@@ -113,7 +113,7 @@ class Athena(PrimordialChaos):
         if response:
             final_result = utils.handle_response(response).get('params')
         else:
-            self.alert_with_error(f'[__get_response] No response received after {attempt_threshold} attempts. Creating a new connection...')
+            self.discord.send_status(f'[__get_response] No response received after {attempt_threshold} attempts. Creating a new connection...')
             raise ConnectionException
         if final_result:
             return Ticker(final_result)
