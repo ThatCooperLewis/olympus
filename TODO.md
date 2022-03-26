@@ -43,7 +43,6 @@ Hermes followup
 5. Windows NAS as WSL - Prediction Engine
 
 maybe have main branch be "autodeploying"? alias on servers have the service reboot after a git pull?
-Change hostnames of pi's to match function, as well as the pi cli aliases (ssh-postgres, ssh-athena, ssh-monitor)
 
 
 IP list
