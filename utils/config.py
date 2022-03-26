@@ -48,6 +48,9 @@ POSTGRES_STATUS_COMPLETE = 'COMPLETE'
 
 POSTGRES_ALLOWED_STATUSES = [POSTGRES_STATUS_QUEUED, POSTGRES_STATUS_PROCESSING, POSTGRES_STATUS_COMPLETE]
 
+UNRESPONSIVE_TIMEOUT_THRESHOLD = 240
+'''Number of seconds before the monitoring service should give up sending alerts over an lack of table updates.'''
+
 ################# Scraping #################
 
 TICKER_INTERVAL = 60  # seconds

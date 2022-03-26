@@ -1,3 +1,4 @@
+from re import sub
 import subprocess
 from time import sleep
 from time import time as now
@@ -5,7 +6,13 @@ from typing import List
 from utils import DiscordWebhook, Logger, Postgres
 from crosstower.models import Order, Ticker
 from utils.config import (PREDICTION_QUEUE_MAX_SIZE, STATUS_UPDATE_INTERVAL,
-                          TICKER_INTERVAL)
+                          TICKER_INTERVAL, UNRESPONSIVE_TIMEOUT_THRESHOLD)
+
+class PostgresSubservice:
+
+    def __init__(self, name: str) -> None:
+        self.ignore_inactivity = False
+        self.name = name
 
 
 class PostgresMonitor:
@@ -19,6 +26,8 @@ class PostgresMonitor:
         self.discord = DiscordWebhook('PostgresMonitor')
         self.log = Logger.setup("PostgresMonitor")
         self.interval_threshhold = TICKER_INTERVAL * 2
+        self.ticker_scraper = PostgresSubservice('TickerScraper')
+        self.order_listener = PostgresSubservice('OrderListener')
         self.abort = False
 
     def run(self):
@@ -62,18 +71,11 @@ class PostgresMonitor:
         latest_time: int = now()
 
         if latest_count == self.last_good_ticker_count:
-            time_since_last_ticker = latest_time - self.last_good_ticker_time
-            # It's still the same
-            if time_since_last_ticker > self.interval_threshhold:
-                # If same for too long, raise alarms
-                self.discord.send_alert(
-                    f"TickerScraper has been unresponsive for {int(time_since_last_ticker)} seconds")
-                self.log.error(
-                    f"TickerScraper has been unresponsive for {int(time_since_last_ticker)} seconds")
+            self.ticker_scraper = self.__handle_timeout_and_update_subservice(self.ticker_scraper, int(latest_time - self.last_good_ticker_time))
         else:
-            # Ticker has changed, update last good
             self.last_good_ticker_count = latest_count
             self.last_good_ticker_time = latest_time
+            self.ticker_scraper = self.__handle_service_revival(self.ticker_scraper)
             
     def __order_check(self):
         queued_orders = self.postgres.get_queued_orders()
@@ -83,15 +85,11 @@ class PostgresMonitor:
         latest_queued_order = queued_orders[-1]
         latest_time = now()
         if latest_queued_order.uuid == self.last_good_queued_order.uuid:
-            time_since_last_order = latest_time - self.last_good_queued_order_time
-            if time_since_last_order > self.interval_threshhold:
-                self.discord.send_alert(
-                    f"OrderListener has been unresponsive for {int(time_since_last_order)} seconds.")
-                self.log.error(
-                    f"OrderListener has been unresponsive for {int(time_since_last_order)} seconds.")
+            self.order_listener = self.__handle_timeout_and_update_subservice(self.order_listener, int(latest_time - self.last_good_queued_order_time))
         else:
             self.last_good_queued_order = latest_queued_order
             self.last_good_queued_order_time = latest_time
+            self.order_listener = self.__handle_service_revival(self.order_listener)
 
     def __status_update(self):
         if now() - self.latest_update > STATUS_UPDATE_INTERVAL:
@@ -106,6 +104,25 @@ class PostgresMonitor:
             except:
                 self.log.error("Failed to send status message to discord.")
             self.latest_update = now()
+
+    def __handle_timeout_and_update_subservice(self, subservice: PostgresSubservice, time_since_last_update: int) -> PostgresSubservice:
+        if time_since_last_update > self.interval_threshhold and not subservice.ignore_inactivity:
+            if time_since_last_update > UNRESPONSIVE_TIMEOUT_THRESHOLD:
+                msg = f"{subservice.name} has exceeded the unresponsive timeout threshold. Assume it has completely shut down unless another update appears."
+                subservice.ignore_inactivity = True
+            else:
+                msg = f"{subservice.name} has been unresponsive for {time_since_last_update} seconds"
+            self.discord.send_alert(msg)
+            self.log.error(msg)
+        return subservice
+
+    def __handle_service_revival(self, subservice: PostgresSubservice) -> PostgresSubservice:
+        if subservice.ignore_inactivity:
+            msg = f'{subservice.name} was previsouly unresponsive, but has started updating again. Resuming monitoring...'
+            self.discord.send_alert(msg)
+            self.log.info(msg)
+            subservice.ignore_inactivity = False
+        return subservice
 
 if __name__ == "__main__":
     try:
