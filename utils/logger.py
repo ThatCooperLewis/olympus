@@ -19,6 +19,9 @@ class Logger():
         '''
         logger = logging.getLogger(category_str)
 
+        # TODO: Check for existing log object for category_str, use that instead
+        
+
         # Setup CLI logging stream
         console = logging.StreamHandler()
         console_format = logging.Formatter('%(asctime)s [%(name)s] %(levelname)s: %(message)s')

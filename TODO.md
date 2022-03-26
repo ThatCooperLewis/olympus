@@ -2,8 +2,6 @@
 1. Resolve buy percentage issue in create_order
 2. Inject mock hermes into a mock zeus class
 
-# Athena
-1. Alert if watchdog_loop attempt count goes too high
 # Prometheus
 1. Test cases for Predict() and any other classes used in non-training production
 
