@@ -1,47 +1,32 @@
-# Hermes trader
-1. Resolve buy percentage issue in create_order
-2. Inject mock hermes into a mock zeus class
+# NEXT STEPS
 
-# Prometheus
-1. Test cases for Predict() and any other classes used in non-training production
+Small cleanup, improvements & bugfixing
 
-# Other
-1. Make the config use nice capitalized classes for each category
-2. Do something else with credentials.json 
-4. Test cases for scraper/listener files?
+1. Resolve buy percentage issue in hermes create_order
+2. Make the config use nice capitalized classes for each category
+3. Turn credentials.json into a .env file
+4. Make postgres docker container for unit tests
+5. Define SQL schemas for docker instance
+6. Fix status update logs. Fix "tickers in last hour" query
 
-# Docker
-1. Should we containerize this shit? Apparently there's a cuda docker?
-2. If so, we can create temporary postgres databases. This would let us enforce proper SQL schema files
-    - Maybe separate docker .run files for testing, pi scrapers, cuda container
-# Mock
-1. Introduce Logger to mock classes, replace print statements
+Big next steps
 
-Hermes followup
+1. Setup a system for comparing prediction vs actual price. This may involve adding new rows to order listener i.e. predicted price, current price
+        May be helpful to just compare against closest timestamp in the ticker table
+2. Create a new SQL table for Mock Crosstower orders - buy/sell amount, current price, balances of each account, etc
+        Modify mock_crosstower to interact with this SQL table & report updates to discord
+        This should probably run alongside the hermes listener... but need to figure out safest way to run a mock instance without hardcoding it into the primary hermes code
+        Maybe a separate service manager? mock_services_manager.py?
+3. Setup Delphi on NAS
 
-- After prediction time ends, compare prediction against reality via margin/accuracy
-- Use to validate success rate over time
-- Can do it retroactively/rarely, if it can compare against closest timestamp in big table
-- 
+Backlog
 
-    UPDATE 2/21
-
-    Delphi is formatting CSV properly!
-    ...but something is stopping/slowing the predictor from running
-    when some other thread is aborted, Delphi quickly populates the predictions.
-    Need to see what's holding it up. Maybe multiproccess it, since no other threads are touching that file?
-
-
-
-
-1. RaspPi 4 8GB - Postgres Server
-2. RaspPi 4 2GB - Hermes Order Maker
-3. OrangePi - DB Monitor
-4. RaspPi 3 - Athena Scraper 
-5. Windows NAS as WSL - Prediction Engine
-
-maybe have main branch be "autodeploying"? alias on servers have the service reboot after a git pull?
-
+1. Delphi was behaving weirdly in Zeus, but the delays in prediction may be resolved once it's running on its own machine
+2. We should eventually make test cases for Prometheus and its Predict() method
+3. Master branch autodeployment in service clusters
+        Only redeploy if changes have been pushed
+        Check git status in python code
+        Probably will have to be a separate service entirely
 
 IP list
 192.168.0.20    pi-postgres     Postgres Server     Raspi 4B    8GB
