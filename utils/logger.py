@@ -17,7 +17,7 @@ class Logger():
         :type category_str: str
         :return: A logger object.
         '''
-        logger = logging.getLogger(category_str)
+        logger = cls.__get_existing_logger_if_exists(category_str)
 
         # TODO: Check for existing log object for category_str, use that instead
         
@@ -42,3 +42,11 @@ class Logger():
     @classmethod
     def git_hash(cls):
         return subprocess.check_output(['git', 'rev-parse', '--short', 'HEAD']).decode('ascii').strip()
+
+    @classmethod
+    def __get_existing_logger_if_exists(self, name):
+        loggers = [logging.getLogger(name) for name in logging.root.manager.loggerDict]
+        for logger in loggers:
+            if logger.name == name:
+                return logger
+        return logging.getLogger(name)
