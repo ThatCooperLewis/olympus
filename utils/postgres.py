@@ -9,7 +9,7 @@ from olympus.helper_objects import PredictionVector
 
 from utils import DiscordWebhook, Logger
 import utils.config as constants
-
+from utils.environment import env
 
 class PostgresCursor:
 
@@ -204,10 +204,7 @@ class Postgres:
         return result        
 
     def __setup_connection(self):
-        with open(constants.CREDENTIALS_FILE) as json_file:
-            data: dict = json.load(json_file)
-            config = data.get("postgres")
-        self.conn = psql.connect(f"dbname='{config['database']}' user='{config['user']}' host='{config['host']}' password='{config['password']}'")
+        self.conn = psql.connect(f"dbname='{env.postgres_database}' user='{env.postgres_user}' host='{env.postgres_host}' password='{env.postgres_password}'")
     
     def __reconnect(self):
         self.log.debug("Attempting to reconnect...")

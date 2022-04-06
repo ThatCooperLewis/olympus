@@ -11,7 +11,7 @@ from requests.auth import AuthBase
 
 import crosstower.utils as utils
 from utils.config import REST_URL
-
+from utils.environment import env
 
 class __HS256__(AuthBase):
 
@@ -110,8 +110,8 @@ class __HS256Auth__:
 
 class Authentication:
 
-    def __init__(self, method: str = 'basic', path='credentials.json') -> None:
-        key, secret = self.__load(path)
+    def __init__(self, method: str = 'basic') -> None:
+        key, secret = self.__load_secrets()
         if method.lower() == 'basic':
             api = __BasicAuth__(key, secret)
         elif method.lower() == 'hs256':
@@ -127,18 +127,13 @@ class Authentication:
     def __authenticate(self) -> list:
         return self.auth_get('trading/balance')
 
-    def __load(self, path: str) -> Tuple[str, str]:
-        try:
-            with open(path, 'r') as file:
-                creds = json.load(file)
-            user = creds.get('api_key')
-            pw = creds.get('secret_key')
-            if not (user and pw):
-                err = "Could not find 'api_key' and 'secret_key' in credentials"
-                raise Exception(err)
-            return user, pw
-        except:
-            raise Exception("Credentials file missing or invalid")
+    def __load_secrets(self) -> Tuple[str, str]:
+        key = env.crosstower_api_key
+        secret = env.crosstower_secret_key
+        if not (key and secret):
+            err = "Could not find 'api_key' and 'secret_key' in environment variables"
+            raise Exception(err)
+        return key, secret
 
     def auth_get(self, endpoint: str, request_name: str = 'API') -> dict:
         raise NotImplementedError

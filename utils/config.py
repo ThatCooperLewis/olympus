@@ -11,9 +11,6 @@ FILE_LOGGING_LEVEL = logging.DEBUG
 LOGGING_FILENAME = 'debug-log.txt'
 '''The name of the file to send logs.'''
 
-CREDENTIALS_FILE = 'credentials.json'
-'''Contains API keys, webhook URLs, PSQL connection, etc. See readme.md for more information.'''
-
 STATUS_UPDATE_INTERVAL = 21600 # 6 hours
 '''How often to update the status of the servers via discord, in seconds.'''
 

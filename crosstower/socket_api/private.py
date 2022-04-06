@@ -14,7 +14,7 @@ from websockets import connect as Connection
 
 from utils import Logger, DiscordWebhook
 from utils.config import DEFAULT_SYMBOL, SOCKET_URI, POSTGRES_STATUS_PROCESSING, POSTGRES_STATUS_COMPLETE
-
+from utils.environment import env
 
 class SocketAPI:
 
@@ -33,13 +33,11 @@ class SocketAPI:
         return utils.handle_response(response).get('result')
 
     @classmethod
-    async def get_authenticated_socket(cls, credentials_path: str) -> Connection:
-        with open(credentials_path, 'r') as file:
-            creds = json.load(file)
-            public_key = creds.get('api_key')
-            secret_key = creds.get('secret_key')
-            if not public_key or not secret_key:
-                raise Exception("Couldn't retrieve api & secret key.")
+    async def get_authenticated_socket(cls) -> Connection:
+        public_key = env.crosstower_api_key
+        secret_key = env.crosstower_secret_key
+        if not public_key or not secret_key:
+            raise Exception("Couldn't retrieve api & secret key.")
         websocket = await Connection(SOCKET_URI)
         data = {
             "algo": "BASIC",
@@ -52,13 +50,12 @@ class SocketAPI:
 
 class Trading:
 
-    def __init__(self, symbol: str = DEFAULT_SYMBOL, credentials_path: str = 'credentials.json'):
+    def __init__(self, symbol: str = DEFAULT_SYMBOL):
         self.symbol = symbol
-        self.credentials_path = credentials_path
         loop = asyncio.new_event_loop()
         asyncio.set_event_loop(loop)
         self.websocket: Connection = loop.run_until_complete(
-            SocketAPI.get_authenticated_socket(credentials_path)
+            SocketAPI.get_authenticated_socket()
         )
 
     def __request_until_complete(self, method: str, params: str):
@@ -129,7 +126,7 @@ class Trading:
 
 class OrderListener:
 
-    def __init__(self, credentials_path: str = 'credentials.json', websocket_override=None) -> None:
+    def __init__(self, websocket_override=None) -> None:
         self.log = Logger.setup(self.__class__.__name__)
         self.discord = DiscordWebhook(self.__class__.__name__)
         self.__socket: SocketAPI = SocketAPI
@@ -137,12 +134,11 @@ class OrderListener:
             self.__socket = websocket_override 
         self.__thread: Thread = Thread(target=self.__wait_loop, daemon=True)
         self.__queue: Queue = Queue()
-        self.__creds_path = credentials_path
         self.__quit = False
 
     async def __orders_coroutine(self):
         try:
-            socket = await self.__socket.get_authenticated_socket(self.__creds_path)
+            socket = await self.__socket.get_authenticated_socket()
             while not self.__quit:
                 if self.__queue.qsize() > 0:
                     order_object: OrderListenerObject = self.__queue.get()

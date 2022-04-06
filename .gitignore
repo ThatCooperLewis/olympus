@@ -16,7 +16,8 @@ testing/*.csv
 testing/**/*.json
 
 # Shh It's A Secret
-credentials*.json
+.env.production
+.env.testing
 
 # Model training
 results/

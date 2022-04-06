@@ -89,7 +89,7 @@ class MockSocket:
         # print("[MockSocket]: Balances updated!")
         return True
 
-    async def get_authenticated_socket(self, credentials_path: str):
+    async def get_authenticated_socket(self):
         return None
 
 
@@ -114,7 +114,6 @@ class MockAPI:
     def __init__(self, balance_sheet_path: str, mock_discord) -> None:
         self.__balance_sheet = MockBalanceSheet(balance_sheet_path)
         self.trading = MockTrading(self.__balance_sheet)
-        self.listener = OrderListener(
-            websocket_override=MockSocket(self.__balance_sheet))
+        self.listener = OrderListener(websocket_override=MockSocket(self.__balance_sheet))
         self.listener.discord = mock_discord
         return
