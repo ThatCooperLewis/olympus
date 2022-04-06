@@ -3,17 +3,17 @@
 Small cleanup, improvements & bugfixing
 
 1. Resolve buy percentage issue in hermes create_order
-2. Make the config use nice capitalized classes for each category
 3. Turn credentials.json into a .env file
 4. Make postgres docker container for unit tests
 5. Define SQL schemas for docker instance
 6. Fix status update logs. Fix "tickers in last hour" query
-
+7. Fix logger by checking for existing log-label pairs
+ 
 Big next steps
 
 1. Setup a system for comparing prediction vs actual price. This may involve adding new rows to order listener i.e. predicted price, current price
         May be helpful to just compare against closest timestamp in the ticker table
-2. Create a new SQL table for Mock Crosstower orders - buy/sell amount, current price, balances of each account, etc
+2. Create a new SQL table for *Mock* Crosstower orders - buy/sell amount, current price, balances of each account, etc
         Modify mock_crosstower to interact with this SQL table & report updates to discord
         This should probably run alongside the hermes listener... but need to figure out safest way to run a mock instance without hardcoding it into the primary hermes code
         Maybe a separate service manager? mock_services_manager.py?
