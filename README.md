@@ -13,7 +13,7 @@ Bitcoin price approximation & trading
 
 For running on a local Ubuntu machine, [refer to this guide](docs/local_setup.md)
 
-TODO - Crosstower API Setup, credentials.json
+TODO - Crosstower API Setup
 
 ## Components
 

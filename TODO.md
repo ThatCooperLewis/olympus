@@ -3,11 +3,9 @@
 Small cleanup, improvements & bugfixing
 
 1. Resolve buy percentage issue in hermes create_order
-3. Turn credentials.json into a .env file
 4. Make postgres docker container for unit tests
 5. Define SQL schemas for docker instance
 6. Fix status update logs. Fix "tickers in last hour" query
-7. Fix logger by checking for existing log-label pairs
  
 Big next steps
 
