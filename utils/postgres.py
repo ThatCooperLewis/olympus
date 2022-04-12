@@ -157,6 +157,20 @@ class Postgres:
         query = f"""UPDATE {self.order_table_name} SET status = '{status}' WHERE uuid = '{uuid}'"""
         self._query(query, False)
 
+    # Public Methods - MOCK/TESTING
+    # TODO: Move this? when we're done testing?
+
+    def get_latest_mock_balances(self):
+        query = "SELECT ending_usd_balance, ending_btc_balance FROM _mock_order_feed ORDER BY local_timestamp DESC LIMIT 1"
+        result = self._query(query, True)
+        return result[0]
+    
+    def insert_mock_order(self, quantity: float, side: str, ending_usd_balance: float, ending_btc_balance: float, current_btc_price: float):
+        query = f"""INSERT INTO {self.order_table_name} (timestamp, quantity, side, ending_usd_balance, ending_btc_balance, current_btc_price)
+        VALUES ({int(now())}, {quantity}, '{side}', {ending_usd_balance}, {ending_btc_balance}, {current_btc_price})
+        """
+        self._query(query, False)
+
     # Private Methods
 
     def __convert_result_to_order(self, result) -> PostgresOrder:

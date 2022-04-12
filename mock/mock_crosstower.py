@@ -8,6 +8,22 @@ from utils.config import CRYPTO_SYMBOL, FIAT_SYMBOL
 from websockets import connect as Connection
 
 # TODO: Add logger, zero-balance logic
+'''
+POSTGRES TODO
+
+this needs a lot of work
+
+Hermes is sending Order objects here & asking for balances
+
+Postgres needs new methods:
+    1. mock order submission needs its own query? includes other columns
+    2. mock trading balance - get latest balance from mock orders table e.g. "ending_btc_balance"
+
+Pretty sure MockBalanceSheet can be ditched
+
+Gotta create Postgres instance to share across classes, with the overridden table names
+'''
+
 
 class MockBalanceSheet:
 
@@ -17,8 +33,7 @@ class MockBalanceSheet:
 
     def __init__(self, filepath: str):
         if type(filepath) is not str:
-            raise Exception(
-                "Invalid type for balance sheet filepath: expected str")
+            raise Exception("Invalid type for balance sheet filepath: expected str")
         self.file_path = filepath
         self.reload()
 
@@ -69,6 +84,7 @@ class MockSocket:
         # print("[MockSocket]: New request incoming...")
         if method != 'newOrder':
             raise NotImplementedError
+        # TODO: Get latest price from ticker feed table in postgres, prevent API failures
         ticker = MarketData.get_ticker()
         latest_price = ticker.ask
         side = params['side']
@@ -87,6 +103,10 @@ class MockSocket:
         self.balance_sheet.set_balance(FIAT_SYMBOL, usd_quantity)
         self.balance_sheet.set_balance(CRYPTO_SYMBOL, btc_quantity)
         # print("[MockSocket]: Balances updated!")
+        
+        # TODO:
+        # self.postgres.insert_mock_order(params)
+        
         return True
 
     async def get_authenticated_socket(self):
@@ -101,6 +121,9 @@ class MockTrading:
         # print(self.balance_sheet)
 
     def get_trading_balance(self, currencies: list = []):
+        # TODO:
+        # self.postgres.get_mock_trading_balances()
+        # Figure out how to index the two returned values properly        
         return self.balance_sheet.balances
 
 

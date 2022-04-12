@@ -3,8 +3,8 @@
 Small cleanup, improvements & bugfixing
 
 1. Resolve buy percentage issue in hermes create_order
-4. Make postgres docker container for unit tests
 5. Define SQL schemas for docker instance
+4. Make postgres docker container for unit tests
 6. Fix status update logs. Fix "tickers in last hour" query
  
 Big next steps
