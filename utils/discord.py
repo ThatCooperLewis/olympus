@@ -6,7 +6,7 @@ from utils.environment import env
 class DiscordWebhook:
 
     def __init__(self, app_name: str):
-        self.log = Logger.setup(self.__class__.__name__)
+        self.log = Logger.setup(app_name)
         self.name = app_name
         self.alert_url = env.discord_alert_webhook
         self.status_url = env.discord_status_webhook
