@@ -13,7 +13,7 @@ from olympus.helper_objects.prediction_queue import \
     PredictionQueueDB as PredictionQueue
 from olympus.primordial_chaos import PrimordialChaos
 from olympus.prometheus import Predict
-
+from utils.environment import env
 
 class Delphi(PrimordialChaos):
 
@@ -23,8 +23,8 @@ class Delphi(PrimordialChaos):
 
     def __init__(
         self,
-        model_path: str,
-        params_path: str,
+        override_model_path: str = None,
+        override_params_path: str = None,
         override_sql_mode_with_csv_path: str = None,
         override_prediction_queue: PredictionQueue = None,
         override_iteration_length: int = None,
@@ -45,6 +45,9 @@ class Delphi(PrimordialChaos):
             self.postgres = Postgres()
             self.sql_mode = True
             self.tmp_csv_path = self.__generate_tmp_filename()
+
+        model_path = override_model_path if override_model_path else env.keras_model_path
+        params_path = override_params_path if override_params_path else env.keras_params_path
 
         with open(params_path) as file:
             params: dict = json.load(file)

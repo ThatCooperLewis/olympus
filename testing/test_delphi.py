@@ -18,8 +18,8 @@ class TestDelphi(TestCase):
         self.postgres = PostgresTesting.setUp()
         self.queue = PredictionQueue(override_postgres=self.postgres)
         self.delphi = Delphi(
-            model_path='testing/test_files/test_model.h5',
-            params_path='testing/test_files/test_params.json',
+            override_model_path='testing/test_files/test_model.h5',
+            override_params_path='testing/test_files/test_params.json',
             override_sql_mode_with_csv_path='testing/test_files/test_data.csv',
             override_prediction_queue=self.queue,
             override_iteration_length=3
@@ -44,8 +44,8 @@ class TestDelphi(TestCase):
 
     def test_sql_init(self):
         sql_delphi = Delphi(
-            model_path='testing/test_files/test_model.h5',
-            params_path='testing/test_files/test_params.json',
+            override_model_path='testing/test_files/test_model.h5',
+            override_params_path='testing/test_files/test_params.json',
             override_prediction_queue=self.queue,
             override_iteration_length=3
         )

@@ -42,6 +42,13 @@ class env_meta(type):
     def postgres_database(cls) -> str:
         return os.getenv('PSQL_DB')
 
+    @property
+    def keras_model_path(cls) -> str:
+        return os.getenv('KERAS_MODEL_PATH')
+    
+    @property
+    def keras_params_path(cls) -> str:
+        return os.getenv('KERAS_PARAMS_PATH')
 
 class env(metaclass=env_meta):
     pass
