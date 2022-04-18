@@ -15,8 +15,7 @@ class FakeBalanceSheet:
 
     def __init__(self, filepath: str):
         if type(filepath) is not str:
-            raise Exception(
-                "Invalid type for balance sheet filepath: expected str")
+            raise Exception("Invalid type for balance sheet filepath: expected str")
         self.file_path = filepath
         self.reload()
 
