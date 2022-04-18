@@ -31,7 +31,7 @@ POSTGRES_ORDER_COLUMNS = '(timestamp, quantity, side, status, uuid)'
 POSTGRES_PREDICTION_TABLE_NAME = 'prediction_feed'
 '''The name of the pSQL table that stores prediction data & history.'''
 
-POSTGRES_PREDICTION_COLUMNS = '(timestamp, prediction_timestamp, prediction_weight, prediction_history, status, uuid)'
+POSTGRES_PREDICTION_COLUMNS = '(timestamp, prediction_timestamp, prediction_weight, prediction_history, status, uuid, prediction_percent)'
 '''The columns of the pSQL table that stores prediction data & history. Used for sql insert queries.'''
 
 POSTGRES_STATUS_QUEUED = 'QUEUED'
@@ -43,7 +43,10 @@ POSTGRES_STATUS_PROCESSING = 'PROCESSING'
 POSTGRES_STATUS_COMPLETE = 'COMPLETE'
 '''The postgres.order_feed status of an order that has been completed.'''
 
-POSTGRES_ALLOWED_STATUSES = [POSTGRES_STATUS_QUEUED, POSTGRES_STATUS_PROCESSING, POSTGRES_STATUS_COMPLETE]
+POSTGRES_STATUS_FAILED = 'FAILED'
+'''The postgres.order_feed status of an order that has failed.'''
+
+POSTGRES_ALLOWED_STATUSES = [POSTGRES_STATUS_QUEUED, POSTGRES_STATUS_PROCESSING, POSTGRES_STATUS_COMPLETE, POSTGRES_STATUS_FAILED]
 
 UNRESPONSIVE_TIMEOUT_THRESHOLD = 240
 '''Number of seconds before the monitoring service should give up sending alerts over an lack of table updates.'''
@@ -61,7 +64,7 @@ DEFAULT_CSV_HEADERS = 'price,bid,last,low,high,open,volume,volumeQuote,timestamp
 
 ################# Trading #################
 
-MAX_TRADE_PERCENTAGE = .2
+MAX_TRADE_PERCENTAGE = .4
 '''Maximum percentage of total balance to spend on a single trade'''
 
 CRYPTO_SYMBOL = 'BTC_TR'
@@ -106,10 +109,10 @@ VALIDATION_SPLIT = 0.2
 
 ################# Prediction #################
 
-PREDICTION_DELTA_THRESHOLD = 0.0003
+PREDICTION_DELTA_THRESHOLD = 0.003
 '''When price is predicted to change by this much percentage, take 100% action'''
 
-PREDICTION_ITERATION_COUNT = 3
+PREDICTION_ITERATION_COUNT = 5
 '''The number of prediction cycles to run before stopping & submitting prediction.'''
 
 PREDICTION_QUEUE_MAX_SIZE = 5

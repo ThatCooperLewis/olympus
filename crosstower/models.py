@@ -175,6 +175,10 @@ class Order:
         """Order quantity"""
         return float(self._data.get('quantity'))
 
+    @quantity.setter
+    def quantity(self, value: float) -> None:
+        self._data['quantity'] = float(value)
+
     @property
     def price(self) -> float:
         """Order price"""

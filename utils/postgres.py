@@ -1,7 +1,7 @@
 import json
 import traceback
 from time import time as now
-from typing import List
+from typing import List, Tuple
 
 import psycopg2 as psql
 from crosstower.models import Order, Ticker
@@ -61,6 +61,7 @@ class PostgresPredictionVector:
             self.prediction_history.append(float(prediction))
         self.status: str = data[4]
         self.uuid: str = data[5]
+        self.percent: float = data[6]
 
 class Postgres:
 
@@ -91,7 +92,7 @@ class Postgres:
         self.log.debug(f"Inserting prediction vector with uuid: {prediction_vector.uuid}")
         history = self.__convert_prediction_history_to_string(prediction_vector.prediction_history)
         query = f"""INSERT INTO {self.prediction_table_name} {constants.POSTGRES_PREDICTION_COLUMNS}
-        VALUES ({int(now())}, {prediction_vector.timestamp}, {prediction_vector.weight}, {history}, '{constants.POSTGRES_STATUS_QUEUED}', '{prediction_vector.uuid}')"""
+        VALUES ({int(now())}, {prediction_vector.timestamp}, {prediction_vector.weight}, {history}, '{constants.POSTGRES_STATUS_QUEUED}', '{prediction_vector.uuid}', {prediction_vector.percent})"""
         self._query(query, False)
 
     # Public Methods - SELECT
@@ -140,8 +141,7 @@ class Postgres:
         Get the number of tickers in the last hour
         :return: The number of tickers in the last hour
         """
-        latest_timestamp = self.get_latest_tickers(1)[0].timestamp
-        query = f"""SELECT COUNT(*) FROM ticker_feed WHERE timestamp > {latest_timestamp - 3600}"""
+        query = f"""SELECT COUNT(*) FROM ticker_feed WHERE local_timestamp > {int(now()) - 3600}"""
         result = self._query(query, True)
         return result[0][0]
 
@@ -155,6 +155,22 @@ class Postgres:
     def update_order_status(self, uuid: str, new_status: str):
         status = self.__parse_allowed_statuses(new_status)
         query = f"""UPDATE {self.order_table_name} SET status = '{status}' WHERE uuid = '{uuid}'"""
+        self._query(query, False)
+
+    # Public Methods - MOCK/TESTING
+    # TODO: Move this? when we're done testing?
+
+    def get_latest_mock_balances(self) -> Tuple[float, float]:
+        query = "SELECT ending_usd_balance, ending_btc_balance FROM _mock_order_feed ORDER BY local_timestamp DESC LIMIT 1"
+        result = self._query(query, True)
+        usd = result[0][0]
+        btc = result[0][1]
+        return float(usd), float(btc)
+    
+    def insert_mock_order(self, quantity: float, side: str, ending_usd_balance: float, ending_btc_balance: float, current_btc_price: float, total_value: float, uuid: str):
+        self.log.debug(f"Inserting mock order with uuid: {uuid}")
+        query = f"""INSERT INTO _mock_order_feed (timestamp, quantity, side, ending_usd_balance, ending_btc_balance, current_btc_price, total_value, uuid)
+        VALUES ({int(now())}, {quantity}, '{side}', {ending_usd_balance}, {ending_btc_balance}, {current_btc_price}, {total_value}, '{uuid}')"""
         self._query(query, False)
 
     # Private Methods

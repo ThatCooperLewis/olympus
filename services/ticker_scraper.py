@@ -1,5 +1,7 @@
 from utils import Logger, DiscordWebhook
 from olympus.athena import Athena
+from time import sleep
+
 
 class TickerScraper:
 
@@ -13,7 +15,7 @@ class TickerScraper:
         self.athena.run(headless=True)
         try:
             while True:
-                pass
+                sleep(10)
         except KeyboardInterrupt:
             self.athena.stop()
             self.log.debug('KeyboardInterrupt')

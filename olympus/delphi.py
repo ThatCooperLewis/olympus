@@ -1,9 +1,10 @@
 import json
-from queue import Queue
 from threading import Thread
 from time import sleep
 from typing import Tuple
 from uuid import uuid4
+from os import remove
+import asyncio
 
 import utils.config as constants
 from utils import DiscordWebhook, Logger, Postgres
@@ -146,6 +147,12 @@ class Delphi(PrimordialChaos):
             return -1
         return eval
 
+    async def sleep(self, seconds: int):
+        for i in range(seconds):
+            if self.abort:
+                return
+            await asyncio.sleep(1)
+
     def __primary_loop(self):
         self.log.debug('Starting loop')
         while not self.abort:
@@ -175,17 +182,15 @@ class Delphi(PrimordialChaos):
                 )
             )
             self.log.debug('Submitted prediction to queue')
-
-            # TODO: Handle this by checking time since last prediction
-            sleep(self.interval_size + self.iterations)
+            
+            # Delete self.temp_csv_path
+            remove(self.tmp_csv_path)
+            self.log.debug('Deleted temp csv')
+            
+            # Sleep my sweet angel
+            asyncio.run(self.sleep(self.interval_size * self.iterations))
         self.log.debug('Exiting loop')
 
 
 if __name__ == "__main__":
-    pass
-    # Delphi(
-    #     csv_path='crosstower-btc.csv',
-    #     model_path='results/1617764061 - 0.0002/model.h5',
-    #     params_path='results/1617764061 - 0.0002/params.json',
-    #     iteration_length=3
-    # ).run()
+    Delphi().run()

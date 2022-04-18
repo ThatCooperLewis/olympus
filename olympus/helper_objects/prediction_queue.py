@@ -29,22 +29,29 @@ class PredictionQueueDB:
         Pop the first prediction in the queue that is not being processed
         :return: A prediction object.
         """
+        self.log.debug('Getting prediction from DB')
         results = self.postgres.get_queued_predictions()
         if len(results) > 0:
             first_prediction = results[0]
             if first_prediction:
+                self.log.debug('Got prediction from DB, setting to "processing"')
                 self.postgres.update_prediction_status(first_prediction.uuid, constants.POSTGRES_STATUS_PROCESSING)
                 return first_prediction
+        self.log.debug('No predictions in DB, returning None')
         return None
     
-    def close(self, prediction_vector: PredictionVector):
+    def close(self, prediction_vector: PredictionVector, failed: bool = False):
         '''
         Set the DB status for a given prediction to 'COMPLETE'
         '''
+        self.log.debug('Setting prediction in DB to "complete"')
         if type(prediction_vector) not in [PredictionVector, PostgresPredictionVector]:
             self.log.error('Tried to submit non-PredictionVector to queue')
             raise Exception("What's up guy? Bad type submitted to prediction queue!")
-        self.postgres.update_prediction_status(prediction_vector.uuid, constants.POSTGRES_STATUS_COMPLETE)
+        if failed:
+            self.postgres.update_prediction_status(prediction_vector.uuid, constants.POSTGRES_STATUS_FAILED)
+        else:
+            self.postgres.update_prediction_status(prediction_vector.uuid, constants.POSTGRES_STATUS_COMPLETE)
         
     
     @property

@@ -22,7 +22,7 @@ class SocketAPI:
         return
 
     @classmethod
-    async def request(cls, socket: Connection, method: str, params: dict):
+    async def request(cls, socket: Connection, method: str, params: dict, uuid: str = None):
         data = {
             "method": method,
             "params": params,
@@ -143,9 +143,9 @@ class OrderListener:
                 if self.__queue.qsize() > 0:
                     order_object: OrderListenerObject = self.__queue.get()
                     order_object.on_submission()
-                    await self.__socket.request(socket, 'newOrder', order_object.order.dict)
+                    await self.__socket.request(socket, 'newOrder', order_object.order.dict, order_object.order.uuid)
                     order_object.on_complete()
-                    sleep(1)
+                sleep(0.1)
             self.log.debug('self.__orders_coroutine() is quitting')
         except KeyboardInterrupt:
             self.log.debug('KeyboardInterrupt during orders coroutine')

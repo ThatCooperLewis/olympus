@@ -1,6 +1,7 @@
 import traceback
 from threading import Thread
 from typing import List, Tuple
+from time import sleep
 
 import utils.config as constants
 from crosstower.models import Balance, Order
@@ -140,17 +141,18 @@ class Hermes(PrimordialChaos):
         '''
         submitted = self.__order_status_processing
         completed = self.__order_status_complete
+        new_order_side = order.side
+        last_order_side = self.__orders[-1].side if len(self.__orders) > 0 else None
         if len(self.__orders) == 0:
             self.log.debug('No orders in list, adding new order')
             self.__orders.append(order)
-            self.postgres.insert_order(order)
             self.order_listener.submit_order(order, submitted, completed)
-        elif self.__orders[-1].side == order.side:
+        elif last_order_side == new_order_side:
             self.log.debug('Same direction as last order, adding to list')
             self.__orders.append(order)
             self.order_listener.submit_order(order, submitted, completed)
-        elif self.__orders[-1].side != order.side:
-            self.log('Opposite direction as last order, summing & inversing past orders')
+        elif last_order_side != new_order_side:
+            self.log.debug('Opposite direction as last order, summing & inversing past orders')
             total_quantity = 0
             for order in self.__orders:
                 total_quantity += order.quantity
@@ -182,7 +184,8 @@ class Hermes(PrimordialChaos):
                     order = self.__create_order(prediction, balances)
                     if order:
                         self.__submit_order(order)
-                    self.prediction_queue.close(prediction)
+                    self.prediction_queue.close(prediction, failed=(order is None))
+                sleep(0.2)
         except KeyboardInterrupt:
             self.log.debug('Keyboard interrupt received, aborting')
             self.abort = True

@@ -236,6 +236,7 @@ class Athena(PrimordialChaos):
                     if not latest or (ticker.timestamp - latest) >= self.interval:
                         latest = ticker.timestamp
                         self.postgres.insert_ticker(ticker)
+                    sleep(1)
         except KeyboardInterrupt:
             self.log.debug('Keyboard interrupt received. Aborting...')
             self.abort = True

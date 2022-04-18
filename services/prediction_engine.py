@@ -1,6 +1,6 @@
 from olympus.delphi import Delphi
 from utils import DiscordWebhook, Logger
-
+from time import sleep
 class PredictionEngine:
     
     def __init__(self) -> None:
@@ -13,9 +13,10 @@ class PredictionEngine:
         self.delphi.run()
         try:
             while True:
-                pass
+                sleep(10)
         except KeyboardInterrupt:
             self.delphi.stop()
+            self.delphi.abort = True
             self.log.debug('KeyboardInterrupt')
             
 if __name__ == '__main__':
