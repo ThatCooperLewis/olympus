@@ -37,7 +37,7 @@ Open the Ubuntu program if not already running. Run the following:
 
 ### Setup repository
 
-    ssh-keygen -t ed25519 -C "your_email@example.com"
+    ssh-keygen -t ed25519 -C "you@example.com"
     eval "$(ssh-agent -s)"
     ssh-add ~/.ssh/id_ed25519
     cat ~/.ssh/id_ed25519.pub
@@ -46,6 +46,9 @@ Open the Ubuntu program if not already running. Run the following:
     python -m venv venv
     source venv/bin/activate
     pip install -r requirements-no-cuda.txt
+    echo "source .env.production" >> venv/bin/activate
+    git config --global user.email "you@example.com"
+    git config --global user.name "Your Name"
 
 ### Setup CUDA Toolkit
 
@@ -62,7 +65,7 @@ Install CUDA Toolkit
     wget https://developer.download.nvidia.com/compute/cuda/11.7.0/local_installers/cuda-repo-wsl-ubuntu-11-7-local_11.7.0-1_amd64.deb
     sudo dpkg -i cuda-repo-wsl-ubuntu-11-7-local_11.7.0-1_amd64.deb
 
-This last `dpkg` step may warn you to install the CUDA GPG Key:
+This last `dpkg` step may warn you to install the CUDA GPG Key. If so, run this:
 
     sudo cp /var/cuda-repo-wsl-ubuntu-11-7-local/cuda-B81839D3-keyring.gpg /usr/share/keyrings/
 
@@ -95,4 +98,4 @@ Continue installation
 2. Install VS Code and the  [Remote Development](https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.vscode-remote-extensionpack) extension.
 3. Enter Ubuntu WSL, navigate to directory, run `code .`
 
-Some things should install, then VS Code should open & connect to the WSL. It will behave as a normal UNIX workspace now, even when re-opening VS Code (it isn't necessary to open it via WSL).
+Some things should install, then VS Code should open & connect to the WSL. No need to open Code from WSL after this first launch.

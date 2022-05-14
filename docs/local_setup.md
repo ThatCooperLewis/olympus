@@ -95,3 +95,7 @@ Setup virtual environment & install dependencies (in repo directory)
 If setting up a machine without CUDA capability, use `requirements-no-cuda.txt` instead
 
     pip install -r requirements.txt
+
+If you'd like your local env file to be automatically sourced when entering the python env, run this:
+
+    echo "source .env.production" >> venv/bin/activate
