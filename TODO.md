@@ -2,16 +2,16 @@
 
 Small cleanup, improvements & bugfixing
 
-1. Resolve buy percentage issue in hermes create_order
+0. Un-mock the gdrive module & move usage to separate service (so we can stop it form crashing other things during session timeout)
+1. Add different trade thresholds for USD and BTC 
 2. Make service for Delphi on main PC
 3. Turn of rainbow LEDs in computer
-5. Define SQL schemas for docker instance
-4. Make postgres docker container for unit tests
- 
+4. Define SQL schemas for docker instance
+5. Make postgres docker container for unit tests
 Next steps
 
-1. Update status bot to compare current account value vs. initial balance (factoring in current BTC price)
-
+1. ~Update status bot to compare current account value vs. initial balance (factoring in current BTC price)~
+        Maybe just do google sheets instead?
 # **Big picture** 
 
 ## Multiple accounts/models
