@@ -18,6 +18,8 @@ testing/**/*.json
 # Shh It's A Secret
 .env.production
 .env.testing
+token.json
+google_creds.json
 
 # Model training
 results/
