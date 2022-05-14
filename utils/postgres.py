@@ -36,6 +36,20 @@ class PostgresOrder:
         self.uuid: str = str(data[4])
 
 
+class MockPostgresOrder:
+    
+    def __init__(self, data: tuple) -> None:
+        self.timestamp = int(data[0])
+        self.quantity = float(data[1])
+        self.side = str(data[2])
+        self.ending_usd_balance = float(data[3])
+        self.ending_btc_balance = float(data[4])   
+        self.current_price = float(data[5]) 
+        self.local_timestamp = int(data[6])
+        self.uuid = str(data[7])
+        self.total_value = float(data[8])
+        self.status = str(data[9])
+
 class PostgresTicker:
 
     def __init__(self, data: tuple) -> None:
@@ -126,6 +140,21 @@ class Postgres:
         query = f"""SELECT * FROM {self.order_table_name} WHERE status = 'QUEUED' ORDER BY timestamp ASC"""
         result = self._query(query, True)
         return list(map(self.__convert_result_to_order, result))
+    
+    def get_latest_orders(self, row_count: int) -> List[PostgresOrder]:
+        """
+        It returns a specific number of the newest orders from the database
+        
+        :param row_count: The number of rows to return
+        :return: A list of PostgresOrder objects
+        """
+        query = f"SELECT * FROM {self.order_table_name} ORDER BY timestamp DESC LIMIT {row_count}"
+        result = self._query(query, True)
+        if type(result) is list:
+            result.reverse()
+            return list(map(self.__convert_result_to_order, result))
+        else:
+            return []
 
     def get_queued_predictions(self) -> List[PostgresPredictionVector]:
         """
@@ -144,6 +173,15 @@ class Postgres:
         query = f"""SELECT COUNT(*) FROM ticker_feed WHERE local_timestamp > {int(now()) - 3600}"""
         result = self._query(query, True)
         return result[0][0]
+    
+    def get_latest_stack_of_same_orders(self) -> List[PostgresOrder]:
+        query = f"""SELECT side FROM {self.order_table_name} ORDER BY timestamp DESC LIMIT 1"""
+        last_side = self._query(query, True)[0][0]
+        query = f"SELECT timestamp from {self.order_table_name} where side != '{last_side}' ORDER BY timestamp DESC LIMIT 1"
+        earliest_timestamp = self._query(query, True)[0][0]
+        query = f"SELECT * FROM {self.order_table_name} where timestamp > {earliest_timestamp} and side = '{last_side}' ORDER BY timestamp ASC"
+        result = self._query(query, True)
+        return list(map(self.__convert_result_to_order, result))
 
     # Public Methods - UPDATE
 
@@ -172,6 +210,15 @@ class Postgres:
         query = f"""INSERT INTO _mock_order_feed (timestamp, quantity, side, ending_usd_balance, ending_btc_balance, current_btc_price, total_value, uuid)
         VALUES ({int(now())}, {quantity}, '{side}', {ending_usd_balance}, {ending_btc_balance}, {current_btc_price}, {total_value}, '{uuid}')"""
         self._query(query, False)
+        
+    def get_latest_mock_orders(self, row_count: int) -> List[MockPostgresOrder]:
+        query = f"SELECT * FROM _mock_order_feed ORDER BY local_timestamp DESC LIMIT {row_count}"
+        result = self._query(query, True)
+        return list(map(self.__convert_result_to_mock_order, result))
+    
+    def __convert_result_to_mock_order(self, result) -> MockPostgresOrder:
+        return MockPostgresOrder(result)
+
 
     # Private Methods
 

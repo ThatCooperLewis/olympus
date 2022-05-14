@@ -6,25 +6,12 @@ from time import sleep
 import utils.config as constants
 from crosstower.models import Balance, Order
 from crosstower.socket_api.private import OrderListener, Trading
-from utils import DiscordWebhook, Logger, Postgres
+from utils import DiscordWebhook, Logger, Postgres, GoogleSheets
 
 from olympus.helper_objects import PredictionVector
 from olympus.helper_objects.prediction_queue import \
     PredictionQueueDB as PredictionQueue
 from olympus.primordial_chaos import PrimordialChaos
-
-'''
-
-- should we hodl when it drops? sell on the way down?
-- change amount based on prediction level (including inverse maybe?)
-- Include regular check for failed orders
-
-- Need to check total balance of trading account, to determine trade size
-- Need to stack compound same-orders to execute opposite once inverse trend is expected
-- Fuck this is more complicated than I thought
-- Need to make sure there's enough USD when buying, but the trade amount in Order() is exclusively BTC quantity
-    - Use certain BTC price in prediction history? Based on how many prediction cycles?
-'''
 
 class Hermes(PrimordialChaos):
 
@@ -36,9 +23,9 @@ class Hermes(PrimordialChaos):
         super().__init__()
         self.log = Logger.setup(__name__)
         self.discord = DiscordWebhook(self.__class__.__name__)
+        self.gsheets = GoogleSheets()
         self.postgres = Postgres()
         self.abort = False
-        self.__orders: List[Order] = []
         self.__main_thread: Thread = Thread(target=self.__main_loop, args=())
         self.submitted_order_count = 0 # Used for tracking activity status
         
@@ -76,7 +63,7 @@ class Hermes(PrimordialChaos):
 
     # Private
 
-    def __parse_quantity(self, prediction: PredictionVector, balance: float) -> float:
+    def __parse_sell_quantity(self, prediction: PredictionVector, crypto_balance: float) -> float:
         '''
         Given a prediction vector, a balance, and a maximum trade percentage, return the quantity of the
         prediction vector to buy or sell
@@ -89,8 +76,13 @@ class Hermes(PrimordialChaos):
         '''
         self.log.debug('Parsing quantity for prediction vector: {}'.format(prediction))
         percentage = constants.MAX_TRADE_PERCENTAGE * abs(prediction.weight)
-        order_quantity = percentage * balance
-        return order_quantity
+        return abs(percentage * crypto_balance)
+
+    def __parse_buy_quantity(self, prediction: PredictionVector, usd_balance: float, current_btc_price: float) -> float:
+        self.log.debug('Parsing buy quantity for prediction vector: {}'.format(prediction))
+        percentage = constants.MAX_TRADE_PERCENTAGE * abs(prediction.weight)
+        usd_buy_amount = percentage * usd_balance
+        return abs(usd_buy_amount / current_btc_price)
 
     def __parse_balances(self, balances: List[Balance]) -> Tuple[float, float]:
         '''
@@ -109,56 +101,50 @@ class Hermes(PrimordialChaos):
 
     def __create_order(self, prediction: PredictionVector, balances: List[Balance]) -> Order:
         crypto_balance, fiat_balance = self.__parse_balances(balances)
-        # TODO: There's an issue here.. when the BTC balance is very high and USD low, basic buy orders fail, because it's trying to buy too much BTC
-        # I think buy & sell need to be computed separately
-        # But that means we'd have to grab the current BTC price to convert here
-        trade_quantity: float = self.__parse_quantity(
-            prediction, crypto_balance)
+        current_btc_price = self.postgres.get_latest_tickers(1)[0].ask
         if prediction.weight > 0:
             side = 'buy'
+            trade_quantity: float = self.__parse_buy_quantity(prediction, fiat_balance, current_btc_price)
         elif prediction.weight < 0:
             side = 'sell'
+            trade_quantity: float = self.__parse_sell_quantity(prediction, crypto_balance)
         else:
             self.log.debug('Prediction weight is 0, not executing order')
             return None
-        # TODO: maybe incorporate the prediction cycles so this is the actual current price?
-        predicted_price = prediction.prediction_history[-4]
-        if side == 'buy' and (predicted_price * trade_quantity) > fiat_balance:
+        self.log.debug(f'Quantity: {trade_quantity}')
+        if side == 'buy' and (current_btc_price * trade_quantity) > fiat_balance:
             self.log.error('Buy order failed, insufficient funds.\nFiat Balance: {}\nPredicted Price: {}\nTrade Quantity: {}'.format(
-                fiat_balance, predicted_price, trade_quantity))
+                fiat_balance, current_btc_price, trade_quantity))
+            return None
+        if side == 'sell' and trade_quantity > crypto_balance:
+            self.log.error('Sell order failed, insufficient funds.\nCrypto Balance: {}\nPredicted Price: {}\nTrade Quantity: {}'.format(
+                crypto_balance, current_btc_price, trade_quantity))
             return None
         return Order.create(trade_quantity, side, constants.TRADING_SYMBOL, uuid=prediction.uuid)
-        # also check total account balance to determine portion
 
     def __submit_order(self, order: Order):
-        '''
-        If the last order in the list is the same as the current order, add the current order to the list.
-        If the last order in the list is not the same as the current order, execute the last order and add
-        the current order to the list
-
-        :param order: The order that was just submitted
+        """
+        Submit order to the database.
+        If the last order was in the opposite direction, sum the past orders 
+        
+        :param order: The order to submit
         :type order: Order
-        '''
+        """
         submitted = self.__order_status_processing
         completed = self.__order_status_complete
         new_order_side = order.side
-        last_order_side = self.__orders[-1].side if len(self.__orders) > 0 else None
-        if len(self.__orders) == 0:
-            self.log.debug('No orders in list, adding new order')
-            self.__orders.append(order)
-            self.order_listener.submit_order(order, submitted, completed)
-        elif last_order_side == new_order_side:
-            self.log.debug('Same direction as last order, adding to list')
-            self.__orders.append(order)
-            self.order_listener.submit_order(order, submitted, completed)
-        elif last_order_side != new_order_side:
+        order_stack = self.postgres.get_latest_stack_of_same_orders()
+        last_order_side = order_stack[0].side
+        if last_order_side != new_order_side and len(last_order_side) > 1:
             self.log.debug('Opposite direction as last order, summing & inversing past orders')
-            total_quantity = 0
-            for order in self.__orders:
-                total_quantity += order.quantity
-            order.quantity += total_quantity
-            self.order_listener.submit_order(order, submitted, completed)
-            self.__orders = []
+            past_quantity = 0
+            # Skip the first order, which was the last summed order
+            # Inverse the rest of the orders
+            orders_to_sum = order_stack[1:11]
+            for past_order in orders_to_sum:
+                past_quantity += abs(past_order.quantity)
+            order.quantity += past_quantity
+        self.order_listener.submit_order(order, submitted, completed)
         self.log.debug(f'Executed order: {order.side} {order.symbol} {order.quantity}')
         self.submitted_order_count += 1
 
@@ -185,6 +171,11 @@ class Hermes(PrimordialChaos):
                     if order:
                         self.__submit_order(order)
                     self.prediction_queue.close(prediction, failed=(order is None))
+                    sleep(1)
+                    try:
+                        self.gsheets.rotate_order_feed()
+                    except:
+                        self.log.error("Could not rotate order feed. Prob expired token?")
                 sleep(0.2)
         except KeyboardInterrupt:
             self.log.debug('Keyboard interrupt received, aborting')
