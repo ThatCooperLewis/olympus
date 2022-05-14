@@ -14,6 +14,9 @@ LOGGING_FILENAME = 'debug-log.txt'
 STATUS_UPDATE_INTERVAL = 21600 # 6 hours
 '''How often to update the status of the servers via discord, in seconds.'''
 
+GDRIVE_API_SCOPES = ['https://www.googleapis.com/auth/spreadsheets']
+'''Defines the request permissions when accessing the Google Drive API.'''
+
 ################# Postgres #################
 
 POSTGRES_TICKER_TABLE_NAME = 'ticker_feed'

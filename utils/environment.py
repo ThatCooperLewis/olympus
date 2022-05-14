@@ -49,6 +49,10 @@ class env_meta(type):
     @property
     def keras_params_path(cls) -> str:
         return os.getenv('KERAS_PARAMS_PATH')
+    
+    @property
+    def google_sheet_id(cls) -> str:
+        return os.getenv('GOOGLE_SHEET_ID')
 
 class env(metaclass=env_meta):
     pass
