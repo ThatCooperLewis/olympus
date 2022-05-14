@@ -91,3 +91,8 @@ Continue installation
 
 ### Setup VS Code Server
 
+1. Download & install [Git for Windows](https://git-scm.com/download/win)
+2. Install VS Code and the  [Remote Development](https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.vscode-remote-extensionpack) extension.
+3. Enter Ubuntu WSL, navigate to directory, run `code .`
+
+Some things should install, then VS Code should open & connect to the WSL. It will behave as a normal UNIX workspace now, even when re-opening VS Code (it isn't necessary to open it via WSL).
