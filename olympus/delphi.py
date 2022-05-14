@@ -70,6 +70,8 @@ class Delphi(PrimordialChaos):
 
         self.prediction_queue: PredictionQueue = override_prediction_queue if override_prediction_queue else PredictionQueue(override_postgres=self.postgres)
         self.abort = False
+        self.is_active = False
+        self.latest_timestamp = None
         self.primary_thread: Thread = Thread(target=self.__primary_loop)
         self.all_threads = [self.primary_thread]
 
@@ -93,6 +95,7 @@ class Delphi(PrimordialChaos):
         return latest_price, latest_timestamp
     
     def __fetch_new_data_from_psql(self) -> Tuple[float, int]:
+        # TODO - This 100 number depends on epoch count I'm pretty sure. This should be grabbed from params in case its ever higher
         rows = self.postgres.get_latest_tickers(row_count=100)
         tmp_rows = [constants.DEFAULT_CSV_HEADERS]
         
@@ -125,8 +128,7 @@ class Delphi(PrimordialChaos):
     def __add_prediction_to_tmp_csv(self, prediction: float, timestamp: int):
         with open(self.tmp_csv_path, 'a') as file:
             # Training model only cares about first column
-            file.write(
-                f'\n{prediction},10.0,10.0,10.0,10.0,10.0,10.0,10.0,{timestamp}')
+            file.write(f'\n{prediction},10.0,10.0,10.0,10.0,10.0,10.0,10.0,{timestamp}')
             self.log.debug('Added prediction to csv')
 
     def __weigh_price_delta_against_threshold(self, prediction, current):
@@ -155,10 +157,24 @@ class Delphi(PrimordialChaos):
 
     def __primary_loop(self):
         self.log.debug('Starting loop')
+        self.is_active = True
         while not self.abort:
             self.log.debug('Starting iteration')
             predictions = []
             current_price, timestamp = self.__latest_data_handler()
+            if timestamp == self.latest_timestamp:
+                if self.is_active:
+                    self.alert_with_error('Ticket data is stale, skipping prediction. Will alert when new data is available')
+                    self.is_active = False
+                asyncio.run(self.sleep(65))
+                continue
+            else:
+                if not self.is_active:
+                    self.is_active = True
+                    # TODO: 18 should be the actual epoch count
+                    self.alert_with_error('Ticket data is fresh again. Waiting 18 predictions, then resuming...')
+                    asyncio.run(self.sleep(18*self.interval_size))
+                self.latest_timestamp = timestamp
             self.log.debug('Got latest data')
             
             for i in range(self.iterations):
