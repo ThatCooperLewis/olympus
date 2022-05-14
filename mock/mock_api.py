@@ -60,9 +60,11 @@ class MockSocket:
         total_value = round((ending_usd + ending_btc * latest_price), 2)
         
         if ending_usd <= 0 or ending_btc <= 0:
-            self.discord.send_status("Mock order would result in negative balance. Aborting...")
+            self.discord.send_alert("Mock order would result in negative balance. Aborting this order...")
             # TODO: Create custom zero dollar exception
-            raise Exception("Zero balance")
+            # raise Exception("Zero balance")
+            self.log.error("Zero balance! Skipping order!")
+            return
 
         self.log.debug(f"Submitting mock order: {side}, {btc_quantity} BTC, {usd_quantity} USD")
 
