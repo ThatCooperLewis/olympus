@@ -3,15 +3,17 @@ Bitcoin price approximation & trading
 
 ## Requirements
 
-- Ubuntu 20.04 machine with CUDA-compatible Nvidia GPU 
-  - Other operating systems may work, but the setup guide below is tailored for Linux Mint
+- Ubuntu 20.04 or Windows 11 machine with CUDA-compatible Nvidia GPU 
 - Visual Studio Code
 - Crosstower trading account w/ API Key
 - Nvidia Developer account
 
-## Setup
+## Installation Guides
 
-For running on a local Ubuntu machine, [refer to this guide](docs/local_setup.md)
+- [Ubuntu Local Setup](docs/ubuntu_local_setup.md)
+- [Windows Local Setup](docs/windows_local_setup.md)
+- [Raspberry Pi Server](docs/raspi_server_setup.md)
+- [Postgres Server](docs/postgres_server_setup.md)
 
 TODO - Crosstower API Setup
 
