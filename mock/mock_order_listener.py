@@ -1,7 +1,11 @@
+from time import sleep
+
 from olympus.hermes import Hermes
 from utils import DiscordWebhook, Logger
+from utils.postgres import Postgres
+
 from mock.mock_api import MockAPI
-from time import sleep
+
 
 class MockOrderListener:
 
@@ -13,6 +17,8 @@ class MockOrderListener:
             override_orderListener=self.mock_api.listener,
             override_tradingAccount=self.mock_api.trading
         )
+        self.postgres = Postgres(order_table_override='_mock_order_feed')
+        self.hermes.postgres = self.postgres
         self.abort = False
 
     def run(self):
