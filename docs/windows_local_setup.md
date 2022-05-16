@@ -46,8 +46,7 @@ Open the Ubuntu program if not already running. Run the following:
     cd olympus
     python -m venv venv
     source venv/bin/activate
-    pip install -r requirements-no-cuda.txt
-    echo "source .env.production" >> venv/bin/activate
+    pip install -r requirements.txt
     git config --global user.email "you@example.com"
     git config --global user.name "Your Name"
 
@@ -93,10 +92,57 @@ Continue installation
     sudo apt-get install libcudnn8
     sudo apt-get install libcudnn8-dev
 
-### Setup VS Code Server
+## Setup Visual Studio Code
 
-1. Download & install [Git for Windows](https://git-scm.com/download/win)
-2. Install VS Code and the  [Remote Development](https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.vscode-remote-extensionpack) extension.
-3. Enter Ubuntu WSL, navigate to directory, run `code .`
+### Remote Development
+
+Download & install the following
+
+- [VS Code](https://code.visualstudio.com/download)
+- [FiraCode Nerd Font](https://www.nerdfonts.com/font-downloads) 
+    - Only install the font `Fira Mono Regular Nerd Font Complete Mono Windows Compatible.otf`
+- [Git for Windows](https://git-scm.com/download/win)
+- [Remote Development for VS Code](https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.vscode-remote-extensionpack)
+
+Enter Ubuntu WSL 
+
+    cd path/to/olympus
+    code .
 
 Some things should install, then VS Code should open & connect to the WSL. No need to open Code from WSL after this first launch.
+
+### Fix environment
+
+To more easily source private keys into the WSL environment, run this in the olympus directory
+
+    echo "source .env.production" >> venv/bin/activate
+
+Python's environment won't automatically activate when using the WSL terminal through VS Code. To have it automatically run `source venv/bin/activate`, navigate to `~/.vscode-server/data/Machine/settings.json` and add the following:
+
+    "python.terminal.activateEnvironment": true
+
+Then restart the VS Code terminal.
+
+## Install ZSH & PowerLevel10K
+
+Follows [this guide](https://medium.com/@shivam1/make-your-terminal-beautiful-and-fast-with-zsh-shell-and-powerlevel10k-6484461c6efb)
+
+    sudo apt install zsh
+    chsh -s $(which zsh)
+    sh -c "$(curl -fsSL https://raw.githubusercontent.com/robbyrussell/oh-my-zsh/master/tools/install.sh)"
+    git clone https://github.com/romkatv/powerlevel10k.git $ZSH_CUSTOM/themes/powerlevel10k
+    git clone https://github.com/zsh-users/zsh-autosuggestions.git $ZSH_CUSTOM/plugins/zsh-autosuggestions
+    git clone https://github.com/zsh-users/zsh-syntax-highlighting.git $ZSH_CUSTOM/plugins/zsh-syntax-highlighting
+    nano ~/.zshrc
+
+Add/Update the following lines, then save the file
+
+    ZSH_THEME="powerlevel10k/powerlevel10k"
+    POWERLEVEL9K_MODE="nerdfont-complete"
+    ENABLE_CORRECTION="true"
+    plugins=(git zsh-autosuggestions zsh-syntax-highlighting)
+
+Enable nerd fonts:
+1. Hit `Ctrl-Shift-P` in VS Code and get to Terminal: Configure Terminal Settings
+2. Find `Terminal > Integrated > Font Family`
+3. Enter `FiraMono NF`, Ctrl-S and restart Code
