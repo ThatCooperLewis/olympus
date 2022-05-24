@@ -14,7 +14,7 @@ This guide assumes that WSL2 will be installing Ubuntu 20.04. If this changes in
 2. Download the latest Nvidia drivers
 3. Run Powershell as administrator, then run
 
-        wsl.exe --install
+        wsl.exe --install -d Ubuntu-20.04
 
 4. Wait for installation, reboot, then setup Ubuntu user/password when prompted
     - **Note:** Sometimes Ubuntu will not auto-install. If a new unix terminal doesn't appear after startup (or the command `wsl` says "No installed distributions") then download Ubuntu 20.04 LTS from the Windows Store. 
