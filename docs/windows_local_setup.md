@@ -89,12 +89,14 @@ Continue installation
 
     sudo add-apt-repository "deb https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2004/x86_64/ /"
     sudo apt-get update
-    sudo apt-get install libcudnn8
-    sudo apt-get install libcudnn8-dev
+    sudo apt-get install libcudnn8 libcudnn8-dev
+    rm cuda-repo-wsl-ubuntu-11-7-local_11.7.0-1_amd64.deb
 
-## Setup Visual Studio Code
+## (Optional) Setup Visual Studio Code
 
-### Remote Development
+Follow this section if you want to edit the repo within VS Code as if you're on a linux machine
+
+### **Setup remote development**
 
 Download & install the following
 
@@ -111,7 +113,7 @@ Enter Ubuntu WSL
 
 Some things should install, then VS Code should open & connect to the WSL. No need to open Code from WSL after this first launch.
 
-### Fix environment
+### **Fix environment**
 
 To more easily source private keys into the WSL environment, run this in the olympus directory
 
@@ -123,7 +125,7 @@ Python's environment won't automatically activate when using the WSL terminal th
 
 Then restart the VS Code terminal.
 
-## Install ZSH & PowerLevel10K
+### **Install ZSH & PowerLevel10K**
 
 Follows [this guide](https://medium.com/@shivam1/make-your-terminal-beautiful-and-fast-with-zsh-shell-and-powerlevel10k-6484461c6efb)
 
@@ -146,3 +148,55 @@ Enable nerd fonts:
 1. Hit `Ctrl-Shift-P` in VS Code and get to Terminal: Configure Terminal Settings
 2. Find `Terminal > Integrated > Font Family`
 3. Enter `FiraMono NF`, Ctrl-S and restart Code
+
+## (Optional) Setup WSL + OpenSSH
+
+Follow this section if you want to access this machine remotely.
+### WSL 2 Setup
+
+Install and configure OpenSSH
+
+    sudo apt install openssh-server
+    sudo ssh-keygen -A
+    sudo nano /etc/ssh/sshd_config
+
+Update the following lines and save file:
+
+    Port 2222
+    ListenAddress 0.0.0.0
+    PasswordAuthentication yes
+
+Configure SSH to start without `sudo`
+
+    sudo visudo
+
+Add the following line after `...ALL=(ALL:ALL) ALL` and save
+
+    %sudo ALL=NOPASSWD: /etc/init.d/ssh start
+
+Leave WSL using `exit`
+
+### Windows Host Setup
+
+WSL Changes IP on every cold start, so port forwarding must be dynamically changed. Download the [ssh_port_configuration](../scripts/ssh_port_configuration.ps1) file to your host machine, and unblock it in an Admin Powershell:
+
+    unblock-file C:\path\to\ssh_port_configuration.ps1
+
+Run this file to confirm no errors appear. It boots WSL, gets the IP, and exposes it to the network. If successful, you should be able to ssh from another machine using
+
+    ssh wsluser@windowsip -p 2222
+
+To make this run on startup:
+
+1. Open Task Scheduler
+2. Create a basic task
+3. Give it a name
+4. Set trigger to 'When I log on'
+5. Choose 'Start a program'
+    a. Program/script: `powershell.exe`
+    b. Add arguments: `-file "C:\path\to\ssh_port_configuration.ps1"`
+6. Select `Open the Properties dialog...` and click 'Finish'
+7. In properties window
+    a. Select 'Run whether user is logged in'
+    b. Check 'Run with highest privileges'
+8. Save & enter Windows password
