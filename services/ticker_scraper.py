@@ -11,7 +11,7 @@ class TickerScraper:
         self.athena = Athena(custom_interval=60)
 
     def run(self) -> None:
-        self.discord.send_status(f"TickerScraper has started a new run. (Git hash: `{Logger.git_hash()}`)")
+        self.discord.send_status(f"TickerScraper has started a new run (Git hash: `{Logger.git_hash()}`)")
         self.athena.run(headless=True)
         try:
             while not self.athena.abort:
