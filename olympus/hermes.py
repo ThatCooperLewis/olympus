@@ -55,6 +55,7 @@ class Hermes(PrimordialChaos):
         '''
         Returns the size of the prediction queue, and the total number of orders submitted. 
         '''
+        # TODO: Unused - Maybe delete? Idk
         return self.prediction_queue.size, self.submitted_order_count
 
     @property
