@@ -30,7 +30,6 @@ class PostgresMonitor:
         self.postgres = Postgres()
         self.discord = DiscordWebhook('PostgresMonitor')
         self.log = Logger.setup("PostgresMonitor")
-        self.interval_threshhold = TICKER_INTERVAL * 2
         self.ticker_scraper_subservice = PostgresSubservice('TickerScraper')
         self.order_listener_subservice = PostgresSubservice('OrderListener')
         self.prediction_engine_subservice = PostgresSubservice('PredictionEngine')
@@ -86,7 +85,12 @@ class PostgresMonitor:
         latest_time: int = now()
 
         if latest_count == self.last_good_ticker_count:
-            self.ticker_scraper_subservice = self.__handle_timeout_and_update_subservice(self.ticker_scraper_subservice, int(latest_time - self.last_good_ticker_time))
+            self.ticker_scraper_subservice = self.__handle_timeout_and_update_subservice(
+                subservice=self.ticker_scraper_subservice, 
+                time_since_last_update=int(latest_time - self.last_good_ticker_time),
+                unresponsive_threshold=int(TICKER_INTERVAL*2),
+                abandon_threshold=int(UNRESPONSIVE_TIMEOUT_THRESHOLD)
+            )
         else:
             self.last_good_ticker_count = latest_count
             self.last_good_ticker_time = latest_time
@@ -101,7 +105,12 @@ class PostgresMonitor:
         latest_queued_order = queued_orders[-1]
         latest_time = now()
         if latest_queued_order.uuid == self.last_good_queued_order.uuid:
-            self.order_listener_subservice = self.__handle_timeout_and_update_subservice(self.order_listener_subservice, int(latest_time - self.last_good_queued_order_time))
+            self.order_listener_subservice = self.__handle_timeout_and_update_subservice(
+                subservice=self.order_listener_subservice, 
+                time_since_last_update=int(latest_time - self.last_good_queued_order_time),
+                unresponsive_threshold=int(TICKER_INTERVAL*2),
+                abandon_threshold=int(UNRESPONSIVE_TIMEOUT_THRESHOLD)
+            )
         else:
             self.last_good_queued_order = latest_queued_order
             self.last_good_queued_order_time = latest_time
@@ -114,11 +123,14 @@ class PostgresMonitor:
         
         latest_queued_prediction = queued_predictions[-1]
         latest_time = now()
+        prediction_gap = TICKER_INTERVAL*PREDICTION_ITERATION_COUNT
+
         if latest_queued_prediction.uuid == self.last_good_queued_prediction.uuid:
             self.prediction_engine_subservice = self.__handle_timeout_and_update_subservice(
-                self.prediction_engine_subservice, 
-                int(latest_time - self.last_good_queued_prediction_time),
-                override_timeout=(TICKER_INTERVAL*PREDICTION_ITERATION_COUNT*2)
+                subservice=self.prediction_engine_subservice, 
+                time_since_last_update=int(latest_time - self.last_good_queued_prediction_time),
+                unresponsive_threshold=int(prediction_gap*2),
+                abandon_threshold=int(prediction_gap*4)
             )
         else:
             self.last_good_queued_prediction = latest_queued_prediction
@@ -141,10 +153,9 @@ class PostgresMonitor:
                 self.log.error("Failed to send status message to discord.")
             self.latest_update = now()
 
-    def __handle_timeout_and_update_subservice(self, subservice: PostgresSubservice, time_since_last_update: int, override_timeout: int = None) -> PostgresSubservice:
-        timeout_threshold = override_timeout if override_timeout else UNRESPONSIVE_TIMEOUT_THRESHOLD
-        if time_since_last_update > self.interval_threshhold and not subservice.ignore_inactivity:
-            if time_since_last_update > timeout_threshold:
+    def __handle_timeout_and_update_subservice(self, subservice: PostgresSubservice, time_since_last_update: int, unresponsive_threshold: int, abandon_threshold: int) -> PostgresSubservice:
+        if time_since_last_update > unresponsive_threshold and not subservice.ignore_inactivity:
+            if time_since_last_update > abandon_threshold:
                 msg = f"{subservice.name} has exceeded the unresponsive timeout threshold. Assume it has completely shut down unless another update appears."
                 subservice.ignore_inactivity = True
             else:
