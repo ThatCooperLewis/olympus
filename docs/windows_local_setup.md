@@ -197,7 +197,7 @@ To make this run on startup:
     b. Add arguments: `-file "C:\path\to\ssh_port_configuration.ps1"`
 6. Select `Open the Properties dialog...` and click 'Finish'
 7. In properties window
-    a. Select 'Run whether user is logged in'
+    a. Select 'Run whether user is logged in or not'
     b. Check 'Run with highest privileges'
 8. Save & enter Windows password
 
@@ -207,3 +207,4 @@ Wanna use the `systemd` scripts in WSL to run on startup? Tough shit. WSL doesn'
 
 1. Copy the powershell script(s) located in [the services/wsl direcotry](../services/wsl/) into a Windows directory
 2. Follow the steps in the previous section, but choose the services script instead.
+3. Before saving, under 'Triggers' edit the 'At log on' trigger and set it to **Delay task for 30 seconds**. This will stop it from interfering with the SSH initializer. 
