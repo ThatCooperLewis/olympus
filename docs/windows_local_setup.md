@@ -178,7 +178,7 @@ Leave WSL using `exit`
 
 ### Windows Host Setup
 
-WSL Changes IP on every cold start, so port forwarding must be dynamically changed. Download the [ssh_port_configuration](../scripts/ssh_port_config.ps1) file to your host machine, and unblock it in an Admin Powershell:
+Wanna easily SSH into your WSL instance? Tough shit. WSL Changes IP on every cold start, so port forwarding must be dynamically changed. Download the [ssh_port_configuration](../scripts/ssh_port_config.ps1) file to your host machine, and unblock it in an Admin Powershell:
 
     unblock-file C:\path\to\ssh_port_configuration.ps1
 
@@ -200,3 +200,10 @@ To make this run on startup:
     a. Select 'Run whether user is logged in'
     b. Check 'Run with highest privileges'
 8. Save & enter Windows password
+
+### "Service" setup
+
+Wanna use the `systemd` scripts in WSL to run on startup? Tough shit. WSL doesn't play well with `systemd`, so we must create another task.
+
+1. Copy the powershell script(s) located in [the services/wsl direcotry](../services/wsl/) into a Windows directory
+2. Follow the steps in the previous section, but choose the services script instead.

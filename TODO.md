@@ -25,6 +25,7 @@
   - Check git status in python code
   - Probably will have to be a separate service entirely
 - Make postgres docker container for unit tests
+- Services assume server user is `cooper`. Change that? Add disclaimer? IDK.
 
 # Local IP list
 Move this to private file when you change to permanent network, dumbass
