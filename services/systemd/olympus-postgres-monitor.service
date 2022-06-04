@@ -3,7 +3,7 @@ After=network.service
 
 [Service]
 User=cooper
-ExecStart=/bin/bash -c '~/olympus/services/shell/olympus-prediction-engine.sh'
+ExecStart=/bin/bash -c '~/olympus/services/shell/olympus-postgres-monitor.sh'
 
 [Install]
 WantedBy=multi-user.target

@@ -3,7 +3,7 @@ After=network.service
 
 [Service]
 User=cooper
-ExecStart=/bin/bash -c 'cd /home/cooper/olympus/ && source venv/bin/activate && python3.10 services_manager.py orders'
+ExecStart=/bin/bash -c '~/olympus/services/shell/olympus-order-listener.sh'
 
 [Install]
 WantedBy=multi-user.target
