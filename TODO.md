@@ -14,7 +14,8 @@
 ## Next steps
 - Move GDrive to separate service (so we can stop it form crashing other things if there's a session timeout)
 - Add different trade thresholds for USD and BTC 
-- Make service for Delphi on main PC
+- Make service for Delphi on NAS
+  - Add postgres monitoring for prediction db
 - Define SQL schemas for docker instance
 - Find good postgres program for windows
 
