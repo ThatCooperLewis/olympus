@@ -5,7 +5,7 @@ from time import time as now
 from typing import List
 from utils import DiscordWebhook, Logger, Postgres
 from crosstower.models import Order, Ticker
-from helper_objects.prediction_vector import PredictionVector
+from olympus.helper_objects.prediction_vector import PredictionVector
 from utils.config import (PREDICTION_QUEUE_MAX_SIZE, STATUS_UPDATE_INTERVAL,
                           TICKER_INTERVAL, UNRESPONSIVE_TIMEOUT_THRESHOLD)
 
