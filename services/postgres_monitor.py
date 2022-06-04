@@ -117,7 +117,7 @@ class PostgresMonitor:
         if latest_queued_prediction.uuid == self.last_good_queued_prediction.uuid:
             self.prediction_engine_subservice = self.__handle_timeout_and_update_subservice(
                 self.prediction_engine_subservice, 
-                int(latest_time - self.last_good_queued_prediction_time)
+                int(latest_time - self.last_good_queued_prediction_time),
                 override_timeout=(TICKER_INTERVAL*PREDICTION_ITERATION_COUNT*2)
             )
         else:
