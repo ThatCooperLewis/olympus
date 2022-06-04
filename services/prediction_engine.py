@@ -1,6 +1,8 @@
 from olympus.delphi import Delphi
 from utils import DiscordWebhook, Logger
 from time import sleep
+
+
 class PredictionEngine:
     
     def __init__(self) -> None:
@@ -12,7 +14,7 @@ class PredictionEngine:
         self.discord.send_status(f"PredictionEngine has started a new run. (Git hash: `{Logger.git_hash()}`)")
         self.delphi.run()
         try:
-            while True:
+            while not self.delphi.abort:
                 sleep(10)
         except KeyboardInterrupt:
             self.delphi.stop()

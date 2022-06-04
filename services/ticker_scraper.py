@@ -14,7 +14,7 @@ class TickerScraper:
         self.discord.send_status(f"TickerScraper has started a new run. (Git hash: `{Logger.git_hash()}`)")
         self.athena.run(headless=True)
         try:
-            while True:
+            while not self.athena.abort:
                 sleep(10)
         except KeyboardInterrupt:
             self.athena.stop()

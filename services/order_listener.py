@@ -1,6 +1,8 @@
 from olympus.hermes import Hermes
 from utils import DiscordWebhook, Logger
 from time import sleep
+
+
 class OrderListener:
 
     def __init__(self) -> None:
@@ -13,7 +15,7 @@ class OrderListener:
         self.discord.send_status(f"OrderListener has started a new run. (Git hash: `{Logger.git_hash()}`)")
         self.hermes.run()
         try:
-            while True:
+            while not self.hermes.abort:
                 sleep(10)
         except KeyboardInterrupt:
             self.hermes.stop()
