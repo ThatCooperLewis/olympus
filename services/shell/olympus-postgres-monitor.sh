@@ -2,8 +2,6 @@
 
 echo "Starting monitor service shell script..."
 
-sleep 30
-
 cd ~/olympus
 git pull
 
