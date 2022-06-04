@@ -43,3 +43,13 @@ Move this to private file when you change to permanent network, dumbass
         192.168.0.23    pi-monitor      DB Monitor          OrangePi    1GB
         192.168.0.24    pi-hermes       Hermes              Raspi 4B    2GB
         192.168.0.21    pi-athena       Athena Scraper      Raspi 3B    1GB
+
+
+Saturday 6/4
+
+- Setup nightly reboot on NAS via new Scheduled Task
+- Test WSL service startup command
+- How hard would a discord torrent bot be?
+  - Post rarbg links to disc? Maybe just the torrent link?
+  - Download torrent, run old formatter script
+  - Figure out how to automate moving movies & deciphering shows vs movies (regex ugh)
