@@ -22,7 +22,7 @@ class MockOrderListener:
         self.abort = False
 
     def run(self):
-        self.discord.send_status(f"OrderListener has started a new run. (Git hash: `{Logger.git_hash()}`)")
+        self.discord.send_status(f"MockOrderListener has started a new run. (Git hash: `{Logger.git_hash()}`)")
         self.hermes.run()
         try:
             while True:
