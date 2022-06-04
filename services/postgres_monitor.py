@@ -40,7 +40,7 @@ class PostgresMonitor:
 
     def run(self):
         hash = subprocess.check_output(['git', 'rev-parse', '--short', 'HEAD']).decode('ascii').strip()
-        self.discord.send_status(f"PostgresMonitor has started a new run. (Git hash: `{hash}`)")
+        self.discord.send_status(f"PostgresMonitor has started a new run (Git hash: `{hash}`)")
         self.log.debug("PostgresMonitor has started a new run.")
         right_now = now()
 
