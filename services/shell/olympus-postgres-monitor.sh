@@ -2,6 +2,7 @@
 
 echo "Starting monitor service shell script..."
 
+# OrangePi is slow as fuck to boot up, wait for internet connection, otherwise `git pull` will fail
 sleep 30
 
 cd ~/olympus
