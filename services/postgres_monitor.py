@@ -6,7 +6,7 @@ from typing import List
 from utils import DiscordWebhook, Logger, Postgres
 from crosstower.models import Order, Ticker
 from olympus.helper_objects.prediction_vector import PredictionVector
-from utils.config import (PREDICTION_QUEUE_MAX_SIZE, STATUS_UPDATE_INTERVAL,
+from utils.config import (PREDICTION_QUEUE_MAX_SIZE, PREDICTION_ITERATION_COUNT, STATUS_UPDATE_INTERVAL,
                           TICKER_INTERVAL, UNRESPONSIVE_TIMEOUT_THRESHOLD)
 
 class PostgresSubservice:
@@ -115,7 +115,11 @@ class PostgresMonitor:
         latest_queued_prediction = queued_predictions[-1]
         latest_time = now()
         if latest_queued_prediction.uuid == self.last_good_queued_prediction.uuid:
-            self.prediction_engine_subservice = self.__handle_timeout_and_update_subservice(self.prediction_engine_subservice, int(latest_time - self.last_good_queued_prediction_time))
+            self.prediction_engine_subservice = self.__handle_timeout_and_update_subservice(
+                self.prediction_engine_subservice, 
+                int(latest_time - self.last_good_queued_prediction_time)
+                override_timeout=(TICKER_INTERVAL*PREDICTION_ITERATION_COUNT*2)
+            )
         else:
             self.last_good_queued_prediction = latest_queued_prediction
             self.last_good_queued_prediction_time = latest_time
@@ -137,9 +141,10 @@ class PostgresMonitor:
                 self.log.error("Failed to send status message to discord.")
             self.latest_update = now()
 
-    def __handle_timeout_and_update_subservice(self, subservice: PostgresSubservice, time_since_last_update: int) -> PostgresSubservice:
+    def __handle_timeout_and_update_subservice(self, subservice: PostgresSubservice, time_since_last_update: int, override_timeout: int = None) -> PostgresSubservice:
+        timeout_threshold = override_timeout if override_timeout else UNRESPONSIVE_TIMEOUT_THRESHOLD
         if time_since_last_update > self.interval_threshhold and not subservice.ignore_inactivity:
-            if time_since_last_update > UNRESPONSIVE_TIMEOUT_THRESHOLD:
+            if time_since_last_update > timeout_threshold:
                 msg = f"{subservice.name} has exceeded the unresponsive timeout threshold. Assume it has completely shut down unless another update appears."
                 subservice.ignore_inactivity = True
             else:
