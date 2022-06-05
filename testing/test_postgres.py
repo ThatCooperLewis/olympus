@@ -33,7 +33,7 @@ class TestPostgres(TestCase):
         ticker = utils.get_basic_ticker()
         self.postgres.insert_ticker(ticker)
         rows = self.postgres.get_latest_tickers(1)
-        self.assertEqual(len(rows), 1)
+        self.assertEqual(len(rows), 123)
         first_ticker = rows[0]
         self.assertEqual(first_ticker.timestamp, ticker.timestamp)
         self.assertEqual(first_ticker.ask, ticker.ask)
