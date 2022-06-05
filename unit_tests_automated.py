@@ -71,7 +71,7 @@ class ContinuousIntegration:
                     )
                     process.wait()
 
-                    pr_info_str = f'''**Name:** {pr.get('title')}\n**Status:** {pr.get('state')}\n**Branch:** `{branch}`\n**URL:** <{pr.get('url')}>\n**SHA:** {newest_sha}'''
+                    pr_info_str = f'''**Name:** {pr.get('title')}\n**Status:** {pr.get('state')}\n**Branch:** `{branch}`\n**URL:** <{pr.get('url')}>\n**SHA:** {newest_sha[:8]}'''
                     gh_pr = self.repo.get_pull(int(pr.get('number')))
                     if process.returncode == 0:
                         self.discord.send_alert(f"<a:DANKIES:927062701878947851> **==== PR Test Success ====** <a:DANKIES:927062701878947851>")
