@@ -95,7 +95,7 @@ class TestAthena(TestCase):
         new = utils.count_rows_from_file(self.filename)
         self.assertNotEqual(old, new)
         self.athena.stop()
-        sleep(5)
+        sleep(10)
         for thread in self.athena.all_threads:
             self.assertFalse(thread.is_alive())
 
