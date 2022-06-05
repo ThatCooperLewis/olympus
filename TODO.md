@@ -8,19 +8,15 @@
 ## Google Sheets integration
 - Add automated system for logging long-term _full_data
 
-## Make services better
-- What would it take to run automated PR testing? Via jenkins locally?
 
 # **Small Stuff**
 
 ## Next steps
+- Make the CI/CD a task on NAS scheduler
 - MockAPI/insertOrder probably doesn't work anymore, since tests were updated. Now hermes uses the "insertOrder" directly in the method, which I don't think will work well if mocking
 - Move GDrive to separate service (so we can stop it form crashing other things if there's a session timeout)
 - Add different trade thresholds for USD and BTC 
-- Make service for Delphi on NAS
-  - Add postgres monitoring for prediction db
 - Define SQL schemas for docker instance
-- Find good postgres program for windows
 
 ## Backlog
 - Global services manager that imports the cuda services only if predict arg is given
