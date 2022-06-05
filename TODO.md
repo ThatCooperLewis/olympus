@@ -23,6 +23,9 @@
 - Find good postgres program for windows
 
 ## Backlog
+- Global services manager that imports the cuda services only if predict arg is given
+  - It can listen for messages for spinning up new instaces/rebooting
+  - Get them from discord?
 - CSV modes are deprecated. Tests wont work with them anymore. Remove all trace
 - We should eventually make test cases for Prometheus and its Predict() method
 - Master branch autodeployment in service clusters
