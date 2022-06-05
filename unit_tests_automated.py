@@ -71,12 +71,12 @@ class ContinuousIntegration:
                     )
                     process.wait()
 
-                    pr_info_str = f'''**Name:** {pr.get('title')}\n**Status:** {pr.get('state')}\n**Branch:** `{branch}`\n**URL:** <{pr.get('url')}>\n**SHA:** {newest_sha[:8]}'''
+                    pr_info_str = f'''**Name:** {pr.get('title')}\n**Status:** {pr.get('state')}\n**Branch:** `{branch}`\n**URL:** <{pr.get('url')}>\n**SHA:** {newest_sha[:7]}'''
                     gh_pr = self.repo.get_pull(int(pr.get('number')))
                     if process.returncode == 0:
                         self.discord.send_alert(f"<a:DANKIES:927062701878947851> **==== PR Test Success ====** <a:DANKIES:927062701878947851>")
                         self.discord.send_alert(pr_info_str)
-                        gh_pr.create_issue_comment(f'[AUTOMATED]* As of commit hash {pr.get("newest_sha")}, the PR has passed all unit tests.')
+                        gh_pr.create_issue_comment(f'[AUTOMATED] As of commit hash {pr.get("newest_sha")}, the PR has passed all unit tests.')
                     else:
                         if os.path.exists(filename):
                             with open(filename, 'r') as f:
