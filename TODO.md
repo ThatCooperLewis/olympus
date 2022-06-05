@@ -20,6 +20,7 @@
 # **Small Stuff**
 
 ## Next steps
+- MockAPI/insertOrder probably doesn't work anymore, since tests were updated. Now hermes uses the "insertOrder" directly in the method, which I don't think will work well if mocking
 - Move GDrive to separate service (so we can stop it form crashing other things if there's a session timeout)
 - Add different trade thresholds for USD and BTC 
 - Make service for Delphi on NAS
@@ -28,6 +29,7 @@
 - Find good postgres program for windows
 
 ## Backlog
+- CSV modes are deprecated. Tests wont work with them anymore. Remove all trace
 - We should eventually make test cases for Prometheus and its Predict() method
 - Master branch autodeployment in service clusters
   - Only redeploy if changes have been pushed
