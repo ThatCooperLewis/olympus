@@ -31,7 +31,7 @@ def count_rows_from_file(file_name: str) -> int:
         return len(f.readlines())
 
 def create_blank_file() -> None:
-    file_name = 'testing/test_' + str(uuid.uuid4()) + '.csv'
+    file_name = 'testing/' + str(uuid.uuid4()) + '.csv'
     with open(file_name, 'w') as f:
         f.write('')
     return file_name
