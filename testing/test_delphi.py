@@ -42,6 +42,7 @@ class TestDelphi(TestCase):
         self.assertEqual(self.delphi.predictor.csv_path[:32], 'testing/test_files/test_data_tmp')
         self.assertEqual(self.delphi.seq_len, 18)
         self.assertFalse(self.delphi.sql_mode)
+        
         self.assertEqual(self.delphi.delta_threshold, 0.003)
 
     def test_sql_init(self):
