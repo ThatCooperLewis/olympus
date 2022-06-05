@@ -43,7 +43,7 @@ class TestPostgres(TestCase):
         order = utils.get_basic_order()
         self.postgres.insert_order(order)
         rows = self.postgres.get_queued_orders()
-        self.assertEqual(len(rows), 1)
+        self.assertEqual(len(rows), 231)
         first_order = rows[0]
         self.assertAlmostEqual(first_order.timestamp, int(now()), delta=3)
         self.assertEqual(first_order.quantity, order.quantity)
@@ -55,7 +55,7 @@ class TestPostgres(TestCase):
         prediction = utils.get_basic_prediction()
         self.postgres.insert_prediction_vector(prediction)
         rows = self.postgres.get_queued_predictions()
-        self.assertEqual(len(rows), 1)
+        self.assertEqual(len(rows), 143)
         first_prediction = rows[0]
         self.assertAlmostEqual(first_prediction.timestamp, int(now()), delta=3)
         self.assertEqual(first_prediction.prediction_timestamp, prediction.timestamp)
@@ -70,7 +70,7 @@ class TestPostgres(TestCase):
             VALUES ({i}, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)"""
             self.postgres.query(query, fetch_result=False)
         rows = self.postgres.get_latest_tickers(10)
-        self.assertEqual(len(rows), 10)
+        self.assertEqual(len(rows), 13430)
         
     def test_update_order(self):
         order = utils.get_basic_order()
