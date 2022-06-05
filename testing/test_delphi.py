@@ -3,6 +3,7 @@ from threading import Thread
 from time import sleep
 from time import time as now
 from unittest import TestCase
+from mock.mock_discord import MockDiscord
 
 from olympus.delphi import Delphi
 from olympus.helper_objects.prediction_queue import \
@@ -25,6 +26,7 @@ class TestDelphi(TestCase):
             override_iteration_length=3
         )
         self.delphi.interval_size = 3
+        self.delphi.discord = MockDiscord('TestDelphi')
 
     def tearDown(self):
         utils.delete_file(self.delphi.tmp_csv_path)
