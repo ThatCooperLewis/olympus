@@ -65,7 +65,7 @@ class ContinuousIntegration:
                     branch = pr.get('branch')
                     filename = f"test-log-{branch}.txt"
                     process = subprocess.Popen(
-                        f"cd ~/olympus && git checkout main && git pull && git fetch origin {branch} && git checkout {branch} && git pull origin {branch} && python unit_tests.py all {filename}",
+                        f"cd ~/cicd && git checkout main && git pull && git fetch origin {branch} && git checkout {branch} && git pull origin {branch} && python unit_tests.py all {filename}",
                         shell=True
                     )
                     process.wait()
@@ -82,11 +82,15 @@ class ContinuousIntegration:
                                 test_log = f.read()
                             with open('debug-log.txt', 'r') as f:
                                 debug_log = f.read()
-                            test_results = "```" + test_log[test_log.index('=====================')+1:] + "```"
+                            test_errors = test_log[test_log.index('=====================')+1:]
                             alert = f'''<:widepeepoSad1:662519773439197203><:widepeepoSad2:662519773514563614>  **=== PR Test Failed ===** <:widepeepoSad1:662519773439197203><:widepeepoSad2:662519773514563614>'''
                             self.discord.send_alert(alert)
                             self.discord.send_alert(pr_info_str)
-                            self.discord.send_alert(test_results)
+                            if len(test_errors) > 2000:
+                                test_log = '```' + test_errors[:1900] + '```'
+                                self.discord.send_alert(test_log)
+                                test_log = '```' + test_errors[1900:] + '```'
+                            self.discord.send_alert(test_log)
                         comment = f'[AUTOMATED] As of commit hash {pr.get("newest_sha")}, the PR has **FAILED** unit tests.\n\nMerging this branch may break production clusters! Check Discord for more infomoration.'
                         gh_pr.create_issue_comment(comment)
                     pr['tested_sha'] = newest_sha

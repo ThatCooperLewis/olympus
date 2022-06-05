@@ -1,1 +1,1 @@
-wsl ~/olympus/services/shell/olympus-continuous-integration.sh
+wsl ~/cicd/services/shell/olympus-continuous-integration.sh
