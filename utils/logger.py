@@ -33,7 +33,8 @@ class Logger():
 
         # Setup file logging
         file_format = logging.Formatter('%(asctime)s [%(name)s] %(levelname)s: %(message)s')
-        file_handler = logging.FileHandler(LOGGING_FILENAME)
+        file_handler = RotatingFileHandler(LOGGING_FILENAME, mode='a', maxBytes=5*1024*1024, 
+                                 backupCount=2, encoding=None, delay=0)
         file_handler.setFormatter(file_format)
         file_handler.setLevel(FILE_LOGGING_LEVEL)
         logger.addHandler(file_handler)
