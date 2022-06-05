@@ -9,12 +9,6 @@
 - Add automated system for logging long-term _full_data
 
 ## Make services better
-- CAP DEBUG FILE SIZE/LINE COUNT
-- Increase reboot frequency (twice daily)
-  - Consider rebooting all servers regularly
-  - NAS reboot? 5AM PST?
-  - Maybe a new task schedule can reboot WSL & rerun the SSH/service scripts?
-- git pull upon service startup
 - What would it take to run automated PR testing? Via jenkins locally?
 
 # **Small Stuff**
