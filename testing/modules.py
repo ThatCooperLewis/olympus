@@ -10,14 +10,14 @@ from testing.test_services_manager import TestServicesManager
 class __TestModule:
 
     def __init__(self, suite):
-        self.suite = unittest.TestLoader().loadTestsFromTestCase(suite)
+        self.suite = suite
 
-    @property
-    def result(self):
-        return unittest.TextTestRunner(verbosity=2).run(self.suite)
+    def run(self):
+        loaded_test = unittest.TestLoader().loadTestsFromTestCase(self.suite)
+        return unittest.TextTestRunner(verbosity=2).run(loaded_test)
 
 
-MODULES = {
+TEST_MODULES = {
     'athena': __TestModule(TestAthena),
     'delphi': __TestModule(TestDelphi),
     'hermes': __TestModule(TestHermes),

@@ -1,1 +1,1 @@
-from testing.modules import MODULES
+from testing.modules import TEST_MODULES
