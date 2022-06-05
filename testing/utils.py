@@ -1,4 +1,5 @@
 
+from cgi import test
 import json
 import os
 import uuid
@@ -44,6 +45,21 @@ def delete_file(file_name: str) -> None:
         os.remove(file_name)
     except:
         pass
+
+def delete_all_test_files():
+    exclude = [
+        'test_data.csv',
+        'test_params.json',
+        'test_model.h5'
+    ]
+    testing_dirs = [
+        './testing',
+        './testing/test_files',
+    ]
+    for dir in testing_dirs:
+        for filename in os.listdir(dir):
+            if filename not in exclude and filename.startswith('test_') and (filename.endswith(('.csv', '.json'))):
+                os.remove(dir + '/' + filename)
 
 def get_first_row_from_file(file_name: str) -> str:
     with open(file_name, 'r') as f:
