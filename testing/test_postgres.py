@@ -14,7 +14,6 @@ class TestPostgres(TestCase):
 
     def setUp(self):
         # TODO: This is dangerous. Make a separate DB for testing.
-        # Is it tho? Idk man
         self.postgres: PostgresTesting = PostgresTesting.setUp()
         self.postgres.discord = MockDiscord('Postgres')
     
