@@ -70,7 +70,7 @@ class TestPostgres(TestCase):
             VALUES ({i}, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)"""
             self.postgres.query(query, fetch_result=False)
         rows = self.postgres.get_latest_tickers(10)
-        self.assertEqual(len(rows), 13430)
+        self.assertEqual(len(rows), 1340)
         
     def test_update_order(self):
         order = utils.get_basic_order()
