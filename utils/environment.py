@@ -54,5 +54,9 @@ class env_meta(type):
     def google_sheet_id(cls) -> str:
         return os.getenv('GOOGLE_SHEET_ID')
 
+    @property
+    def github_access_token(cls) -> str:
+        return os.getenv('GITHUB_ACCESS_TOKEN')
+
 class env(metaclass=env_meta):
     pass

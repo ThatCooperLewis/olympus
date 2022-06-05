@@ -75,6 +75,10 @@ def get_json_from_file(file_name: str) -> list:
     with open(file_name, 'r') as f:
         return json.loads(f.read())
 
+def save_dict_to_json(dict: dict, file_name: str):
+    with open(file_name, 'w') as f:
+        json.dump(dict, f)
+
 def get_basic_ticker() -> Ticker:
     return Ticker({
         'symbol': 'BTCUSD',

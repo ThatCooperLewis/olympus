@@ -1,10 +1,13 @@
 from services.prediction_engine import PredictionEngine
+from services.continuous_integration import IntegrationService
 from utils import DiscordWebhook
 import sys
 
 def get_service(service_name: str):
     if service_name == 'prediction':
         return PredictionEngine()
+    elif service_name == 'integration':
+        return IntegrationService()
     return None
 
 if __name__ == "__main__":
