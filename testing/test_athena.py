@@ -47,20 +47,6 @@ class TestAthena(TestCase):
         self.assertTrue(self.athena.queue.qsize() > 0)
         self.athena.abort = True
         thread.join()
-
-
-    # TODO: CSV loop is deprecated. Delete all traces of it
-    # def test_csv_loop(self):
-    #     thread = Thread(target=self.athena.csv_loop)
-    #     thread.start()
-    #     test_ticker = utils.get_basic_ticker()
-    #     self.assertEqual(test_ticker.csv_line, '2.0,1.0,3,7,6,8,4,5,1262332800\n')
-    #     self.athena.queue.put(test_ticker)
-    #     sleep(3)
-    #     self.assertEqual(utils.count_rows_from_file(self.filename), 1)
-    #     self.assertEqual(utils.get_first_row_from_file(self.filename),'2.0,1.0,3,7,6,8,4,5,1262332800\n')
-    #     self.athena.abort = True
-    #     thread.join()
         
     def test_sql_loop(self):
         self.athena.csv_path = None

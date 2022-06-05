@@ -54,15 +54,6 @@ class TestDelphi(TestCase):
         self.assertEqual(len(sql_delphi.tmp_csv_path), 23)
         utils.delete_file(sql_delphi.tmp_csv_path)
 
-    def test_run_loop(self):
-        self.delphi.run()
-        self.__wait_for_queue_to_fill()
-        self.assertTrue(self.queue.size > 0)
-        self.delphi.stop()
-        sleep(3)
-        self.assertEqual(utils.count_rows_from_file(self.delphi.tmp_csv_path), 104)
-        self.assertEqual(self.__get_first_line_from_file(self.delphi.tmp_csv_path), 'price,bid,last,low,high,open,volume,volumeQuote,timestamp\n')
-
     def test_run_loop_sql_mode(self):
         self.delphi.sql_mode = True
         self.delphi.postgres = PostgresTesting(
@@ -80,8 +71,6 @@ class TestDelphi(TestCase):
         self.assertEqual(len(predictions_in_db), 1)
         self.assertEqual(prediction.status, 'QUEUED')
         self.assertAlmostEqual(prediction.timestamp, int(now()), delta=3)
-        self.assertEqual(utils.count_rows_from_file(self.delphi.tmp_csv_path), 104)
-        self.assertEqual(self.__get_first_line_from_file(self.delphi.tmp_csv_path), 'price,bid,last,low,high,open,volume,volumeQuote,timestamp\n')
 
     def test_superclass(self):
         self.delphi.run()
