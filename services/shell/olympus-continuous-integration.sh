@@ -3,6 +3,7 @@
 echo "Starting order service shell script..."
 
 cd ~/cicd
+git checkout main
 git pull
 
 source venv/bin/activate
