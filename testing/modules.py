@@ -12,9 +12,9 @@ class __TestModule:
     def __init__(self, suite):
         self.suite = suite
 
-    def run(self):
+    def run(self, output_file=None):
         loaded_test = unittest.TestLoader().loadTestsFromTestCase(self.suite)
-        return unittest.TextTestRunner(verbosity=2).run(loaded_test)
+        return unittest.TextTestRunner(output_file, verbosity=2).run(loaded_test)
 
 
 TEST_MODULES = {
