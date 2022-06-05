@@ -178,7 +178,7 @@ Leave WSL using `exit`
 
 ### Windows Host Setup
 
-Wanna easily SSH into your WSL instance? Tough shit. WSL Changes IP on every cold start, so port forwarding must be dynamically changed. Download the [ssh_port_configuration](../scripts/ssh_port_config.ps1) file to your host machine, and unblock it in an Admin Powershell:
+Wanna easily SSH into your WSL instance? Tough shit. WSL Changes IP on every cold start, so port forwarding must be dynamically changed. Download the [ssh_port_configuration](../scripts/ssh_port_config.ps1) file to your host machine (Windows, not WSL), and unblock it in an Admin Powershell:
 
     unblock-file C:\path\to\ssh_port_configuration.ps1
 
