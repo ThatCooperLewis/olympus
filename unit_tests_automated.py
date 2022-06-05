@@ -91,7 +91,7 @@ class ContinuousIntegration:
                             # TODO: Make this less hacky
                             if len(test_errors) > 1993:
                                 start_index = 0
-                                for i in range(len(test_errors) % 1993):
+                                for i in range(len(test_errors) // 1993):
                                     test_log = '```' + test_errors[start_index:start_index+1993] + '```'
                                     self.discord.send_alert(test_log)
                                     sleep(0.5)
