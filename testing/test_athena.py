@@ -29,12 +29,11 @@ class TestAthena(TestCase):
     def test_run_and_exit(self):
         self.athena.timeout_threshold = 10
         self.athena.run(headless=True)
-        sleep(4)
+        sleep(10)
         # Test that the file is not empty
         self.assertTrue(utils.count_rows_from_file(self.filename) > 1)
         self.athena.abort = True
         sleep(2)
-
         # Test that the file is unchanged after quitting
         row_count = utils.count_rows_from_file(self.filename)
         sleep(1)
@@ -68,7 +67,7 @@ class TestAthena(TestCase):
         self.athena.run(headless=True)
         sleep(2)
         self.athena.join_threads()
-        sleep(3)
+        sleep(5)
         for thread in self.athena.all_threads:
             self.assertFalse(thread.is_alive())
 

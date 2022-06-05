@@ -6,6 +6,7 @@ from mock.mock_gdrive import MockGoogleSheets
 from olympus.hermes import Hermes
 from olympus.helper_objects import PredictionVector
 from olympus.helper_objects.prediction_queue import PredictionQueueDB
+from utils import Postgres
 
 from testing import config, utils
 from testing.utils import PostgresTesting
@@ -26,11 +27,7 @@ class TestHermes(TestCase):
             }
         ])
         self.testing_api = TestingAPI(self.params_file, MockDiscord('TestingAPIOrderListener'))
-        self.postgres = PostgresTesting(
-            ticker_table_override=config.POSTGRES_TEST_TICKER_TABLE, 
-            order_table_override=config.POSTGRES_TEST_ORDER_TABLE,
-            prediction_table_override=config.POSTGRES_TEST_PREDICTION_TABLE
-        )
+        self.postgres = PostgresTesting.setUp()
         self.postgres.insert_ticker(utils.get_basic_ticker())
         self.prediction_queue = PredictionQueueDB(override_postgres=self.postgres)
         self.hermes = Hermes(

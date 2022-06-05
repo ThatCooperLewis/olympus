@@ -20,18 +20,21 @@ class PostgresTesting(Postgres):
     
     @classmethod
     def setUp(cls):
-        return cls(
+        postgres = cls(
             ticker_table_override=constants.POSTGRES_TEST_TICKER_TABLE,
             order_table_override=constants.POSTGRES_TEST_ORDER_TABLE,
             prediction_table_override=constants.POSTGRES_TEST_PREDICTION_TABLE
         )
+        # Clear any possible leftover data
+        postgres.tearDown()
+        return postgres
 
 def count_rows_from_file(file_name: str) -> int:
     with open(file_name, 'r') as f:
         return len(f.readlines())
 
 def create_blank_file() -> None:
-    file_name = 'testing/' + str(uuid.uuid4()) + '.csv'
+    file_name = 'testing/test_' + str(uuid.uuid4()) + '.csv'
     with open(file_name, 'w') as f:
         f.write('')
     return file_name
