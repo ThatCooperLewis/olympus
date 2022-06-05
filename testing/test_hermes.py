@@ -2,6 +2,7 @@ from time import sleep
 from unittest import TestCase
 
 from mock import MockDiscord
+from mock.mock_gdrive import MockGoogleSheets
 from olympus.hermes import Hermes
 from olympus.helper_objects import PredictionVector
 from olympus.helper_objects.prediction_queue import PredictionQueueDB
@@ -30,6 +31,7 @@ class TestHermes(TestCase):
             order_table_override=config.POSTGRES_TEST_ORDER_TABLE,
             prediction_table_override=config.POSTGRES_TEST_PREDICTION_TABLE
         )
+        self.postgres.insert_ticker(utils.get_basic_ticker())
         self.prediction_queue = PredictionQueueDB(override_postgres=self.postgres)
         self.hermes = Hermes(
             override_orderListener=self.testing_api.listener,
@@ -38,6 +40,7 @@ class TestHermes(TestCase):
         )
         self.hermes.discord = MockDiscord('Postgres')
         self.hermes.postgres = self.postgres
+        self.hermes.gsheets = MockGoogleSheets('Hermes')
 
     def tearDown(self):
         self.postgres.tearDown()
@@ -73,6 +76,7 @@ class TestHermes(TestCase):
         self.hermes.run()
         prediction = utils.get_basic_prediction()
         self.hermes.submit_prediction_to_queue(prediction)
+        sleep(3)
         self.hermes.stop()
         order_rows = self.hermes.postgres.get_queued_orders()
         self.assertEqual(len(order_rows), 0)

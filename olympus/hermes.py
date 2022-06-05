@@ -134,9 +134,12 @@ class Hermes(PrimordialChaos):
         submitted = self.__order_status_processing
         completed = self.__order_status_complete
         new_order_side = order.side
-        order_stack = self.postgres.get_latest_stack_of_same_orders()
-        last_order_side = order_stack[0].side
-        if last_order_side != new_order_side and len(last_order_side) > 1:
+        try:
+            order_stack = self.postgres.get_latest_stack_of_same_orders()
+        except IndexError:
+            order_stack = []
+        last_order_side = order_stack[0].side if len(order_stack) > 0 else None
+        if last_order_side != new_order_side and len(order_stack) > 1:
             self.log.debug('Opposite direction as last order, summing & inversing past orders')
             past_quantity = 0
             # Skip the first order, which was the last summed order
@@ -145,6 +148,7 @@ class Hermes(PrimordialChaos):
             for past_order in orders_to_sum:
                 past_quantity += abs(past_order.quantity)
             order.quantity += past_quantity
+        self.postgres.insert_order(order)
         self.order_listener.submit_order(order, submitted, completed)
         self.log.debug(f'Executed order: {order.side} {order.symbol} {order.quantity}')
         self.submitted_order_count += 1
