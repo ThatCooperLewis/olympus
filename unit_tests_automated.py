@@ -1,6 +1,7 @@
 import collections
 import os
 import subprocess
+from time import sleep
 
 from github import Github
 
@@ -86,10 +87,17 @@ class ContinuousIntegration:
                             alert = f'''<:widepeepoSad1:662519773439197203><:widepeepoSad2:662519773514563614>  **=== PR Test Failed ===** <:widepeepoSad1:662519773439197203><:widepeepoSad2:662519773514563614>'''
                             self.discord.send_alert(alert)
                             self.discord.send_alert(pr_info_str)
-                            if len(test_errors) > 2000:
-                                test_log = '```' + test_errors[:1900] + '```'
-                                self.discord.send_alert(test_log)
-                                test_log = '```' + test_errors[1900:] + '```'
+                            # Get around Discord's character limit
+                            # TODO: Make this less hacky
+                            if len(test_errors) > 1993:
+                                start_index = 0
+                                for i in range(len(test_errors) // 1993):
+                                    test_log = '```' + test_errors[start_index:start_index+1993] + '```'
+                                    self.discord.send_alert(test_log)
+                                    sleep(0.5)
+                                    start_index += 1993
+                            else:
+                                test_log = '```' + test_errors + '```'
                             self.discord.send_alert(test_log)
                         comment = f'[AUTOMATED] As of commit hash {pr.get("newest_sha")}, the PR has **FAILED** unit tests.\n\nMerging this branch may break production clusters! Check Discord for more infomoration.'
                         gh_pr.create_issue_comment(comment)
