@@ -65,7 +65,7 @@ class ContinuousIntegration:
                     branch = pr.get('branch')
                     filename = f"test-log-{branch}.txt"
                     process = subprocess.Popen(
-                        f"cd ~/olympus && git checkout main && git pull && git fetch origin {branch} && git checkout {branch} && git pull origin {branch} && python unit_tests.py all {filename}",
+                        f"cd ~/cicd && git checkout main && git pull && git fetch origin {branch} && git checkout {branch} && git pull origin {branch} && python unit_tests.py all {filename}",
                         shell=True
                     )
                     process.wait()
