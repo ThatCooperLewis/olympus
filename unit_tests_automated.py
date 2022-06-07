@@ -59,8 +59,7 @@ class ContinuousIntegration:
         for pr in sorted_prs.values():
             newest_sha = pr.get('newest_sha')
             tested_sha = pr.get('tested_sha')
-            # TODO: Shouldn't check for passing here. It'll cause crazy repeats
-            if tested_sha is None or newest_sha != tested_sha:
+            if tested_sha is None or newest_sha != tested_sha or True:
                 try:
                     # Its morbin time
                     branch = pr.get('branch')
