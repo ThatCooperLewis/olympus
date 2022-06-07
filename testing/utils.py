@@ -13,7 +13,7 @@ class PostgresTesting(Postgres):
 
     # Expose query method for testing
     def query(self, query_str: str, fetch_result: bool):
-        return self._query(query_str)
+        return self._query(query_str, fetch_result)
     
     def tearDown(self):
         self._query(f'DELETE FROM {constants.POSTGRES_TEST_ORDER_TABLE}', fetch_result=False)
