@@ -7,6 +7,7 @@ from crosstower.models import Ticker, Order
 from olympus.helper_objects import PredictionVector
 from utils import Postgres
 import testing.config as constants
+from mock.mock_discord import MockDiscord
 
 class PostgresTesting(Postgres):
 
@@ -26,6 +27,7 @@ class PostgresTesting(Postgres):
             order_table_override=constants.POSTGRES_TEST_ORDER_TABLE,
             prediction_table_override=constants.POSTGRES_TEST_PREDICTION_TABLE
         )
+        postgres.discord = MockDiscord('Postgres')
         # Clear any possible leftover data
         postgres.tearDown()
         return postgres
