@@ -64,7 +64,7 @@ class ContinuousIntegration:
                     # Its morbin time
                     branch = pr.get('branch')
                     filename = f"test-log-{branch}.txt"
-                    process = subprocess.Popen(f'script -c "~/cicd/services/shell/automated-unit-tests.sh {branch}" output.log', shell=True)
+                    process = subprocess.Popen(['./services/shell/automated-unit-tests.sh', branch],)
                     process.wait()
 
                     pr_info_str = f'''**Name:** {pr.get('title')}\n**Status:** {pr.get('state')}\n**Branch:** `{branch}`\n**URL:** <{pr.get('url')}>\n**SHA:** {newest_sha[:7]}'''
