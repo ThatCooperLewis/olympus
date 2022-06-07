@@ -63,7 +63,7 @@ class ContinuousIntegration:
                 try:
                     # Its morbin time
                     branch = pr.get('branch')
-                    self.discord.send_status(f'Running automated tests for PR #{pr.get("number")} - `{branch}`')
+                    self.discord.send_status(f'Running automated tests for PR #{pr.get("number")} - `{branch}` - `{newest_sha}`')
                     filename = f"automated-test.log"
                     process = subprocess.Popen(f'script -c "./services/shell/automated-unit-tests.sh {branch}" {filename}', shell=True)
                     process.wait()
