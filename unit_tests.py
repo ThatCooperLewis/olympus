@@ -1,4 +1,3 @@
-from cmath import log
 import sys
 import unittest
 from testing import TEST_MODULES
