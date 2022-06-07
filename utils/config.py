@@ -38,7 +38,7 @@ POSTGRES_TICKER_COLUMNS = '(timestamp, ask, bid, last, low, high, open, volume, 
 POSTGRES_ORDER_TABLE_NAME = 'order_feed'
 '''The name of the pSQL table that stores order data & history.'''
 
-POSTGRES_ORDER_COLUMNS = '(timestamp, quantity, side, status, uuid)'
+POSTGRES_ORDER_COLUMNS = '(timestamp, quantity, side, status, uuid, usd_balance, btc_balance, current_price)'
 '''The columns of the pSQL table that stores order data & history. Used for sql insert queries.'''
 
 POSTGRES_PREDICTION_TABLE_NAME = 'prediction_feed'

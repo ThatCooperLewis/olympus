@@ -102,7 +102,7 @@ class Postgres:
     def insert_order(self, order: Order, current_price: float, crypto_balance: float, fiat_balance: float):
         self.log.debug(f"Inserting order with uuid: {order.uuid}")
         query = f"""INSERT INTO {self.order_table_name} {constants.POSTGRES_ORDER_COLUMNS}
-        VALUES ({int(now())}, {order.quantity}, '{order.side}', '{constants.POSTGRES_STATUS_QUEUED}', '{order.uuid}')"""
+        VALUES ({int(now())}, {order.quantity}, '{order.side}', '{constants.POSTGRES_STATUS_QUEUED}', '{order.uuid}', {fiat_balance}, {crypto_balance}, {current_price})"""
         self._query(query, False)
 
     def insert_prediction_vector(self, prediction_vector: PredictionVector):

@@ -99,7 +99,10 @@ def get_basic_order() -> Order:
         'timestamp': '2010-01-01T00:00:00.000Z',
         'quantity': '1',
         'side': 'BUY',
-        'status': 'QUEUED'
+        'status': 'QUEUED',
+        'usd_balance': '2',
+        'btc_balance': '3',
+        'current_price': '4',
     }, uuid=uuid.uuid4().hex)
 
 def get_basic_prediction() -> PredictionVector:
