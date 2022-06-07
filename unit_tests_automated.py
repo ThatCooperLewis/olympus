@@ -12,10 +12,6 @@ from utils.environment import env
 
 class ContinuousIntegration:
 
-    '''
-    TODO: This class is pretty messy, I made it at 5am and it's probably not the best way to do it.
-    '''
-
     def __init__(self):
         self.log = Logger.setup(self.__class__.__name__)
         self.discord = DiscordWebhook(self.__class__.__name__)
@@ -63,15 +59,12 @@ class ContinuousIntegration:
         for pr in sorted_prs.values():
             newest_sha = pr.get('newest_sha')
             tested_sha = pr.get('tested_sha')
-            if tested_sha is None or newest_sha != tested_sha:
+            if tested_sha is None or newest_sha != tested_sha or True:
                 try:
                     # Its morbin time
                     branch = pr.get('branch')
                     filename = f"test-log-{branch}.txt"
-                    process = subprocess.Popen(
-                        f"cd ~/cicd && git checkout main && git pull && git fetch origin {branch} && git checkout {branch} && git pull origin {branch} && python unit_tests.py all {filename}",
-                        shell=True
-                    )
+                    process = subprocess.Popen(f'script -c "~/cicd/services/shell/automated-unit-tests.sh {branch}" output.log', shell=True)
                     process.wait()
 
                     pr_info_str = f'''**Name:** {pr.get('title')}\n**Status:** {pr.get('state')}\n**Branch:** `{branch}`\n**URL:** <{pr.get('url')}>\n**SHA:** {newest_sha[:7]}'''
