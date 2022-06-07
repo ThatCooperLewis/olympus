@@ -12,6 +12,10 @@ from utils.environment import env
 
 class ContinuousIntegration:
 
+    '''
+    TODO: This class is pretty messy, I made it at 5am and it's probably not the best way to do it.
+    '''
+
     def __init__(self):
         self.log = Logger.setup(self.__class__.__name__)
         self.discord = DiscordWebhook(self.__class__.__name__)
@@ -59,7 +63,6 @@ class ContinuousIntegration:
         for pr in sorted_prs.values():
             newest_sha = pr.get('newest_sha')
             tested_sha = pr.get('tested_sha')
-            # TODO: Shouldn't check for passing here. It'll cause crazy repeats
             if tested_sha is None or newest_sha != tested_sha:
                 try:
                     # Its morbin time
