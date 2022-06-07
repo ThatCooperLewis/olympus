@@ -63,9 +63,11 @@ class ContinuousIntegration:
                 try:
                     # Its morbin time
                     branch = pr.get('branch')
+                    self.discord.send_status(f'Running automated tests for PR #{pr.get("number")} - `{branch}`')
                     filename = f"automated-test.log"
                     process = subprocess.Popen(f'script -c "./services/shell/automated-unit-tests.sh {branch}" {filename}', shell=True)
                     process.wait()
+                    subprocess.run(['git', 'checkout', 'main'])
 
                     pr_info_str = f'''**Name:** {pr.get('title')}\n**Status:** {pr.get('state')}\n**Branch:** `{branch}`\n**URL:** <{pr.get('url')}>\n**SHA:** {newest_sha[:7]}'''
                     gh_pr = self.repo.get_pull(int(pr.get('number')))
