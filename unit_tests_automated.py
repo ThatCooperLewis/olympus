@@ -12,10 +12,6 @@ from utils.environment import env
 
 class ContinuousIntegration:
 
-    '''
-    TODO: This class is pretty messy, I made it at 5am and it's probably not the best way to do it.
-    '''
-
     def __init__(self):
         self.log = Logger.setup(self.__class__.__name__)
         self.discord = DiscordWebhook(self.__class__.__name__)
