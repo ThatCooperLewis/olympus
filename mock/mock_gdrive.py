@@ -6,5 +6,5 @@ class MockGoogleSheets:
          self.log = Logger.setup(self.__class__.__name__)
          self.name = app_name
 
-    def rotate_order_feed(self):
+    def update_order_feed(self):
         self.log.debug("Pretending to rotate order feed")

@@ -14,8 +14,18 @@ LOGGING_FILENAME = 'debug-log.txt'
 STATUS_UPDATE_INTERVAL = 21600 # 6 hours
 '''How often to update the status of the servers via discord, in seconds.'''
 
+################# Google Drive #############
+
+GDRIVE_CREDENTIALS_PATH = 'google_creds.json'
+
+GDRIVE_TOKEN_PATH = 'token.json'
+
 GDRIVE_API_SCOPES = ['https://www.googleapis.com/auth/spreadsheets']
 '''Defines the request permissions when accessing the Google Drive API.'''
+
+GDRIVE_24H_FEED_RANGE = '_data!A2:H289'
+
+GDRIVE_ALLTIME_FEED_RANGE = '_full_data!A2:D5002'
 
 ################# Postgres #################
 
