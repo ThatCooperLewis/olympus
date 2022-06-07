@@ -75,7 +75,7 @@ class ContinuousIntegration:
                     if os.path.exists(filename):
                         with open(filename, 'r') as f:
                             test_log = f.read()
-                    if not 'FAILED (errors=' in test_log:
+                    if not '[COMMAND_EXIT_CODE="1"]' in test_log:
                         self.discord.send_alert(f"<a:DANKIES:927062701878947851> **==== PR Test Success ====** <a:DANKIES:927062701878947851>")
                         self.discord.send_alert(pr_info_str)
                         gh_pr.create_issue_comment(f'[AUTOMATED] As of commit hash {pr.get("newest_sha")}, the PR has passed all unit tests.')
