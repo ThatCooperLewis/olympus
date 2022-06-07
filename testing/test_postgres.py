@@ -41,7 +41,7 @@ class TestPostgres(TestCase):
 
     def test_insert_order(self):
         order = utils.get_basic_order()
-        self.postgres.insert_order(order)
+        self.postgres.insert_order(order, 0.0, 0.0, 0.0)
         rows = self.postgres.get_queued_orders()
         self.assertEqual(len(rows), 1)
         first_order = rows[0]
@@ -74,7 +74,7 @@ class TestPostgres(TestCase):
         
     def test_update_order(self):
         order = utils.get_basic_order()
-        self.postgres.insert_order(order)
+        self.postgres.insert_order(order, 0.0, 0.0, 0.0)
         rows = self.postgres.get_queued_orders()
         self.assertEqual(len(rows), 1)
         self.postgres.update_order_status(order.uuid, 'PROCESSING')

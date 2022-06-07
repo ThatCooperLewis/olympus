@@ -100,9 +100,7 @@ class Hermes(PrimordialChaos):
                 crypto_balance = balance.available
         return crypto_balance, fiat_balance
 
-    def __create_order(self, prediction: PredictionVector, balances: List[Balance]) -> Order:
-        crypto_balance, fiat_balance = self.__parse_balances(balances)
-        current_btc_price = self.postgres.get_latest_tickers(1)[0].ask
+    def __create_order(self, prediction: PredictionVector, current_btc_price: float, crypto_balance: float, fiat_balance: float) -> Order:
         if prediction.weight > 0:
             side = 'buy'
             trade_quantity: float = self.__parse_buy_quantity(prediction, fiat_balance, current_btc_price)
@@ -123,7 +121,7 @@ class Hermes(PrimordialChaos):
             return None
         return Order.create(trade_quantity, side, constants.TRADING_SYMBOL, uuid=prediction.uuid)
 
-    def __submit_order(self, order: Order):
+    def __submit_order(self, order: Order, current_btc_price: float, crypto_balance: float, fiat_balance: float) -> None:
         """
         Submit order to the database.
         If the last order was in the opposite direction, sum the past orders 
@@ -148,7 +146,7 @@ class Hermes(PrimordialChaos):
             for past_order in orders_to_sum:
                 past_quantity += abs(past_order.quantity)
             order.quantity += past_quantity
-        self.postgres.insert_order(order)
+        self.postgres.insert_order(order, current_btc_price, crypto_balance, fiat_balance)
         self.order_listener.submit_order(order, submitted, completed)
         self.log.debug(f'Executed order: {order.side} {order.symbol} {order.quantity}')
         self.submitted_order_count += 1
@@ -170,15 +168,19 @@ class Hermes(PrimordialChaos):
                 if self.prediction_queue.size > 0:
                     prediction = self.prediction_queue.get()
                     self.log.debug('Got prediction from queue')
-                    balances = self.trading_account.get_trading_balance(
-                        [constants.CRYPTO_SYMBOL, constants.FIAT_SYMBOL])
-                    order = self.__create_order(prediction, balances)
+                    balances = self.trading_account.get_trading_balance([constants.CRYPTO_SYMBOL, constants.FIAT_SYMBOL])
+                    crypto_balance, fiat_balance = self.__parse_balances(balances)
+                    current_btc_price = self.postgres.get_latest_tickers(1)[0].ask
+                    self.log.debug('Got balances and current price')
+                    # TODO: Pass around these prices in a more succinct manner
+                    # use a class called BalanceData or something, with all three values
+                    order = self.__create_order(prediction, current_btc_price, crypto_balance, fiat_balance)
                     if order:
-                        self.__submit_order(order)
+                        self.__submit_order(order, current_btc_price, crypto_balance, fiat_balance)
                     self.prediction_queue.close(prediction, failed=(order is None))
                     sleep(1)
                     try:
-                        self.gsheets.rotate_order_feed()
+                        self.gsheets.update_order_feed()
                     except:
                         self.log.error("Could not rotate order feed. Prob expired token?")
                 sleep(0.2)

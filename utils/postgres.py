@@ -34,6 +34,9 @@ class PostgresOrder:
         self.side: str = str(data[2])
         self.status: str = str(data[3])
         self.uuid: str = str(data[4])
+        self.usd_balance: float = float(data[5])
+        self.btc_balance: float = float(data[6])
+        self.current_price: float = float(data[7])
 
 
 class MockPostgresOrder:
@@ -96,10 +99,10 @@ class Postgres:
         VALUES ({ticker.timestamp}, {ticker.ask}, {ticker.bid}, {ticker.last}, {ticker.low}, {ticker.high}, {ticker.open}, {ticker.volume}, {ticker.volume_quote})"""
         self._query(query, False)
 
-    def insert_order(self, order: Order):
+    def insert_order(self, order: Order, current_price: float, crypto_balance: float, fiat_balance: float):
         self.log.debug(f"Inserting order with uuid: {order.uuid}")
         query = f"""INSERT INTO {self.order_table_name} {constants.POSTGRES_ORDER_COLUMNS}
-        VALUES ({int(now())}, {order.quantity}, '{order.side}', '{constants.POSTGRES_STATUS_QUEUED}', '{order.uuid}')"""
+        VALUES ({int(now())}, {order.quantity}, '{order.side}', '{constants.POSTGRES_STATUS_QUEUED}', '{order.uuid}', {fiat_balance}, {crypto_balance}, {current_price})"""
         self._query(query, False)
 
     def insert_prediction_vector(self, prediction_vector: PredictionVector):
@@ -155,6 +158,17 @@ class Postgres:
             return list(map(self.__convert_result_to_order, result))
         else:
             return []
+
+    def get_all_orders(self) -> List[PostgresOrder]:
+        """
+        Get all the orders from the database
+        
+        :return: A list of Order objects
+        """
+        # TODO: Move column names to config
+        query = f"""SELECT timestamp, quantity, side, status, uuid, usd_balance, btc_balance, current_price FROM {self.order_table_name} ORDER BY timestamp ASC"""
+        result = self._query(query, True)
+        return list(map(self.__convert_result_to_order, result))
 
     def get_queued_predictions(self) -> List[PostgresPredictionVector]:
         """
@@ -212,9 +226,10 @@ class Postgres:
         self._query(query, False)
         
     def get_latest_mock_orders(self, row_count: int) -> List[MockPostgresOrder]:
-        query = f"SELECT * FROM _mock_order_feed ORDER BY local_timestamp DESC LIMIT {row_count}"
+        # TODO: Move column names to config
+        query = f"SELECT timestamp, quantity, side, status, uuid, usd_balance, btc_balance, current_price FROM {self.order_table_name} ORDER BY timestamp DESC LIMIT {row_count}"
         result = self._query(query, True)
-        return list(map(self.__convert_result_to_mock_order, result))
+        return list(map(self.__convert_result_to_order, result))
     
     def __convert_result_to_mock_order(self, result) -> MockPostgresOrder:
         return MockPostgresOrder(result)

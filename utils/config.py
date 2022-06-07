@@ -14,8 +14,18 @@ LOGGING_FILENAME = 'debug-log.txt'
 STATUS_UPDATE_INTERVAL = 21600 # 6 hours
 '''How often to update the status of the servers via discord, in seconds.'''
 
+################# Google Drive #############
+
+GDRIVE_CREDENTIALS_PATH = 'google_creds.json'
+
+GDRIVE_TOKEN_PATH = 'token.json'
+
 GDRIVE_API_SCOPES = ['https://www.googleapis.com/auth/spreadsheets']
 '''Defines the request permissions when accessing the Google Drive API.'''
+
+GDRIVE_24H_FEED_RANGE = '_data!A2:H289'
+
+GDRIVE_ALLTIME_FEED_RANGE = '_full_data!A2:D5002'
 
 ################# Postgres #################
 
@@ -28,7 +38,7 @@ POSTGRES_TICKER_COLUMNS = '(timestamp, ask, bid, last, low, high, open, volume, 
 POSTGRES_ORDER_TABLE_NAME = 'order_feed'
 '''The name of the pSQL table that stores order data & history.'''
 
-POSTGRES_ORDER_COLUMNS = '(timestamp, quantity, side, status, uuid)'
+POSTGRES_ORDER_COLUMNS = '(timestamp, quantity, side, status, uuid, usd_balance, btc_balance, current_price)'
 '''The columns of the pSQL table that stores order data & history. Used for sql insert queries.'''
 
 POSTGRES_PREDICTION_TABLE_NAME = 'prediction_feed'

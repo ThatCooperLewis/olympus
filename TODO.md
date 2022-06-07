@@ -12,7 +12,7 @@
 # **Small Stuff**
 
 ## Next steps
-- Make the CI/CD a task on NAS scheduler
+- CI logging doesn't work. Some failures don't create a log at all. Fix it!
 - CI is pretty sloppy, clean it up a lil
 - MockAPI/insertOrder probably doesn't work anymore, since tests were updated. Now hermes uses the "insertOrder" directly in the method, which I don't think will work well if mocking
 - Move GDrive to separate service (so we can stop it form crashing other things if there's a session timeout)
