@@ -11,6 +11,7 @@ socket_test.py
 tests.py
 test_balances.json
 pull_requests.json
+automated-test.log
 
 # Unit Test Temp Files
 testing/*.csv

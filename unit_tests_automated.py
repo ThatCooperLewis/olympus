@@ -63,38 +63,42 @@ class ContinuousIntegration:
                 try:
                     # Its morbin time
                     branch = pr.get('branch')
-                    filename = f"test-log-{branch}.txt"
-                    process = subprocess.Popen(['./services/shell/automated-unit-tests.sh', branch],)
+                    filename = f"automated-test.log"
+                    process = subprocess.Popen(f'script -c "./services/shell/automated-unit-tests.sh {branch}" {filename}', shell=True)
                     process.wait()
 
                     pr_info_str = f'''**Name:** {pr.get('title')}\n**Status:** {pr.get('state')}\n**Branch:** `{branch}`\n**URL:** <{pr.get('url')}>\n**SHA:** {newest_sha[:7]}'''
                     gh_pr = self.repo.get_pull(int(pr.get('number')))
+
                     if process.returncode == 0:
                         self.discord.send_alert(f"<a:DANKIES:927062701878947851> **==== PR Test Success ====** <a:DANKIES:927062701878947851>")
                         self.discord.send_alert(pr_info_str)
                         gh_pr.create_issue_comment(f'[AUTOMATED] As of commit hash {pr.get("newest_sha")}, the PR has passed all unit tests.')
                     else:
+                        alert = f'''<:widepeepoSad1:662519773439197203><:widepeepoSad2:662519773514563614>  **=== PR Test Failed ===** <:widepeepoSad1:662519773439197203><:widepeepoSad2:662519773514563614>'''
+                        self.discord.send_alert(alert)
+                        self.discord.send_alert(pr_info_str)
                         if os.path.exists(filename):
                             with open(filename, 'r') as f:
                                 test_log = f.read()
                             with open('debug-log.txt', 'r') as f:
                                 debug_log = f.read()
                             test_errors = test_log[test_log.index('=====================')+1:]
-                            alert = f'''<:widepeepoSad1:662519773439197203><:widepeepoSad2:662519773514563614>  **=== PR Test Failed ===** <:widepeepoSad1:662519773439197203><:widepeepoSad2:662519773514563614>'''
-                            self.discord.send_alert(alert)
-                            self.discord.send_alert(pr_info_str)
                             # Get around Discord's character limit
                             # TODO: Make this less hacky
                             if len(test_errors) > 1993:
                                 start_index = 0
-                                for i in range(len(test_errors) // 1993):
-                                    test_log = '```' + test_errors[start_index:start_index+1993] + '```'
-                                    self.discord.send_alert(test_log)
-                                    sleep(0.5)
-                                    start_index += 1993
+                                for i in range(len(test_errors) // 1993 + 1):
+                                    try:
+                                        test_log = '```' + test_errors[start_index:start_index+1993] + '```'
+                                        self.discord.send_alert(test_log)
+                                        sleep(0.5)
+                                        start_index += 1993
+                                    except:
+                                        pass
                             else:
                                 test_log = '```' + test_errors + '```'
-                            self.discord.send_alert(test_log)
+                                self.discord.send_alert(test_log)
                         comment = f'[AUTOMATED] As of commit hash {pr.get("newest_sha")}, the PR has **FAILED** unit tests.\n\nMerging this branch may break production clusters! Check Discord for more infomoration.'
                         gh_pr.create_issue_comment(comment)
                     pr['tested_sha'] = newest_sha
@@ -105,7 +109,6 @@ class ContinuousIntegration:
                         f"git checkout main && git pull", shell=True)
             updated_prs[int(pr.get('number'))] = pr
             try:
-                os.remove('debug-log.txt')
                 os.remove(filename)
             except:
                 pass
