@@ -35,7 +35,7 @@ class TestHermes(TestCase):
             override_tradingAccount=self.testing_api.trading,
             override_predictionQueue=self.prediction_queue,
         )
-        self.hermes.discord = MockDiscord('Postgres')
+        self.hermes.discord = MockDiscord('Hermes')
         self.hermes.postgres = self.postgres
         self.hermes.gsheets = MockGoogleSheets('Hermes')
 
