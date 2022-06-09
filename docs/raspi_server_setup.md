@@ -32,7 +32,7 @@ Similar to the local setup guide, this is a walkthrough of vanilla ubuntu server
 
 ### Enable desired service
 
-    ./scripts/setup_systemd_service.sh service_name.service
+    ./services/helpers/setup_systemd_service.sh service_name.service
 
 ### (Optional) Setup regular reboots
 
