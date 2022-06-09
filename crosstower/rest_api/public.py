@@ -1,7 +1,7 @@
 from time import struct_time
 from typing import List
 
-from utils.config import DEFAULT_SYMBOL, REST_URL
+from utils.config import DEFAULT_SYMBOL, REST_V2_URL
 from crosstower.models import Candle, Symbol, Ticker, Trade
 from requests import get
 
@@ -32,7 +32,7 @@ class MarketData:
         ----------
         `Symbol` class.
         """
-        resp = get(f"{REST_URL}/public/symbol/{symbol}")
+        resp = get(f"{REST_V2_URL}/public/symbol/{symbol}")
         if resp.status_code != 200:
             raise Exception("Invalid symbol or bad connection.")
         data = resp.json()
@@ -54,7 +54,7 @@ class MarketData:
         ----------
         `Ticker` class.
         """
-        resp = get(f"{REST_URL}/public/ticker/{symbol}")
+        resp = get(f"{REST_V2_URL}/public/ticker/{symbol}")
         if resp.status_code != 200:
             raise Exception("Invalid symbol or bad connection.")
         data = resp.json()
@@ -118,7 +118,7 @@ class MarketData:
         volumeQuote : Float
             Volume in quote currency
         """
-        resp = get(f"{REST_URL}/public/candles/{symbol}")
+        resp = get(f"{REST_V2_URL}/public/candles/{symbol}")
         # TODO: Add data here
         if resp.status_code != 200:
             raise Exception("Invalid symbol or bad connection.")
@@ -180,7 +180,7 @@ class MarketData:
             Trade timestamp
         """
         resp = get(
-            f"{REST_URL}/public/trades/{symbol}",
+            f"{REST_V2_URL}/public/trades/{symbol}",
             data={
                 'symbols': symbol,
                 'from': from_date

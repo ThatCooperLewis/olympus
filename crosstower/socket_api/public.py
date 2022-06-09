@@ -2,7 +2,7 @@ import asyncio
 import json
 from time import time as now
 
-from utils.config import DEFAULT_CURRENCY, DEFAULT_SYMBOL, SOCKET_URI
+from utils.config import DEFAULT_CURRENCY, DEFAULT_SYMBOL, SOCKET_V2_URL
 from crosstower.models import Symbol
 from crosstower.socket_api import utils
 from websockets import connect as Connection
@@ -15,7 +15,7 @@ class MarketData:
 
     async def request(self, method: str, params: dict):
         # TODO: I'm pretty this is unused, maybe because it reopens a connection every time? Maybe optional connection override?
-        async with Connection(SOCKET_URI) as websocket:
+        async with Connection(SOCKET_V2_URL) as websocket:
             data = {
                 "method": method,
                 "params": params,
@@ -45,7 +45,7 @@ class MarketData:
 
 class TickerWebsocket:
 
-    def __init__(self, symbol: str = DEFAULT_SYMBOL, uri: str = SOCKET_URI) -> None:
+    def __init__(self, symbol: str = DEFAULT_SYMBOL, uri: str = SOCKET_V2_URL) -> None:
         self.symbol = symbol
         self.uri = uri
         self.connection: WebSocket = None

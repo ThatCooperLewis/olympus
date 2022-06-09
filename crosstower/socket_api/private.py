@@ -13,7 +13,7 @@ from crosstower.utils import aggregate_orders
 from websockets import connect as Connection
 
 from utils import Logger, DiscordWebhook
-from utils.config import DEFAULT_SYMBOL, SOCKET_URI, POSTGRES_STATUS_PROCESSING, POSTGRES_STATUS_COMPLETE
+from utils.config import DEFAULT_SYMBOL, SOCKET_V2_URL, POSTGRES_STATUS_PROCESSING, POSTGRES_STATUS_COMPLETE
 from utils.environment import env
 
 class SocketAPI:
@@ -38,7 +38,7 @@ class SocketAPI:
         secret_key = env.crosstower_secret_key
         if not public_key or not secret_key:
             raise Exception("Couldn't retrieve api & secret key.")
-        websocket = await Connection(SOCKET_URI)
+        websocket = await Connection(SOCKET_V2_URL)
         data = {
             "algo": "BASIC",
             "pKey": public_key,

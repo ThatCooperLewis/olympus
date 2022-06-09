@@ -1,14 +1,14 @@
 from typing import List
 from requests import Response
 
-from utils.config import REST_URL
+from utils.config import REST_V2_URL
 from crosstower.models import Order
 
 
 def build_url(endpoint: str) -> str:
     if endpoint[0] == '/':
         endpoint = endpoint[1:]
-    return f"{REST_URL}/{endpoint}"
+    return f"{REST_V2_URL}/{endpoint}"
 
 
 def handle_response(response: Response, request_name: str = 'API') -> dict:

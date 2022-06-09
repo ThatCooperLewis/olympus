@@ -7,7 +7,7 @@ from typing import List
 import requests
 
 from crosstower.rest_api.auth import Authentication
-from utils.config import DEFAULT_SYMBOL, REST_URL
+from utils.config import DEFAULT_SYMBOL, REST_V2_URL
 from crosstower.models import Balance, Commission, Order
 
 
@@ -187,7 +187,7 @@ class Trading(__API):
             raise Exception("Bad 'side' arg for __market_order")
         timestamp = int(time())
         resp = self._auth_put(
-            endpoint=f"{REST_URL}/order/{timestamp}",
+            endpoint=f"{REST_V2_URL}/order/{timestamp}",
             request_name='Market Order',
             query_params={
                 'symbol': symbol,
@@ -279,7 +279,7 @@ class Trading(__API):
         An array of `Order` objects
         """
         return utils.aggregate_orders(self._auth_delete(
-            endpoint=f"{REST_URL}/order",
+            endpoint=f"{REST_V2_URL}/order",
             request_name="Cancel All Orders"
         ))
 
@@ -299,6 +299,6 @@ class Trading(__API):
         Cancelled `Order` object
         """
         return Order(self._auth_delete(
-            endpoint=f"{REST_URL}/order/{Order.client_order_id}",
+            endpoint=f"{REST_V2_URL}/order/{Order.client_order_id}",
             request_name="Cancel Order"
         ))

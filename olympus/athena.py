@@ -9,7 +9,7 @@ from crosstower.socket_api import utils
 from crosstower.socket_api.public import TickerWebsocket
 from utils import DiscordWebhook, Logger, Postgres
 from utils.config import (DEFAULT_SYMBOL, SOCKET_TIMEOUT_INTERVAL_MULTIPLIER,
-                          SOCKET_URI)
+                          SOCKET_V2_URL)
 
 from olympus.primordial_chaos import PrimordialChaos
 
@@ -37,7 +37,7 @@ class Athena(PrimordialChaos):
         # Set timestamp for last update
         self.last_time = now()
 
-        self.websocket = TickerWebsocket(DEFAULT_SYMBOL, SOCKET_URI)
+        self.websocket = TickerWebsocket(DEFAULT_SYMBOL, SOCKET_V2_URL)
 
         # Constantly fetch new tickers
         self.ticker_thread: Thread = Thread(target=self.ticker_loop, daemon=True)
