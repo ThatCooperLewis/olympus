@@ -22,6 +22,7 @@ testing/**/*.json
 .env.testing
 token.json
 google_creds.json
+local-ip.log
 
 # Model training
 results/
