@@ -3,6 +3,7 @@ import json
 from queue import Queue
 from threading import Thread
 from time import sleep
+from time import time as now
 from typing import List
 import traceback
 from collections.abc import Callable
@@ -25,7 +26,7 @@ class SocketAPI:
         data = {
             "method": method,
             "params": params,
-            "id": 123  # TODO: make good ID generator
+            "id": int(now())
         }
         await socket.send(json.dumps(data))
         response = await socket.recv()

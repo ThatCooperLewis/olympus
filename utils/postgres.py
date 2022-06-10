@@ -83,7 +83,6 @@ class PostgresPredictionVector:
 class Postgres:
 
     def __init__(self, ticker_table_override: str = None, order_table_override: str = None, prediction_table_override: str = None) -> None:
-        # TODO: What the fuck is going on here? Use this elsewhere!
         self.ticker_table_name = ticker_table_override if ticker_table_override is not None else constants.POSTGRES_TICKER_TABLE_NAME
         self.order_table_name = order_table_override if order_table_override is not None else constants.POSTGRES_ORDER_TABLE_NAME
         self.prediction_table_name = prediction_table_override if prediction_table_override is not None else constants.POSTGRES_PREDICTION_TABLE_NAME
@@ -134,7 +133,6 @@ class Postgres:
         result = self._query(query, True)
         return result[0][0]
 
-    # TODO: make this name like the prediction one
     def get_queued_orders(self) -> List[PostgresOrder]:
         """
         Get all the orders that have not been processed.
@@ -165,8 +163,7 @@ class Postgres:
         
         :return: A list of Order objects
         """
-        # TODO: Move column names to config
-        query = f"""SELECT timestamp, quantity, side, status, uuid, usd_balance, btc_balance, current_price FROM {self.order_table_name} ORDER BY timestamp ASC"""
+        query = f"""SELECT {constants.POSTGRES_ORDER_COLUMNS} FROM {self.order_table_name} ORDER BY timestamp ASC"""
         result = self._query(query, True)
         return list(map(self.__convert_result_to_order, result))
 
@@ -210,7 +207,6 @@ class Postgres:
         self._query(query, False)
 
     # Public Methods - MOCK/TESTING
-    # TODO: Move this? when we're done testing?
 
     def get_latest_mock_balances(self) -> Tuple[float, float]:
         query = "SELECT ending_usd_balance, ending_btc_balance FROM _mock_order_feed ORDER BY local_timestamp DESC LIMIT 1"
@@ -226,8 +222,7 @@ class Postgres:
         self._query(query, False)
         
     def get_latest_mock_orders(self, row_count: int) -> List[MockPostgresOrder]:
-        # TODO: Move column names to config
-        query = f"SELECT timestamp, quantity, side, status, uuid, usd_balance, btc_balance, current_price FROM {self.order_table_name} ORDER BY timestamp DESC LIMIT {row_count}"
+        query = f"SELECT {constants.POSTGRES_ORDER_COLUMNS} FROM {self.order_table_name} ORDER BY timestamp DESC LIMIT {row_count}"
         result = self._query(query, True)
         return list(map(self.__convert_result_to_order, result))
     

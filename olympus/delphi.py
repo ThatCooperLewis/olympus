@@ -64,6 +64,7 @@ class Delphi(PrimordialChaos):
             params=params
         )
 
+        self.epoch_count = params.get('epoch_count', constants.EPOCH_COUNT)
         self.iterations = override_iteration_length if override_iteration_length else constants.PREDICTION_ITERATION_COUNT
         self.delta_threshold = constants.PREDICTION_DELTA_THRESHOLD
         self.interval_size = constants.TICKER_INTERVAL
@@ -95,8 +96,7 @@ class Delphi(PrimordialChaos):
         return latest_price, latest_timestamp
     
     def __fetch_new_data_from_psql(self) -> Tuple[float, int]:
-        # TODO - This 100 number depends on epoch count I'm pretty sure. This should be grabbed from params in case its ever higher
-        rows = self.postgres.get_latest_tickers(row_count=100)
+        rows = self.postgres.get_latest_tickers(row_count=self.epoch_count)
         tmp_rows = [constants.DEFAULT_CSV_HEADERS]
         
         for index, ticker in enumerate(rows):
@@ -171,9 +171,8 @@ class Delphi(PrimordialChaos):
             else:
                 if not self.is_active:
                     self.is_active = True
-                    # TODO: 18 should be the actual epoch count
-                    self.alert_with_error('Ticket data is fresh again. Waiting 18 predictions, then resuming...')
-                    asyncio.run(self.sleep(18*self.interval_size))
+                    self.alert_with_error(f'Ticket data is fresh again. Waiting {self.epoch_count} predictions, then resuming...')
+                    asyncio.run(self.sleep(self.epoch_count*self.interval_size))
                 self.latest_timestamp = timestamp
             self.log.debug('Got latest data')
             
