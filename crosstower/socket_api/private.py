@@ -9,11 +9,10 @@ from collections.abc import Callable
 
 from crosstower.models import Balance, Order
 from crosstower.socket_api import utils
-from crosstower.utils import aggregate_orders
 from websockets import connect as Connection
 
 from utils import Logger, DiscordWebhook
-from utils.config import DEFAULT_SYMBOL, SOCKET_URI, POSTGRES_STATUS_PROCESSING, POSTGRES_STATUS_COMPLETE
+from utils.config import DEFAULT_SYMBOL, SOCKET_V3_URL
 from utils.environment import env
 
 class SocketAPI:
@@ -38,11 +37,11 @@ class SocketAPI:
         secret_key = env.crosstower_secret_key
         if not public_key or not secret_key:
             raise Exception("Couldn't retrieve api & secret key.")
-        websocket = await Connection(SOCKET_URI)
+        websocket = await Connection(SOCKET_V3_URL + '/trading')
         data = {
-            "algo": "BASIC",
-            "pKey": public_key,
-            "sKey": secret_key
+            "type": "BASIC",
+            "api_key": public_key,
+            "secret_key": secret_key
         }
         await cls.request(websocket, 'login', data)
         return websocket
@@ -71,7 +70,11 @@ class Trading:
         ---------
         List of active `Order` objects
         """
-        return aggregate_orders(self.__request_until_complete('getOrders', {}))
+        orders_list = self.__request_until_complete('spot_get_orders', {})
+        orders = []
+        for order_data in orders_list:
+            orders.append(Order(order_data))
+        return orders
 
     def get_trading_balance(self, currencies: list = []) -> List[Balance]:
         """
@@ -90,7 +93,7 @@ class Trading:
         ----------
         A list of `Balance` objects
         """
-        result = self.__request_until_complete('getTradingBalance', {})
+        result = self.__request_until_complete('spot_balances', {})
         balance = []
         count = len(currencies)
         for coin in result:
@@ -100,7 +103,7 @@ class Trading:
                 balance.append(Balance(coin))
         return balance
 
-    def cancel_order(self, order: Order):
+    def cancel_order(self, order: Order) -> Order:
         """
         `cancelOrder`
 
@@ -115,11 +118,11 @@ class Trading:
         ----------
         Cancelled `Order` object
         """
-        params = {'clientOrderId': order.client_order_id}
-        result = Order(self.__request_until_complete('cancelOrder', params))
+        params = { 'client_order_id': order.client_order_id }
+        return Order(self.__request_until_complete('spot_cancel_order', params))
 
     def place_new_order(self, order: Order) -> Order:
-        order = self.__request_until_complete('newOrder', order.dict)
+        order = self.__request_until_complete('spot_new_order', order.dict)
         return Order(order)
 
     """ Orders Threading """

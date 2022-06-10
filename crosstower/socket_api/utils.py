@@ -11,24 +11,6 @@ def handle_response(response: str):
         raise Exception(err)
     return response
 
-def get_newest_line(filepath: str) -> str:
-    '''
-    Efficient method for retrieving the newest/last line of a text file, without parsing the entire file.
-    
-    Does not check for file existence, and will raise error if not exist.
-    '''
-    with open(filepath, 'rb') as f:
-        for i in range(-2, 0):
-            # f.seek(-2) will crash if file is only one line
-            try:
-                f.seek(i, os.SEEK_END)
-                while f.read(1) != b'\n':
-                    f.seek(i, os.SEEK_CUR)
-                return f.readline().decode()
-            except OSError:
-                continue
-        return ""
-
 scraper_startup_message = '''
         All threads are running. Runtime options:
 

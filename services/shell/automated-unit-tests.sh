@@ -8,4 +8,4 @@ git fetch origin $1
 git checkout $1
 git pull origin $1
 
-python unit_tests.py all
+timeout 360 python unit_tests.py all

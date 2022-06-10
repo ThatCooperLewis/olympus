@@ -1,46 +1,4 @@
-from time import mktime, strptime, struct_time
-from typing import List
-
-from utils.config import DEFAULT_SYMBOL
-
-
-class Trade:
-    """Trades information for a symbol"""
-
-    def __init__(self, data: dict) -> None:
-        self._data = data
-
-    @property
-    def dict(self) -> dict:
-        return self._data
-
-    @property
-    def id(self) -> int:
-        """Trade identifier"""
-        return int(self._data.get('id'))
-
-    @property
-    def price(self) -> float:
-        """Trade price"""
-        return float(self._data.get('price'))
-
-    @property
-    def quantity(self) -> float:
-        """Trade quantity"""
-        return float(self._data.get('quantity'))
-
-    @property
-    def side(self) -> str:
-        """Trade side, `"sell"` or `"buy"`"""
-        return self._data.get('side')
-
-    @property
-    def timestamp(self) -> struct_time:
-        """Trade timestamp"""
-        return strptime(
-            self._data.get('timestamp'),
-            "%Y-%m-%dT%H:%M:%S.%fZ"
-        )
+from time import strptime, struct_time
 
 
 class Order:
@@ -51,7 +9,6 @@ class Order:
 
     @classmethod
     def create(cls, quantity: float, side: str, symbol, order_type: str = 'market', time_in_force: str = 'GTC', price: float = None, stop_price: float = None, uuid: str = None):
-        # TODO: Expand to GTD orders at some point. Requires timestamp parsing
         '''
         Create a new order
 
@@ -233,74 +190,6 @@ class Order:
             "%Y-%m-%dT%H:%M:%S.%fZ"
         )
 
-    @property
-    def trades_report(self) -> List[Trade]:
-        return
-
-
-class Symbol:
-    """
-    The currency pair indicates how much of the quote currency is needed to purchase one unit of the base currency. 
-    The first listed currency of a symbol is called the base currency, and the second currency is called the quote currency. 
-    """
-
-    def __init__(self, data: dict) -> None:
-        self._data = data
-
-    @property
-    def dict(self) -> dict:
-        return self._data
-
-    @property
-    def id(self) -> str:
-        """Symbol (currency pair) identifier, for example, 'ETHBTC'"""
-        return self._data.get('id')
-
-    @property
-    def base_currency(self) -> str:
-        """Name of base currency"""
-        return self._data.get('baseCurrency')
-
-    @property
-    def base_currency(self) -> str:
-        """Name of quote currency"""
-        return self._data.get('quoteCurrency')
-
-    @property
-    def quantity_increment(self) -> float:
-        """Symbol quantity should be divided by this value with no remainder"""
-        return float(self._data.get('quantityIncrement'))
-
-    @property
-    def tick_size(self) -> float:
-        """Symbol price should be divided by this value with no remainder"""
-        return float(self._data.get('tickSize'))
-
-    @property
-    def take_liquidity_rate(self) -> float:
-        """Default fee rate"""
-        return float(self._data.get('takeLiquidityRate'))
-
-    @property
-    def provide_liquidity_rate(self) -> float:
-        """Default fee rate for market making trades"""
-        return float(self._data.get('provideLiquidityRate'))
-
-    @property
-    def fee_currency(self) -> float:
-        """Value of charged fee"""
-        return float(self._data.get('feeCurrency'))
-
-    @property
-    def margin_trading(self) -> bool:
-        """Is margin trading available. Optional parameter"""
-        return self._data.get('marginTrading')
-
-    @property
-    def max_initial_leverage(self) -> float:
-        """Maximum leverage that user can use for margin trading. Optional parameter"""
-        return self._data.get('maxInitialLeverage')
-
 
 class Ticker:
     """Symbol ticker information"""
@@ -325,92 +214,47 @@ class Ticker:
     @property
     def ask(self) -> float:
         """Best ask price. Can return 'None' if no data."""
-        return float(self._data.get('ask'))
+        return float(self._data.get('a'))
 
     @property
     def bid(self) -> float:
         """Best bid price. Can return 'None' if no data."""
-        return float(self._data.get('bid'))
+        return float(self._data.get('b'))
 
     @property
     def last(self) -> float:
         """Last trade price. Can return 'None' if no data."""
-        return self._data.get('last')
+        return self._data.get('c')
 
     @property
     def open(self) -> float:
         """Last trade price 24 hours ago. Can return 'None' if no data."""
-        return self._data.get('open')
-
-    @property
-    def low(self) -> float:
-        """Lowest trade price within 24 hours"""
-        return self._data.get('low')
+        return self._data.get('o')
 
     @property
     def high(self) -> float:
         """Highest trade price within 24 hours"""
-        return self._data.get('high')
+        return self._data.get('h')
+
+    @property
+    def low(self) -> float:
+        """Lowest trade price within 24 hours"""
+        return self._data.get('l')
 
     @property
     def volume(self) -> float:
         """Total trading amount within 24 hours in base currency"""
-        return self._data.get('volume')
+        return self._data.get('v')
 
     @property
     def volume_quote(self) -> float:
         """Total trading amount within 24 hours in quote currency"""
-        return self._data.get('volumeQuote')
+        return self._data.get('q')
 
     @property
     def timestamp(self) -> int:
         """Last update or refresh ticker timestamp"""
-        struct = strptime(
-            self._data.get('timestamp'),
-            "%Y-%m-%dT%H:%M:%S.%fZ"
-        )
-        return int(mktime(struct))
-
-
-class Candle:
-    """Candles are used for the representation of a specific symbol as an OHLC chart."""
-
-    def __init__(self, data: dict) -> None:
-        self._data = data
-
-    @property
-    def dict(self) -> dict:
-        return self._data
-
-    @property
-    def open(self) -> float:
-        """Opening price"""
-        return float(self._data.get('open'))
-
-    @property
-    def close(self) -> float:
-        """Closing price"""
-        return float(self._data.get('close'))
-
-    @property
-    def min(self) -> float:
-        """Lowest price for the period"""
-        return float(self._data.get('min'))
-
-    @property
-    def max(self) -> float:
-        """Highest price for the period"""
-        return float(self._data.get('max'))
-
-    @property
-    def volume(self) -> float:
-        """Volume in base currency"""
-        return float(self._data.get('volume'))
-
-    @property
-    def volume_quote(self) -> float:
-        """Volume in quote currency"""
-        return float(self._data.get('volumeQuote'))
+        return self._data.get('t')
 
 
 class Balance:
@@ -437,29 +281,3 @@ class Balance:
     def reserved(self) -> float:
         """Amount reserved for active orders or incomplete transfers to main account"""
         return float(self._data.get('reserved'))
-
-
-class Commission:
-    """Personal trading commission rate"""
-
-    def __init__(self, data: dict, symbol: str = '') -> None:
-        self._data = data
-        self._data['symbol'] = symbol
-
-    @property
-    def dict(self) -> dict:
-        return self._data
-
-    @property
-    def symbol(self) -> str:
-        return self._data.get('symbol')
-
-    @property
-    def taker_rate(self) -> float:
-        """takeLiquidityRate"""
-        return self._data.get('takeLiquidityRate')
-
-    @property
-    def maker_rate(self) -> float:
-        """provideLiquidityRate"""
-        return self._data.get('provideLiquidityRate')

@@ -84,15 +84,15 @@ def save_dict_to_json(dict: dict, file_name: str):
 def get_basic_ticker() -> Ticker:
     return Ticker({
         'symbol': 'BTCUSD',
-        'timestamp': '2010-01-01T00:00:00.000Z',
-        'bid': '1',
-        'ask': '2',
-        'last': '3',
-        'volume': '4',
-        'volumeQuote': '5',
-        'high': '6',
-        'low': '7',
-        'open': '8'
+        't': 123456789,
+        'b': '1',
+        'a': '2',
+        'c': '3',
+        'v': '4',
+        'q': '5',
+        'h': '6',
+        'l': '7',
+        'o': '8'
     })
 
 def get_basic_order() -> Order:

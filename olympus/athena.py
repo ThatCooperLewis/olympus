@@ -1,3 +1,4 @@
+import os
 import traceback
 from queue import Queue
 from threading import Thread
@@ -8,8 +9,7 @@ from crosstower.models import Ticker
 from crosstower.socket_api import utils
 from crosstower.socket_api.public import TickerWebsocket
 from utils import DiscordWebhook, Logger, Postgres
-from utils.config import (DEFAULT_SYMBOL, SOCKET_TIMEOUT_INTERVAL_MULTIPLIER,
-                          SOCKET_URI)
+from utils.config import DEFAULT_SYMBOL, SOCKET_TIMEOUT_INTERVAL_MULTIPLIER
 
 from olympus.primordial_chaos import PrimordialChaos
 
@@ -37,7 +37,7 @@ class Athena(PrimordialChaos):
         # Set timestamp for last update
         self.last_time = now()
 
-        self.websocket = TickerWebsocket(DEFAULT_SYMBOL, SOCKET_URI)
+        self.websocket = TickerWebsocket()
 
         # Constantly fetch new tickers
         self.ticker_thread: Thread = Thread(target=self.ticker_loop, daemon=True)
@@ -111,12 +111,13 @@ class Athena(PrimordialChaos):
                     request_attempts += 1
                     continue
         if response:
-            final_result = utils.handle_response(response).get('params')
+            # TODO: Move response handling to API files, it should expect a Ticker object from here
+            final_result: dict = utils.handle_response(response).get('data')
         else:
             self.discord.send_status(f'[__get_response] No response received after {attempt_threshold} attempts. Creating a new connection...')
             raise ConnectionException
-        if final_result:
-            return Ticker(final_result)
+        if final_result.get(DEFAULT_SYMBOL):
+            return Ticker(final_result.get(DEFAULT_SYMBOL))
         else:
             self.log.debug('[__get_response] No final_result received from response (This is okay. Probably means no new data)')
         return None
@@ -204,6 +205,11 @@ class Athena(PrimordialChaos):
         interval seconds away from the latest timestamp,
         then write the ticker to the csv file
         '''
+        # Make file if not exist
+        if not os.path.exists(self.csv_path):
+            self.log.debug(f'Creating csv file at {self.csv_path}')
+            with open(self.csv_path, 'w') as csv_file:
+                csv_file.write('')
         try:
             latest = None
             self.log.debug('Running CSV loop...')
@@ -269,7 +275,16 @@ class Athena(PrimordialChaos):
 
     def __get_latest_local_ticker(self):
         if self.csv_path:
-            utils.get_newest_line(self.csv_path)
+            with open(self.csv_path, 'rb') as f:
+                for i in range(-2, 0):
+                    try:
+                        f.seek(i, os.SEEK_END)
+                        while f.read(1) != b'\n':
+                            f.seek(i, os.SEEK_CUR)
+                        return f.readline().decode()
+                    except OSError:
+                        continue
+                return ""
         else:
             latest = self.postgres.get_latest_tickers(row_count=1)
             if type(latest) is list and len(latest) > 0:
