@@ -59,7 +59,6 @@ class Model:
         self.patience = int(self.epoch_count * .15)
 
         # GUI Config
-        # todo: style='darkgrid'
         sns.set(style='whitegrid', palette='muted', font_scale=1.5)
         rcParams['figure.figsize'] = 14, 8
         # Other stuff

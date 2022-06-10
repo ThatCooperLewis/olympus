@@ -164,8 +164,6 @@ class Hermes(PrimordialChaos):
                     crypto_balance, fiat_balance = self.__parse_balances(balances)
                     current_btc_price = self.postgres.get_latest_tickers(1)[0].ask
                     self.log.debug('Got balances and current price')
-                    # TODO: Pass around these prices in a more succinct manner
-                    # use a class called BalanceData or something, with all three values
                     order = self.__create_order(prediction, current_btc_price, crypto_balance, fiat_balance)
                     if order:
                         self.__submit_order(order, current_btc_price, crypto_balance, fiat_balance)

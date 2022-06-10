@@ -183,7 +183,6 @@ class Athena(PrimordialChaos):
                 current_ticker = self.__get_latest_local_ticker()
                 time_since_update = now() - self.last_time
                 if current_ticker == self.last_ticker and time_since_update > self.timeout_threshold:
-                    # TODO: Notify if several attempts don't work            
                     self.log.debug(f'No new data received for {self.timeout_threshold} seconds. Restarting socket...')    
                     self.restart_socket()
                 elif current_ticker != self.last_ticker:

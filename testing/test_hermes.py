@@ -68,7 +68,6 @@ class TestHermes(TestCase):
         for thread in self.hermes.all_threads:
             self.assertFalse(thread.is_alive())
 
-    # TODO: This test is broken
     def test_order_status_update(self):
         self.hermes.run()
         prediction = utils.get_basic_prediction()
@@ -94,5 +93,3 @@ class TestHermes(TestCase):
         self.assertEqual(len(rows), 1)
         self.assertEqual(rows[0][4], 'COMPLETE')
         self.assertEqual(rows[0][5], prediction.uuid)
-        
-    # TODO: Add stacking order test

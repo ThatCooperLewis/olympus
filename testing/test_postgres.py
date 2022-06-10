@@ -13,7 +13,6 @@ from testing import utils
 class TestPostgres(TestCase):
 
     def setUp(self):
-        # TODO: This is dangerous. Make a separate DB for testing.
         self.postgres: PostgresTesting = PostgresTesting.setUp()
         self.postgres.discord = MockDiscord('Postgres')
     
