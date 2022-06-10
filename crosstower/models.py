@@ -1,4 +1,4 @@
-from time import mktime, strptime, struct_time
+from time import strptime, struct_time
 from typing import List
 
 from utils.config import DEFAULT_SYMBOL
@@ -325,51 +325,47 @@ class Ticker:
     @property
     def ask(self) -> float:
         """Best ask price. Can return 'None' if no data."""
-        return float(self._data.get('ask'))
+        return float(self._data.get('a'))
 
     @property
     def bid(self) -> float:
         """Best bid price. Can return 'None' if no data."""
-        return float(self._data.get('bid'))
+        return float(self._data.get('b'))
 
     @property
     def last(self) -> float:
         """Last trade price. Can return 'None' if no data."""
-        return self._data.get('last')
+        return self._data.get('c')
 
     @property
     def open(self) -> float:
         """Last trade price 24 hours ago. Can return 'None' if no data."""
-        return self._data.get('open')
-
-    @property
-    def low(self) -> float:
-        """Lowest trade price within 24 hours"""
-        return self._data.get('low')
+        return self._data.get('o')
 
     @property
     def high(self) -> float:
         """Highest trade price within 24 hours"""
-        return self._data.get('high')
+        return self._data.get('h')
+
+    @property
+    def low(self) -> float:
+        """Lowest trade price within 24 hours"""
+        return self._data.get('l')
 
     @property
     def volume(self) -> float:
         """Total trading amount within 24 hours in base currency"""
-        return self._data.get('volume')
+        return self._data.get('v')
 
     @property
     def volume_quote(self) -> float:
         """Total trading amount within 24 hours in quote currency"""
-        return self._data.get('volumeQuote')
+        return self._data.get('q')
 
     @property
     def timestamp(self) -> int:
         """Last update or refresh ticker timestamp"""
-        struct = strptime(
-            self._data.get('timestamp'),
-            "%Y-%m-%dT%H:%M:%S.%fZ"
-        )
-        return int(mktime(struct))
+        return self._data.get('t')
 
 
 class Candle:

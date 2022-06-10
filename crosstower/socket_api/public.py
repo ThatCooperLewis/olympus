@@ -2,7 +2,7 @@ import asyncio
 import json
 from time import time as now
 
-from utils.config import DEFAULT_CURRENCY, DEFAULT_SYMBOL, SOCKET_V2_URL
+from utils.config import DEFAULT_CURRENCY, DEFAULT_SYMBOL, SOCKET_V2_URL, SOCKET_V3_URL
 from crosstower.models import Symbol
 from crosstower.socket_api import utils
 from websockets import connect as Connection
@@ -45,9 +45,9 @@ class MarketData:
 
 class TickerWebsocket:
 
-    def __init__(self, symbol: str = DEFAULT_SYMBOL, uri: str = SOCKET_V2_URL) -> None:
+    def __init__(self, symbol: str = DEFAULT_SYMBOL) -> None:
         self.symbol = symbol
-        self.uri = uri
+        self.uri = SOCKET_V3_URL
         self.connection: WebSocket = None
 
     def subscribe(self) -> bool:
@@ -56,8 +56,11 @@ class TickerWebsocket:
         '''
         self.connection = create_connection(self.uri)
         self.connection.send(json.dumps({
-            "method": "subscribeTicker",
-            "params": {"symbol": self.symbol},
+            "method": "subscribe",
+            "ch": "ticker/1s/batch",
+            "params": {
+                "symbols": ["BTCUSD"]
+            },
             "id": int(now())
         }))
         result = self.connection.recv()
