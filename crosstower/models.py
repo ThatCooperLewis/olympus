@@ -254,7 +254,12 @@ class Ticker:
     @property
     def timestamp(self) -> int:
         """Last update or refresh ticker timestamp"""
-        return int(int(self._data.get('t'))/1000)
+        epoch = int(self._data.get('t'))
+        if epoch > 2147483647:
+            # API wants to send milliseconds sometimes
+            # Prevent integer overflow
+            epoch = int(epoch/1000)
+        return epoch
 
 
 class Balance:
