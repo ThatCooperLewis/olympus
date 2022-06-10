@@ -9,8 +9,7 @@ from crosstower.models import Ticker
 from crosstower.socket_api import utils
 from crosstower.socket_api.public import TickerWebsocket
 from utils import DiscordWebhook, Logger, Postgres
-from utils.config import (DEFAULT_SYMBOL, SOCKET_TIMEOUT_INTERVAL_MULTIPLIER,
-                          SOCKET_V2_URL)
+from utils.config import DEFAULT_SYMBOL, SOCKET_TIMEOUT_INTERVAL_MULTIPLIER
 
 from olympus.primordial_chaos import PrimordialChaos
 
@@ -112,6 +111,7 @@ class Athena(PrimordialChaos):
                     request_attempts += 1
                     continue
         if response:
+            # TODO: Move response handling to API files, it should expect a Ticker object from here
             final_result: dict = utils.handle_response(response).get('data')
         else:
             self.discord.send_status(f'[__get_response] No response received after {attempt_threshold} attempts. Creating a new connection...')
@@ -275,7 +275,16 @@ class Athena(PrimordialChaos):
 
     def __get_latest_local_ticker(self):
         if self.csv_path:
-            utils.get_newest_line(self.csv_path)
+            with open(self.csv_path, 'rb') as f:
+                for i in range(-2, 0):
+                    try:
+                        f.seek(i, os.SEEK_END)
+                        while f.read(1) != b'\n':
+                            f.seek(i, os.SEEK_CUR)
+                        return f.readline().decode()
+                    except OSError:
+                        continue
+                return ""
         else:
             latest = self.postgres.get_latest_tickers(row_count=1)
             if type(latest) is list and len(latest) > 0:

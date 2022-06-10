@@ -97,12 +97,6 @@ DEFAULT_CURRENCY = 'BTC'
 DEFAULT_SYMBOL = 'BTCUSD'
 '''[UNUSED] The default symbol to use when making API market requests, representing the trading pair'''
 
-REST_V2_URL = 'https://api.crosstower.com/api/2'
-'''The base REST URL for the Crosstower V2 API'''
-
-SOCKET_V2_URL = 'wss://api.crosstower.com/api/2/ws'
-'''The base socket URL for the Crosstower V2 API'''
-
 SOCKET_V3_URL = 'wss://api.us.crosstower.com/api/3/ws'
 '''The base socket URL for the Crosstower V3 API'''
 

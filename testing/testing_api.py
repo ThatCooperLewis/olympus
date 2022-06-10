@@ -2,10 +2,10 @@ from crosstower.socket_api.private import OrderListener
 import json
 from typing import List
 
-from crosstower.models import Balance, Order
-from crosstower.rest_api import MarketData
-from utils.config import CRYPTO_SYMBOL, FIAT_SYMBOL
+from crosstower.models import Balance
+from utils.config import CRYPTO_SYMBOL, FIAT_SYMBOL 
 from websockets import connect as Connection
+from requests import get
 
 class FakeBalanceSheet:
 
@@ -60,8 +60,8 @@ class FakeSocket:
     async def request(self, socket: Connection, method: str, params: dict, uuid: str = None):
         if method != 'newOrder':
             raise NotImplementedError
-        ticker = MarketData.get_ticker()
-        latest_price = ticker.ask
+        resp = get(f"https://api.crosstower.com/api/2/public/ticker/BTCUSD")
+        latest_price = float(resp.json()['ask'])
         side = params['side']
         btc_quantity: float = float(params['quantity'])
         usd_quantity = btc_quantity * latest_price

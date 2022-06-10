@@ -2,11 +2,10 @@ from crosstower.socket_api.private import OrderListener
 from typing import List
 
 from crosstower.models import Balance
-from crosstower.rest_api import MarketData
 from utils.config import CRYPTO_SYMBOL, FIAT_SYMBOL
 from utils import Postgres, Logger, DiscordWebhook
 from websockets import connect as Connection
-
+from requests import get
 
 class MockTrading:
 
@@ -40,7 +39,8 @@ class MockSocket:
         if method != 'newOrder':
             raise NotImplementedError
         
-        latest_price = MarketData.get_ticker().ask
+        resp = get(f"https://api.crosstower.com/api/2/public/ticker/BTCUSD")
+        latest_price = float(resp.json()['ask'])
         side = params['side']
         btc_quantity: float = float(params['quantity'])
         usd_quantity = btc_quantity * latest_price

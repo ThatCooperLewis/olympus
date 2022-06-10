@@ -9,7 +9,6 @@ from collections.abc import Callable
 
 from crosstower.models import Balance, Order
 from crosstower.socket_api import utils
-from crosstower.utils import aggregate_orders
 from websockets import connect as Connection
 
 from utils import Logger, DiscordWebhook
@@ -71,7 +70,11 @@ class Trading:
         ---------
         List of active `Order` objects
         """
-        return aggregate_orders(self.__request_until_complete('spot_get_orders', {}))
+        orders_list = self.__request_until_complete('spot_get_orders', {})
+        orders = []
+        for order_data in orders_list:
+            orders.append(Order(order_data))
+        return orders
 
     def get_trading_balance(self, currencies: list = []) -> List[Balance]:
         """
