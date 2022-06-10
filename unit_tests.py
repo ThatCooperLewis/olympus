@@ -5,7 +5,6 @@ from testing.utils import delete_all_test_files as delete_all
 
 
 if __name__ == '__main__':
-    # TODO: Make this argparse with help text
     module = sys.argv[1]
     log_file = sys.argv[2] if len(sys.argv) > 2 else None
 

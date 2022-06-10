@@ -35,7 +35,6 @@ class Model:
     '''
 
     def __init__(self, model_name: str, input_csv: str = None, input_model: str = None, **params):
-        # print(params.get('params'))
         self.name = model_name
         if not input_csv and not input_model:
             print("ERROR: Neither of input_csv nor a input_model provided!")

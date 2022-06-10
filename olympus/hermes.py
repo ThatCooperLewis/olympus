@@ -49,14 +49,6 @@ class Hermes(PrimordialChaos):
         Submit a new PredictionVector to the queue, starting a new order process
         '''
         self.prediction_queue.put(queue_object)
-    
-    @property
-    def status(self) -> Tuple[int, int]:
-        '''
-        Returns the size of the prediction queue, and the total number of orders submitted. 
-        '''
-        # TODO: Unused - Maybe delete? Idk
-        return self.prediction_queue.size, self.submitted_order_count
 
     @property
     def queue(self) -> PredictionQueue:

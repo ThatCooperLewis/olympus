@@ -20,8 +20,6 @@ class ContinuousIntegration:
         if not os.path.exists('pull_requests.json'):
             save_dict_to_json({}, 'pull_requests.json')
 
-        # TODO: Make a third text channel for PR bot
-
     def run_cycle(self):
         last_prs: dict = get_json_from_file('pull_requests.json')
         current_prs = self.repo.get_pulls()
@@ -89,8 +87,6 @@ class ContinuousIntegration:
                         self.discord.send_alert(alert)
                         self.discord.send_alert(pr_info_str)
                         test_errors = test_log[test_log.index('=====================')+1:]
-                        # Get around Discord's character limit
-                        # TODO: Make this less hacky
                         if len(test_errors) > 1993:
                             start_index = 0
                             for i in range(len(test_errors) // 1993 + 1):

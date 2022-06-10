@@ -14,14 +14,9 @@ Bitcoin price approximation & trading
 - [Windows Local Setup](docs/windows_local_setup.md)
 - [Raspberry Pi Server](docs/raspi_server_setup.md)
 - [Postgres Server](docs/postgres_server_setup.md)
-
-TODO - Crosstower API Setup
+- [Crosstower account]()
 
 ## Components
-
-### Crosstower API
-
-- TODO - SDK description
 
 ### The Olympians
 

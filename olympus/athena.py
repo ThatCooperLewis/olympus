@@ -155,7 +155,6 @@ class Athena(PrimordialChaos):
         '''
         try:
             self.log.debug('Starting ticker loop...')
-            # TODO: Just move this method into here
             self.__ticker_loop_attempt(int(self.connection_attempts))
         except KeyboardInterrupt:
             self.log.debug('Keyboard interrupt received. Aborting...')
