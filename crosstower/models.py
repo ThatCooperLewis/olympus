@@ -254,7 +254,7 @@ class Ticker:
     @property
     def timestamp(self) -> int:
         """Last update or refresh ticker timestamp"""
-        return self._data.get('t')
+        return int(int(self._data.get('t'))/1000)
 
 
 class Balance:
