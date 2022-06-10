@@ -13,7 +13,7 @@ class TickerWebsocket:
 
     def __init__(self, symbol: str = DEFAULT_SYMBOL) -> None:
         self.symbol = symbol
-        self.uri = SOCKET_V3_URL
+        self.uri = SOCKET_V3_URL + '/public'
         self.connection: WebSocket = None
 
     def subscribe(self) -> bool:

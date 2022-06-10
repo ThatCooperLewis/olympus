@@ -103,7 +103,7 @@ REST_V2_URL = 'https://api.crosstower.com/api/2'
 SOCKET_V2_URL = 'wss://api.crosstower.com/api/2/ws'
 '''The base socket URL for the Crosstower V2 API'''
 
-SOCKET_V3_URL = 'wss://api.us.crosstower.com/api/3/ws/public'
+SOCKET_V3_URL = 'wss://api.us.crosstower.com/api/3/ws'
 '''The base socket URL for the Crosstower V3 API'''
 
 ################# Model Training #################
