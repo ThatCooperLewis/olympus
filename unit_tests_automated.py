@@ -2,7 +2,7 @@ import collections
 import os
 import subprocess
 from time import sleep
-
+from time import time as now
 from github import Github
 
 from testing.utils import get_json_from_file, save_dict_to_json
@@ -65,8 +65,13 @@ class ContinuousIntegration:
                     branch = pr.get('branch')
                     self.discord.send_status(f'Running automated tests for PR #{pr.get("number")} - `{branch}` - `{newest_sha}`')
                     filename = f"automated-test.log"
+                    start_time = now()
                     process = subprocess.Popen(f'script -c "./services/shell/automated-unit-tests.sh {branch}" {filename}', shell=True)
                     process.wait()
+                    end_time = now()
+                    duration = end_time - start_time
+                    minutes, seconds = divmod(duration, 60)
+
                     subprocess.run(['git', 'checkout', 'main'])
 
                     pr_info_str = f'''**Name:** {pr.get('title')}\n**Status:** {pr.get('state')}\n**Branch:** `{branch}`\n**URL:** <{pr.get('url')}>\n**SHA:** {newest_sha[:7]}'''
@@ -75,10 +80,10 @@ class ContinuousIntegration:
                     if os.path.exists(filename):
                         with open(filename, 'r') as f:
                             test_log = f.read()
-                    if not '[COMMAND_EXIT_CODE="1"]' in test_log:
+                    if not '[COMMAND_EXIT_CODE="1"]' in test_log and not 'FAILED (errors=' in test_log:
                         self.discord.send_alert(f"<a:DANKIES:927062701878947851> **==== PR Test Success ====** <a:DANKIES:927062701878947851>")
                         self.discord.send_alert(pr_info_str)
-                        gh_pr.create_issue_comment(f'[AUTOMATED] As of commit hash {pr.get("newest_sha")}, the PR has passed all unit tests.')
+                        gh_pr.create_issue_comment(f'[AUTOMATED] As of commit hash {pr.get("newest_sha")}, the PR has passed all unit tests. (Duration: {minutes}m {seconds}s)')
                     else:
                         alert = f'''<:widepeepoSad1:662519773439197203><:widepeepoSad2:662519773514563614>  **=== PR Test Failed ===** <:widepeepoSad1:662519773439197203><:widepeepoSad2:662519773514563614>'''
                         self.discord.send_alert(alert)
