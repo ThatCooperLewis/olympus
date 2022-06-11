@@ -204,7 +204,3 @@ class Delphi(PrimordialChaos):
             # Sleep my sweet angel
             asyncio.run(self.sleep(self.interval_size * self.iterations))
         self.log.debug('Exiting loop')
-
-
-if __name__ == "__main__":
-    Delphi().run()

@@ -2,20 +2,17 @@ import os
 import traceback
 from queue import Queue
 from threading import Thread
-from time import sleep
+from time import localtime, sleep, strftime
 from time import time as now
 
 from crosstower.models import Ticker
 from crosstower.socket_api import utils
-from crosstower.socket_api.public import TickerWebsocket
+from crosstower.socket_api.public import ConnectionException, TickerWebsocket
 from utils import DiscordWebhook, Logger, Postgres
 from utils.config import DEFAULT_SYMBOL, SOCKET_TIMEOUT_INTERVAL_MULTIPLIER
 
 from olympus.primordial_chaos import PrimordialChaos
 
-
-class ConnectionException(Exception):
-    pass
 
 class Athena(PrimordialChaos):
     '''
@@ -93,13 +90,10 @@ class Athena(PrimordialChaos):
         server before giving up, defaults to 3 (optional)
         :return: A Ticker object
         '''
-        final_result = None
-        response = None
         request_attempts = 0
         while True:
             try:
-                response = self.websocket.get_ticker()
-                break
+                return self.websocket.get_ticker()
             except Exception as err:
                 trace = traceback.format_exc()
                 self.log.debug(f'[__get_response] Error while awaiting response: {trace}')
@@ -110,17 +104,6 @@ class Athena(PrimordialChaos):
                     self.log.warn(f'[__get_response] Response timeout. Attempting to receive response again...')
                     request_attempts += 1
                     continue
-        if response:
-            # TODO: Move response handling to API files, it should expect a Ticker object from here
-            final_result: dict = utils.handle_response(response).get('data')
-        else:
-            self.discord.send_status(f'[__get_response] No response received after {attempt_threshold} attempts. Creating a new connection...')
-            raise ConnectionException
-        if final_result.get(DEFAULT_SYMBOL):
-            return Ticker(final_result.get(DEFAULT_SYMBOL))
-        else:
-            self.log.debug('[__get_response] No final_result received from response (This is okay. Probably means no new data)')
-        return None
 
     def __ticker_loop_attempt(self, connection_attempt: int, socket_restart_attempt: int = 0):
         '''
@@ -248,29 +231,6 @@ class Athena(PrimordialChaos):
             self.alert_with_error(f'[sql_loop] {err}\n{traceback.format_exc()}')
             raise err
 
-    def handle_commands(self):
-        print(utils.scraper_startup_message)
-        try:
-            while True:
-                string = input("Enter command: ")
-                if string.lower() in ['exit', 'e']:
-                    print(utils.scraper_exit_message)
-                    self.abort = True
-                    break
-                elif string.lower() in ['restart', 'r']:
-                    print(utils.scraper_restart_message)
-                    self.restart_socket()
-                elif string.lower() in ['status', 's']:
-                    utils.print_status_message(self.last_time, self.connection_attempts)
-                elif string.lower() in ['help', 'h']:
-                    print(utils.scraper_startup_message)
-        except KeyboardInterrupt:
-            self.log.debug('Keyboard interrupt received. Aborting...')
-            self.abort = True
-        except Exception as err:
-            self.alert_with_error(f'[sql_loop] {err}\n{traceback.format_exc()}')
-            raise err
-
     def __get_latest_local_ticker(self):
         if self.csv_path:
             with open(self.csv_path, 'rb') as f:
@@ -289,9 +249,3 @@ class Athena(PrimordialChaos):
                 return latest[0]
             else:
                 return None
-
-    def run(self, headless: bool = False):
-        PrimordialChaos.run(self)
-        if not headless:
-            self.log.debug('Running in interactive mode...')
-            self.handle_commands()
