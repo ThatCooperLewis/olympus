@@ -2,15 +2,13 @@ import os
 import traceback
 from queue import Queue
 from threading import Thread
-from time import localtime, sleep, strftime
+from time import sleep
 from time import time as now
 
 from crosstower.models import Ticker
-from crosstower.socket_api import utils
 from crosstower.socket_api.public import ConnectionException, TickerWebsocket
 from utils import DiscordWebhook, Logger, Postgres
-from utils.config import DEFAULT_SYMBOL, SOCKET_TIMEOUT_INTERVAL_MULTIPLIER
-
+from utils.config import CrosstowerConfig, ScraperConfig
 from olympus.primordial_chaos import PrimordialChaos
 
 
@@ -52,12 +50,12 @@ class Athena(PrimordialChaos):
         if custom_symbol:
             self.symbol = custom_symbol
         else:
-            self.symbol = DEFAULT_SYMBOL
+            self.symbol = CrosstowerConfig.DEFAULT_SYMBOL
         if custom_interval:
             self.interval = custom_interval
         else:
             self.interval = 1
-        self.timeout_threshold = self.interval * SOCKET_TIMEOUT_INTERVAL_MULTIPLIER
+        self.timeout_threshold = self.interval * ScraperConfig.SOCKET_TIMEOUT_INTERVAL_MULTIPLIER
 
     def restart_socket(self):
         self.log.debug('Restarting socket...')
@@ -159,6 +157,7 @@ class Athena(PrimordialChaos):
         :type interval: int
         '''
         try:
+            sleep(5)
             self.last_ticker = self.__get_latest_local_ticker()
             self.last_time = now()
             self.log.debug('Running watchdog loop...')

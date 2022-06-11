@@ -3,7 +3,7 @@ import json
 from typing import List
 
 from crosstower.models import Balance
-from utils.config import CRYPTO_SYMBOL, FIAT_SYMBOL 
+from utils.config import TradingConfig 
 from websockets import connect as Connection
 from requests import get
 
@@ -73,8 +73,8 @@ class FakeSocket:
             raise Exception(
                 "Unrecognized order type, expected 'buy' or 'sell'")
 
-        self.balance_sheet.set_balance(FIAT_SYMBOL, usd_quantity)
-        self.balance_sheet.set_balance(CRYPTO_SYMBOL, btc_quantity)
+        self.balance_sheet.set_balance(TradingConfig.FIAT_SYMBOL, usd_quantity)
+        self.balance_sheet.set_balance(TradingConfig.CRYPTO_SYMBOL, btc_quantity)
         return True
 
     async def get_authenticated_socket(self):

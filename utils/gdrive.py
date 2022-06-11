@@ -32,21 +32,21 @@ class GoogleSheets:
 
     def __get_resource(self) -> Resource:
         creds = None
-        if os.path.exists(config.GDRIVE_TOKEN_PATH):
+        if os.path.exists(config.GoogleDrive.TOKEN_PATH):
             creds = Credentials.from_authorized_user_file(
-                config.GDRIVE_TOKEN_PATH, 
-                config.GDRIVE_API_SCOPES
+                config.GoogleDrive.TOKEN_PATH, 
+                config.GoogleDrive.API_SCOPES
             )
         if not creds or not creds.valid:
             if creds and creds.expired and creds.refresh_token:
                 creds.refresh(Request())
             else:
                 flow = InstalledAppFlow.from_client_secrets_file(
-                    config.GDRIVE_CREDENTIALS_PATH,
-                    config.GDRIVE_API_SCOPES
+                    config.GoogleDrive.CREDENTIALS_PATH,
+                    config.GoogleDrive.API_SCOPES
                 )
                 creds = flow.run_local_server(port=0)
-            with open(config.GDRIVE_TOKEN_PATH, 'w') as token:
+            with open(config.GoogleDrive.TOKEN_PATH, 'w') as token:
                 token.write(creds.to_json())
         service: Resource = build('sheets', 'v4', credentials=creds)
         return service.spreadsheets()
@@ -90,7 +90,7 @@ class GoogleSheets:
         return truncated
     
     def rotate_24_hour_feed(self, latest_order: PostgresOrder) -> List[List[str]]:
-        sheet_orders = self.__get_values(config.GDRIVE_24H_FEED_RANGE)
+        sheet_orders = self.__get_values(config.GoogleDrive.DAILY_FEED_RANGE)
         sheet_latest_timestamp = int(sheet_orders[0][0])
         if sheet_latest_timestamp == latest_order.timestamp:
             return None
@@ -111,7 +111,7 @@ class GoogleSheets:
         try:
             all_orders = self.postgres.get_all_orders()
             truncated_orders = self.shorten_order_feed(all_orders, 5000)
-            self.__update_values(config.GDRIVE_ALLTIME_FEED_RANGE, truncated_orders)
+            self.__update_values(config.GoogleDrive.ALLTIME_FEED_RANGE, truncated_orders)
         except Exception as e:
             self.log.error("Failed to update _full_data feed")
             self.log.error(e)
@@ -121,7 +121,7 @@ class GoogleSheets:
             latest_order = self.postgres.get_latest_mock_orders(row_count=1)[0]
             order_feed = self.rotate_24_hour_feed(latest_order)
             if order_feed:
-                self.__update_values(config.GDRIVE_24H_FEED_RANGE, order_feed)
+                self.__update_values(config.GoogleDrive.DAILY_FEED_RANGE, order_feed)
         except Exception as e:
             self.log.error("Failed to update _data feed")
             self.log.error(e)

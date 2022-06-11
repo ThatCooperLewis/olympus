@@ -1,20 +1,20 @@
+import asyncio
 import json
+from os import remove
 from threading import Thread
-from time import sleep
 from typing import Tuple
 from uuid import uuid4
-from os import remove
-import asyncio
 
-import utils.config as constants
 from utils import DiscordWebhook, Logger, Postgres
+from utils.config import ScraperConfig, PredictionConfig
+from utils.environment import env
 
 from olympus.helper_objects import PredictionVector
 from olympus.helper_objects.prediction_queue import \
     PredictionQueueDB as PredictionQueue
 from olympus.primordial_chaos import PrimordialChaos
 from olympus.prometheus import Predict
-from utils.environment import env
+
 
 class Delphi(PrimordialChaos):
 
@@ -64,9 +64,9 @@ class Delphi(PrimordialChaos):
             params=params
         )
 
-        self.iterations = override_iteration_length if override_iteration_length else constants.PREDICTION_ITERATION_COUNT
-        self.delta_threshold = constants.PREDICTION_DELTA_THRESHOLD
-        self.interval_size = constants.TICKER_INTERVAL
+        self.iterations = override_iteration_length if override_iteration_length else PredictionConfig.PREDICTION_ITERATION_COUNT
+        self.delta_threshold = PredictionConfig.PREDICTION_DELTA_THRESHOLD
+        self.interval_size = ScraperConfig.TICKER_INTERVAL
 
         self.prediction_queue: PredictionQueue = override_prediction_queue if override_prediction_queue else PredictionQueue(override_postgres=self.postgres)
         self.abort = False
@@ -80,7 +80,7 @@ class Delphi(PrimordialChaos):
             rows = file.readlines()
             file.close()
 
-        tmp_rows = [constants.DEFAULT_CSV_HEADERS]
+        tmp_rows = [ScraperConfig.DEFAULT_CSV_HEADERS]
         for index in range(-100, 0):
             # Remove newlines
             row = rows[index].strip() if index == -1 else rows[index]
@@ -96,7 +96,7 @@ class Delphi(PrimordialChaos):
     
     def __fetch_new_data_from_psql(self) -> Tuple[float, int]:
         rows = self.postgres.get_latest_tickers(row_count=self.seq_len)
-        tmp_rows = [constants.DEFAULT_CSV_HEADERS]
+        tmp_rows = [ScraperConfig.DEFAULT_CSV_HEADERS]
         
         for index, ticker in enumerate(rows):
             row = ticker.csv_line.strip() if index == len(rows) - 1 else ticker.csv_line

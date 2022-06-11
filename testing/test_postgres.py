@@ -15,7 +15,7 @@ class TestPostgres(TestCase):
     def setUp(self):
         self.postgres: PostgresTesting = PostgresTesting.setUp()
         self.postgres.discord = MockDiscord('Postgres')
-    
+
     def tearDown(self):
         self.postgres.tearDown()
         self.postgres.conn.close()

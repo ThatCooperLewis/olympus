@@ -1,6 +1,6 @@
 import logging
 from logging.handlers import RotatingFileHandler
-from utils.config import STREAM_LOGGING_LEVEL, FILE_LOGGING_LEVEL, LOGGING_FILENAME
+from utils.config import General as config
 import subprocess
 
 class Logger():
@@ -29,17 +29,17 @@ class Logger():
         console = logging.StreamHandler()
         console_format = logging.Formatter('%(asctime)s [%(name)s] %(levelname)s: %(message)s')
         console.setFormatter(console_format)
-        console.setLevel(STREAM_LOGGING_LEVEL)
+        console.setLevel(config.STREAM_LOGGING_LEVEL)
         logger.addHandler(console)
 
         # Setup file logging
         file_format = logging.Formatter('%(asctime)s [%(name)s] %(levelname)s: %(message)s')
-        file_handler = RotatingFileHandler(LOGGING_FILENAME, mode='a', maxBytes=5*1024*1024, 
+        file_handler = RotatingFileHandler(config.LOGGING_FILENAME, mode='a', maxBytes=5*1024*1024, 
                                  backupCount=2, encoding=None, delay=0)
         file_handler.setFormatter(file_format)
-        file_handler.setLevel(FILE_LOGGING_LEVEL)
+        file_handler.setLevel(config.FILE_LOGGING_LEVEL)
         logger.addHandler(file_handler)
-        logger.level = FILE_LOGGING_LEVEL
+        logger.level = config.FILE_LOGGING_LEVEL
 
         return logger
     

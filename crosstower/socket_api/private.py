@@ -13,7 +13,7 @@ from crosstower.socket_api import utils
 from websockets import connect as Connection
 
 from utils import Logger, DiscordWebhook
-from utils.config import DEFAULT_SYMBOL, SOCKET_V3_URL
+from utils.config import CrosstowerConfig
 from utils.environment import env
 
 class SocketAPI:
@@ -38,7 +38,7 @@ class SocketAPI:
         secret_key = env.crosstower_secret_key
         if not public_key or not secret_key:
             raise Exception("Couldn't retrieve api & secret key.")
-        websocket = await Connection(SOCKET_V3_URL + '/trading')
+        websocket = await Connection(CrosstowerConfig.SOCKET_V3_URL + '/trading')
         data = {
             "type": "BASIC",
             "api_key": public_key,
@@ -50,7 +50,7 @@ class SocketAPI:
 
 class Trading:
 
-    def __init__(self, symbol: str = DEFAULT_SYMBOL):
+    def __init__(self, symbol: str = CrosstowerConfig.DEFAULT_SYMBOL):
         self.symbol = symbol
         loop = asyncio.new_event_loop()
         asyncio.set_event_loop(loop)

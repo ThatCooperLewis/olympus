@@ -1,13 +1,13 @@
-from re import sub
 import subprocess
 from time import sleep
 from time import time as now
 from typing import List
-from utils import DiscordWebhook, Logger, Postgres
-from crosstower.models import Order, Ticker
+
+from crosstower.models import Order
 from olympus.helper_objects.prediction_vector import PredictionVector
-from utils.config import (PREDICTION_QUEUE_MAX_SIZE, PREDICTION_ITERATION_COUNT, STATUS_UPDATE_INTERVAL,
-                          TICKER_INTERVAL, UNRESPONSIVE_TIMEOUT_THRESHOLD)
+from utils import DiscordWebhook, Logger, Postgres, config
+from utils.config import PostgresConfig, ScraperConfig, PredictionConfig
+
 
 class PostgresSubservice:
 
@@ -58,7 +58,7 @@ class PostgresMonitor:
         self.latest_update = right_now
 
         # Sleep a little, prevent false positives
-        sleep(TICKER_INTERVAL/2)
+        sleep(ScraperConfig.TICKER_INTERVAL/2)
 
         while not self.abort:
             try:
@@ -66,14 +66,14 @@ class PostgresMonitor:
                 self.__order_check()
                 self.__prediction_check()
                 self.__status_update()
-                sleep(TICKER_INTERVAL/2)
+                sleep(ScraperConfig.TICKER_INTERVAL/2)
             except KeyboardInterrupt:
                 self.log.debug('KeyboardInterrupt')
                 self.abort = True
             except Exception as e:
                 self.log.error(f"Unknown error: {e}")
                 self.discord.send_alert(f"Unknown error: {e}")
-                sleep(TICKER_INTERVAL)
+                sleep(ScraperConfig.TICKER_INTERVAL)
 
     def stop(self):
         self.abort = True
@@ -88,8 +88,8 @@ class PostgresMonitor:
             self.ticker_scraper_subservice = self.__handle_timeout_and_update_subservice(
                 subservice=self.ticker_scraper_subservice, 
                 time_since_last_update=int(latest_time - self.last_good_ticker_time),
-                unresponsive_threshold=int(TICKER_INTERVAL*2),
-                abandon_threshold=int(UNRESPONSIVE_TIMEOUT_THRESHOLD)
+                unresponsive_threshold=int(ScraperConfig.TICKER_INTERVAL*2),
+                abandon_threshold=int(PostgresConfig.UNRESPONSIVE_TIMEOUT_THRESHOLD)
             )
         else:
             self.last_good_ticker_count = latest_count
@@ -108,8 +108,8 @@ class PostgresMonitor:
             self.order_listener_subservice = self.__handle_timeout_and_update_subservice(
                 subservice=self.order_listener_subservice, 
                 time_since_last_update=int(latest_time - self.last_good_queued_order_time),
-                unresponsive_threshold=int(TICKER_INTERVAL*2),
-                abandon_threshold=int(UNRESPONSIVE_TIMEOUT_THRESHOLD)
+                unresponsive_threshold=int(ScraperConfig.TICKER_INTERVAL*2),
+                abandon_threshold=int(PostgresConfig.UNRESPONSIVE_TIMEOUT_THRESHOLD)
             )
         else:
             self.last_good_queued_order = latest_queued_order
@@ -123,7 +123,7 @@ class PostgresMonitor:
         
         latest_queued_prediction = queued_predictions[-1]
         latest_time = now()
-        prediction_gap = TICKER_INTERVAL*PREDICTION_ITERATION_COUNT
+        prediction_gap = ScraperConfig.TICKER_INTERVAL*PredictionConfig.PREDICTION_ITERATION_COUNT
 
         if latest_queued_prediction.uuid == self.last_good_queued_prediction.uuid:
             self.prediction_engine_subservice = self.__handle_timeout_and_update_subservice(
@@ -140,7 +140,7 @@ class PostgresMonitor:
     # Helper methods
 
     def __status_update(self):
-        if now() - self.latest_update > STATUS_UPDATE_INTERVAL:
+        if now() - self.latest_update > config.General.STATUS_UPDATE_INTERVAL:
             try:
                 self.discord.send_status(
                     f"**PostgresMonitor has been running for {int((now() - self.start_time) / 60)} minutes.**"

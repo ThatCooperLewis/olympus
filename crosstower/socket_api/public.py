@@ -1,7 +1,7 @@
 import json
 from time import time as now
 
-from utils.config import DEFAULT_SYMBOL, SOCKET_V3_URL
+from utils.config import CrosstowerConfig
 from websocket import create_connection, WebSocket
 from crosstower.socket_api.utils import handle_response
 from crosstower.models import Ticker
@@ -13,9 +13,9 @@ class ConnectionException(Exception):
 
 class TickerWebsocket:
 
-    def __init__(self, symbol: str = DEFAULT_SYMBOL) -> None:
+    def __init__(self, symbol: str = CrosstowerConfig.DEFAULT_SYMBOL) -> None:
         self.symbol = symbol
-        self.uri = SOCKET_V3_URL + '/public'
+        self.uri = CrosstowerConfig.SOCKET_V3_URL + '/public'
         self.connection: WebSocket = None
 
     def subscribe(self) -> bool:
@@ -51,7 +51,7 @@ class TickerWebsocket:
         if not response:
             raise ConnectionException
         full_data: dict = handle_response(response).get('data')
-        symbol_ticker: dict = full_data.get(DEFAULT_SYMBOL)
+        symbol_ticker: dict = full_data.get(CrosstowerConfig.DEFAULT_SYMBOL)
         if not symbol_ticker:
             return None
         return Ticker(symbol_ticker)

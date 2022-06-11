@@ -12,14 +12,12 @@ import numpy as np
 import pandas as pd
 import seaborn as sns
 import tensorflow as tf
-from pylab import rcParams
-from sklearn.preprocessing import MinMaxScaler
-from keras import Model as tfModel
 from keras import Sequential
 from keras.callbacks import EarlyStopping, ModelCheckpoint
-from keras.layers import Activation, Bidirectional, Dense, Dropout, CuDNNLSTM
-
-import utils.config as constants
+from keras.layers import Activation, Bidirectional, CuDNNLSTM, Dense, Dropout
+from pylab import rcParams
+from sklearn.preprocessing import MinMaxScaler
+from utils.config import TrainingConfig
 
 gpus = tf.config.experimental.list_physical_devices('GPU')
 if gpus:
@@ -50,11 +48,11 @@ class Model:
 
         # Tuning Knobs
         override_params = params.get('params', {})
-        self.seq_len = override_params.get('seq_len', constants.SEQUENCE_LENGTH)
-        self.dropout = override_params.get('dropout', constants.DROPOUT)
-        self.epoch_count = override_params.get('epoch_count', constants.EPOCH_COUNT)
-        self.testing_split = override_params.get('testing_split', constants.TESTING_SPLIT)
-        self.validation_split = override_params.get('validation_split', constants.VALIDATION_SPLIT)
+        self.seq_len = override_params.get('seq_len', TrainingConfig.SEQUENCE_LENGTH)
+        self.dropout = override_params.get('dropout', TrainingConfig.DROPOUT)
+        self.epoch_count = override_params.get('epoch_count', TrainingConfig.EPOCH_COUNT)
+        self.testing_split = override_params.get('testing_split', TrainingConfig.TESTING_SPLIT)
+        self.validation_split = override_params.get('validation_split', TrainingConfig.VALIDATION_SPLIT)
         self.window_size = self.seq_len - 1
         self.patience = int(self.epoch_count * .15)
 

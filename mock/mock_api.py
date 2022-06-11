@@ -2,7 +2,7 @@ from crosstower.socket_api.private import OrderListener
 from typing import List
 
 from crosstower.models import Balance
-from utils.config import CRYPTO_SYMBOL, FIAT_SYMBOL
+from utils.config import TradingConfig
 from utils import Postgres, Logger, DiscordWebhook
 from websockets import connect as Connection
 from requests import get
@@ -14,8 +14,8 @@ class MockTrading:
 
     def get_trading_balance(self, currencies: list = []) -> List[Balance]:
         usd_amount, btc_amount = self.postgres.get_latest_mock_balances()
-        usd_balance = Balance({'currency': FIAT_SYMBOL, 'available': usd_amount})
-        btc_balance = Balance({'currency': CRYPTO_SYMBOL, 'available': btc_amount})
+        usd_balance = Balance({'currency': TradingConfig.FIAT_SYMBOL, 'available': usd_amount})
+        btc_balance = Balance({'currency': TradingConfig.CRYPTO_SYMBOL, 'available': btc_amount})
         return [usd_balance, btc_balance]
 
 

@@ -9,6 +9,7 @@ from olympus.helper_objects import PredictionVector
 
 from utils import DiscordWebhook, Logger
 import utils.config as constants
+from utils.config import PostgresConfig
 from utils.environment import env
 
 class PostgresCursor:
@@ -83,9 +84,9 @@ class PostgresPredictionVector:
 class Postgres:
 
     def __init__(self, ticker_table_override: str = None, order_table_override: str = None, prediction_table_override: str = None) -> None:
-        self.ticker_table_name = ticker_table_override if ticker_table_override is not None else constants.POSTGRES_TICKER_TABLE_NAME
-        self.order_table_name = order_table_override if order_table_override is not None else constants.POSTGRES_ORDER_TABLE_NAME
-        self.prediction_table_name = prediction_table_override if prediction_table_override is not None else constants.POSTGRES_PREDICTION_TABLE_NAME
+        self.ticker_table_name = ticker_table_override if ticker_table_override is not None else PostgresConfig.TICKER_TABLE_NAME
+        self.order_table_name = order_table_override if order_table_override is not None else PostgresConfig.ORDER_TABLE_NAME
+        self.prediction_table_name = prediction_table_override if prediction_table_override is not None else PostgresConfig.PREDICTION_TABLE_NAME
         self.log = Logger.setup(self.__class__.__name__)
         self.discord = DiscordWebhook("Postgres")
         self.__setup_connection()
@@ -94,21 +95,21 @@ class Postgres:
 
     def insert_ticker(self, ticker: Ticker):
         self.log.debug(f"Inserting ticker with timestamp: {ticker.timestamp}")
-        query = f"""INSERT INTO {self.ticker_table_name} {constants.POSTGRES_TICKER_COLUMNS}
+        query = f"""INSERT INTO {self.ticker_table_name} {PostgresConfig.TICKER_COLUMNS}
         VALUES ({ticker.timestamp}, {ticker.ask}, {ticker.bid}, {ticker.last}, {ticker.low}, {ticker.high}, {ticker.open}, {ticker.volume}, {ticker.volume_quote})"""
         self._query(query, False)
 
     def insert_order(self, order: Order, current_price: float, crypto_balance: float, fiat_balance: float):
         self.log.debug(f"Inserting order with uuid: {order.uuid}")
-        query = f"""INSERT INTO {self.order_table_name} {constants.POSTGRES_ORDER_COLUMNS}
-        VALUES ({int(now())}, {order.quantity}, '{order.side}', '{constants.POSTGRES_STATUS_QUEUED}', '{order.uuid}', {fiat_balance}, {crypto_balance}, {current_price})"""
+        query = f"""INSERT INTO {self.order_table_name} {PostgresConfig.ORDER_COLUMNS}
+        VALUES ({int(now())}, {order.quantity}, '{order.side}', '{PostgresConfig.STATUS_QUEUED}', '{order.uuid}', {fiat_balance}, {crypto_balance}, {current_price})"""
         self._query(query, False)
 
     def insert_prediction_vector(self, prediction_vector: PredictionVector):
         self.log.debug(f"Inserting prediction vector with uuid: {prediction_vector.uuid}")
         history = self.__convert_prediction_history_to_string(prediction_vector.prediction_history)
-        query = f"""INSERT INTO {self.prediction_table_name} {constants.POSTGRES_PREDICTION_COLUMNS}
-        VALUES ({int(now())}, {prediction_vector.timestamp}, {prediction_vector.weight}, {history}, '{constants.POSTGRES_STATUS_QUEUED}', '{prediction_vector.uuid}', {prediction_vector.percent})"""
+        query = f"""INSERT INTO {self.prediction_table_name} {PostgresConfig.PREDICTION_COLUMNS}
+        VALUES ({int(now())}, {prediction_vector.timestamp}, {prediction_vector.weight}, {history}, '{PostgresConfig.STATUS_QUEUED}', '{prediction_vector.uuid}', {prediction_vector.percent})"""
         self._query(query, False)
 
     # Public Methods - SELECT
@@ -163,7 +164,7 @@ class Postgres:
         
         :return: A list of Order objects
         """
-        query = f"""SELECT {constants.POSTGRES_ORDER_COLUMNS} FROM {self.order_table_name} ORDER BY timestamp ASC"""
+        query = f"""SELECT {PostgresConfig.ORDER_COLUMNS} FROM {self.order_table_name} ORDER BY timestamp ASC"""
         result = self._query(query, True)
         return list(map(self.__convert_result_to_order, result))
 
@@ -222,7 +223,7 @@ class Postgres:
         self._query(query, False)
         
     def get_latest_mock_orders(self, row_count: int) -> List[MockPostgresOrder]:
-        query = f"SELECT {constants.POSTGRES_ORDER_COLUMNS} FROM {self.order_table_name} ORDER BY timestamp DESC LIMIT {row_count}"
+        query = f"SELECT {PostgresConfig.ORDER_COLUMNS} FROM {self.order_table_name} ORDER BY timestamp DESC LIMIT {row_count}"
         result = self._query(query, True)
         return list(map(self.__convert_result_to_order, result))
     
@@ -245,7 +246,7 @@ class Postgres:
         return "ARRAY " + str(prediction_history)
 
     def __parse_allowed_statuses(self, status: str):
-        for allowed_status in constants.POSTGRES_ALLOWED_STATUSES:
+        for allowed_status in PostgresConfig.ALLOWED_STATUSES:
             if status.lower() == allowed_status.lower():
                 return allowed_status
         raise Exception(f"Invalid status: {status}")

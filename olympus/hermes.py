@@ -3,7 +3,9 @@ from threading import Thread
 from typing import List, Tuple
 from time import sleep
 
-import utils.config as constants
+
+from utils.config import PostgresConfig
+from utils.config import TradingConfig
 from crosstower.models import Balance, Order
 from crosstower.socket_api.private import OrderListener, Trading
 from utils import DiscordWebhook, Logger, Postgres, GoogleSheets
@@ -68,12 +70,12 @@ class Hermes(PrimordialChaos):
         :return: The quantity of the asset to be traded.
         '''
         self.log.debug('Parsing quantity for prediction vector: {}'.format(prediction))
-        percentage = constants.MAX_TRADE_PERCENTAGE * abs(prediction.weight)
+        percentage = TradingConfig.MAX_TRADE_PERCENTAGE * abs(prediction.weight)
         return abs(percentage * crypto_balance)
 
     def __parse_buy_quantity(self, prediction: PredictionVector, usd_balance: float, current_btc_price: float) -> float:
         self.log.debug('Parsing buy quantity for prediction vector: {}'.format(prediction))
-        percentage = constants.MAX_TRADE_PERCENTAGE * abs(prediction.weight)
+        percentage = TradingConfig.MAX_TRADE_PERCENTAGE * abs(prediction.weight)
         usd_buy_amount = percentage * usd_balance
         return abs(usd_buy_amount / current_btc_price)
 
@@ -86,9 +88,9 @@ class Hermes(PrimordialChaos):
         :return: The balances of crypto and fiat.
         '''
         for balance in balances:
-            if balance.currency == constants.FIAT_SYMBOL:
+            if balance.currency == TradingConfig.FIAT_SYMBOL:
                 fiat_balance = balance.available
-            elif balance.currency == constants.CRYPTO_SYMBOL:
+            elif balance.currency == TradingConfig.CRYPTO_SYMBOL:
                 crypto_balance = balance.available
         return crypto_balance, fiat_balance
 
@@ -111,7 +113,7 @@ class Hermes(PrimordialChaos):
             self.log.error('Sell order failed, insufficient funds.\nCrypto Balance: {}\nPredicted Price: {}\nTrade Quantity: {}'.format(
                 crypto_balance, current_btc_price, trade_quantity))
             return None
-        return Order.create(trade_quantity, side, constants.TRADING_SYMBOL, uuid=prediction.uuid)
+        return Order.create(trade_quantity, side, TradingConfig.TRADING_SYMBOL, uuid=prediction.uuid)
 
     def __submit_order(self, order: Order, current_btc_price: float, crypto_balance: float, fiat_balance: float) -> None:
         """
@@ -144,10 +146,10 @@ class Hermes(PrimordialChaos):
         self.submitted_order_count += 1
 
     def __order_status_processing(self, order: Order):
-        self.postgres.update_order_status(order.uuid, constants.POSTGRES_STATUS_PROCESSING)
+        self.postgres.update_order_status(order.uuid, PostgresConfig.STATUS_PROCESSING)
         
     def __order_status_complete(self, order: Order):
-        self.postgres.update_order_status(order.uuid, constants.POSTGRES_STATUS_COMPLETE)
+        self.postgres.update_order_status(order.uuid, PostgresConfig.STATUS_COMPLETE)
 
     def __main_loop(self):
         '''
@@ -160,7 +162,7 @@ class Hermes(PrimordialChaos):
                 if self.prediction_queue.size > 0:
                     prediction = self.prediction_queue.get()
                     self.log.debug('Got prediction from queue')
-                    balances = self.trading_account.get_trading_balance([constants.CRYPTO_SYMBOL, constants.FIAT_SYMBOL])
+                    balances = self.trading_account.get_trading_balance([TradingConfig.CRYPTO_SYMBOL, TradingConfig.FIAT_SYMBOL])
                     crypto_balance, fiat_balance = self.__parse_balances(balances)
                     current_btc_price = self.postgres.get_latest_tickers(1)[0].ask
                     self.log.debug('Got balances and current price')
