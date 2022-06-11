@@ -28,7 +28,7 @@ class TestAthena(TestCase):
 
     def test_run_and_exit(self):
         self.athena.timeout_threshold = 10
-        self.athena.run(headless=True)
+        self.athena.run()
         sleep(10)
         # Test that the file is not empty
         self.assertTrue(utils.count_rows_from_file(self.filename) > 1)
@@ -64,7 +64,7 @@ class TestAthena(TestCase):
         self.athena.csv_path = self.filename
 
     def test_superclass(self):
-        self.athena.run(headless=True)
+        self.athena.run()
         sleep(2)
         self.athena.join_threads()
         sleep(5)
@@ -72,7 +72,7 @@ class TestAthena(TestCase):
             self.assertFalse(thread.is_alive())
 
     def test_restart_and_stop(self):
-        self.athena.run(headless=True)
+        self.athena.run()
         sleep(2)
         old = utils.count_rows_from_file(self.filename)
         self.athena.restart_socket()

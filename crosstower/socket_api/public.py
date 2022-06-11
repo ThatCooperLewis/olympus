@@ -1,9 +1,14 @@
-import asyncio
 import json
 from time import time as now
 
 from utils.config import DEFAULT_SYMBOL, SOCKET_V3_URL
 from websocket import create_connection, WebSocket
+from crosstower.socket_api.utils import handle_response
+from crosstower.models import Ticker
+
+
+class ConnectionException(Exception):
+    pass
 
 
 class TickerWebsocket:
@@ -38,11 +43,18 @@ class TickerWebsocket:
             self.connection.close()
         return self.subscribe()
 
-    def get_ticker(self) -> str:
+    def get_ticker(self) -> Ticker:
         '''
         Synchronously retrieves ticker data from the queue.
         '''
-        return self.connection.recv()
+        response = self.connection.recv()
+        if not response:
+            raise ConnectionException
+        full_data: dict = handle_response(response).get('data')
+        symbol_ticker: dict = full_data.get(DEFAULT_SYMBOL)
+        if not symbol_ticker:
+            return None
+        return Ticker(symbol_ticker)
 
     def stop(self) -> None:
         self.connection.close()
