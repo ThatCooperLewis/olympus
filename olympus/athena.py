@@ -96,8 +96,7 @@ class Athena(PrimordialChaos):
                 trace = traceback.format_exc()
                 self.log.debug(f'[__get_response] Error while awaiting response: {trace}')
                 if request_attempts > attempt_threshold:
-                    response = None
-                    break
+                    raise ConnectionException
                 else:
                     self.log.warn(f'[__get_response] Response timeout. Attempting to receive response again...')
                     request_attempts += 1
