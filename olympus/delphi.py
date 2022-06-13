@@ -4,6 +4,7 @@ from os import remove
 from threading import Thread
 from typing import Tuple
 from uuid import uuid4
+from time import time as now
 
 from utils import DiscordWebhook, Logger, Postgres
 from utils.config import ScraperConfig, PredictionConfig
@@ -24,6 +25,7 @@ class Delphi(PrimordialChaos):
 
     def __init__(
         self,
+        override_cycle_wait: bool = False,
         override_model_path: str = None,
         override_params_path: str = None,
         override_sql_mode_with_csv_path: str = None,
@@ -64,9 +66,11 @@ class Delphi(PrimordialChaos):
             params=params
         )
 
+        self.run_immediately = override_cycle_wait
         self.iterations = override_iteration_length if override_iteration_length else PredictionConfig.PREDICTION_ITERATION_COUNT
         self.delta_threshold = PredictionConfig.PREDICTION_DELTA_THRESHOLD
         self.interval_size = ScraperConfig.TICKER_INTERVAL
+        self.prediction_cycle_seconds = self.interval_size * self.iterations
 
         self.prediction_queue: PredictionQueue = override_prediction_queue if override_prediction_queue else PredictionQueue(override_postgres=self.postgres)
         self.abort = False
@@ -148,6 +152,15 @@ class Delphi(PrimordialChaos):
             return -1
         return eval
 
+    def __wait_until_next_prediction_cycle(self):
+        latest = self.postgres.get_latest_prediction_timestamp()
+        time_since_last_prediction = now() - latest
+        # Subrtract the prediction spin-up time
+        wait_time = int(self.prediction_cycle_seconds - time_since_last_prediction - 5)
+        if time_since_last_prediction < self.prediction_cycle_seconds:
+            self.log.info(f'Last prediction was {round(time_since_last_prediction)} seconds ago, waiting {round(wait_time)} seconds')
+            asyncio.run(self.sleep(wait_time))
+
     async def sleep(self, seconds: int):
         for i in range(seconds):
             if self.abort:
@@ -157,6 +170,8 @@ class Delphi(PrimordialChaos):
     def __primary_loop(self):
         self.log.debug('Starting loop')
         self.is_active = True
+        if not self.run_immediately:
+            self.__wait_until_next_prediction_cycle()
         while not self.abort:
             self.log.debug('Starting iteration')
             predictions = []

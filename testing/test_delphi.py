@@ -19,6 +19,7 @@ class TestDelphi(TestCase):
         self.postgres = PostgresTesting.setUp()
         self.queue = PredictionQueue(override_postgres=self.postgres)
         self.delphi = Delphi(
+            override_cycle_wait=True,
             override_model_path='testing/test_files/test_model.h5',
             override_params_path='testing/test_files/test_params.json',
             override_sql_mode_with_csv_path='testing/test_files/test_data.csv',
@@ -46,6 +47,7 @@ class TestDelphi(TestCase):
 
     def test_sql_init(self):
         sql_delphi = Delphi(
+            override_cycle_wait=True,
             override_model_path='testing/test_files/test_model.h5',
             override_params_path='testing/test_files/test_params.json',
             override_prediction_queue=self.queue,
@@ -63,6 +65,7 @@ class TestDelphi(TestCase):
             order_table_override=constants.POSTGRES_TEST_ORDER_TABLE,
             prediction_table_override=constants.POSTGRES_TEST_PREDICTION_TABLE
         )
+        self.delphi.run_immediately = True
         self.delphi.run()
         self.__wait_for_queue_to_fill()
         self.assertTrue(self.queue.size > 0)
@@ -80,10 +83,6 @@ class TestDelphi(TestCase):
         self.delphi.join_threads()
         sleep(5)
         self.assertFalse(self.delphi.primary_thread.is_alive())
-
-    def __get_first_line_from_file(self, filename: str):
-        with open(filename, 'r') as file:
-            return file.readline()
 
     def __wait_for_queue_to_fill(self):
         for i in range(5):

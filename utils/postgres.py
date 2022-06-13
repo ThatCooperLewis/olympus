@@ -177,6 +177,15 @@ class Postgres:
         result = self._query(query, True)
         return list(map(self.__convert_result_to_prediction, result))
     
+    def get_latest_prediction_timestamp(self) -> int:
+        """
+        Get the latest prediction from the database
+        :return: A PredictionVector object
+        """
+        query = f"""SELECT timestamp FROM {self.prediction_table_name} ORDER BY timestamp DESC LIMIT 1"""
+        result = self._query(query, True)
+        return int(result[0][0])
+
     def get_ticker_count_for_last_hour(self) -> int:
         """
         Get the number of tickers in the last hour
