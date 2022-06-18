@@ -27,7 +27,7 @@ class TickerWebsocket:
             "method": "subscribe",
             "ch": "ticker/1s/batch",
             "params": {
-                "symbols": ["BTCUSD"]
+                "symbols": [self.symbol]
             },
             "id": int(now())
         }))
@@ -51,7 +51,7 @@ class TickerWebsocket:
         if not response:
             raise ConnectionException
         full_data: dict = handle_response(response).get('data')
-        symbol_ticker: dict = full_data.get(CrosstowerConfig.DEFAULT_SYMBOL)
+        symbol_ticker: dict = full_data.get(self.symbol)
         if not symbol_ticker:
             return None
         return Ticker(symbol_ticker)

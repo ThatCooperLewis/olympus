@@ -105,7 +105,7 @@ class CrosstowerConfig:
     DEFAULT_CURRENCY = 'BTC'
     '''[]The default currency to use when making API market requests'''
 
-    DEFAULT_SYMBOL = 'BTCUSD'
+    DEFAULT_SYMBOL = 'BTCUSD_TR'
     '''[UNUSED] The default symbol to use when making API market requests, representing the trading pair'''
 
     SOCKET_V3_URL = 'wss://api.us.crosstower.com/api/3/ws'

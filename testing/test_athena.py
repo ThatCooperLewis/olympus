@@ -23,7 +23,7 @@ class TestAthena(TestCase):
         self.assertEqual(self.athena.connection_attempts, 0)
         self.assertEqual(self.athena.abort, False)
         self.assertEqual(self.athena.queue.qsize(), 0)
-        self.assertEqual(self.athena.symbol, 'BTCUSD')
+        self.assertEqual(self.athena.symbol, 'BTCUSD_TR')
         self.assertEqual(self.athena.interval, 1)
 
     def test_run_and_exit(self):
