@@ -22,7 +22,7 @@ class TestHermes(TestCase):
                 "available": 25000.0
             },
             {
-                "currency": "BTC_TR",
+                "currency": "BTC",
                 "available": 5
             }
         ])
@@ -55,7 +55,7 @@ class TestHermes(TestCase):
         sleep(5)
         self.hermes.stop()
         balances = utils.get_json_from_file(self.params_file)
-        self.assertEqual(balances[1]['currency'], "BTC_TR")
+        self.assertEqual(balances[1]['currency'], "BTC")
         self.assertNotEqual(balances[1]['available'], 5.0)
 
     def test_run(self):

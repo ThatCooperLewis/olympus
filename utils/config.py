@@ -89,14 +89,14 @@ class TradingConfig:
     MAX_TRADE_PERCENTAGE = .4
     '''Maximum percentage of total balance to spend on a single trade'''
 
-    CRYPTO_SYMBOL = 'BTC_TR'
+    CRYPTO_SYMBOL = 'BTC'
     '''The symbol of the cryptocurrency when checking account balance'''
 
     FIAT_SYMBOL = 'USD'
     '''The symbol of the fiat currency to check in account balance'''
 
     TRADING_SYMBOL = 'BTCUSD_TR'
-    '''The symbol of the trading pair to trade, used when creating Order objects'''
+    '''The symbol of the trading pair to trade, used when creating Order objects and fetching tickers'''
 
 ################# Crosstower API #################
 
