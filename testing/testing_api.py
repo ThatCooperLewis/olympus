@@ -58,7 +58,7 @@ class FakeSocket:
         return
 
     async def request(self, socket: Connection, method: str, params: dict, uuid: str = None):
-        if method != 'newOrder':
+        if method != 'spot_new_order':
             raise NotImplementedError
         resp = get(f"https://api.crosstower.com/api/2/public/ticker/BTCUSD")
         latest_price = float(resp.json()['ask'])

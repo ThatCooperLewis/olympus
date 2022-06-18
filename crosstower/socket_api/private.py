@@ -147,7 +147,7 @@ class OrderListener:
                 if self.__queue.qsize() > 0:
                     order_object: OrderListenerObject = self.__queue.get()
                     order_object.on_submission()
-                    await self.__socket.request(socket, 'newOrder', order_object.order.dict, order_object.order.uuid)
+                    await self.__socket.request(socket, 'spot_new_order', order_object.order.dict, order_object.order.uuid)
                     order_object.on_complete()
                 sleep(0.1)
             self.log.debug('self.__orders_coroutine() is quitting')

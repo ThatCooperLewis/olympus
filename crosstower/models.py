@@ -42,8 +42,7 @@ class Order:
 
         if side in ['sell', 'buy'] and order_type in ['limit', 'market', 'stopLimit', 'stopMarket'] and time_in_force in ['GTC', 'IOC', 'FOK', 'Day']:
             order_data['side'] = side
-            order_data['type'] = type
-            order_data['timeInForce'] = side
+            order_data['type'] = order_type
         else:
             bad_args = True
 
