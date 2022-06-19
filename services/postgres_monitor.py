@@ -117,9 +117,14 @@ class PostgresMonitor:
             self.order_listener_subservice = self.__handle_service_revival_if_inactive(self.order_listener_subservice)
 
     def __prediction_check(self):
-        queued_predictions = self.postgres.get_queued_predictions()
+        try:
+            queued_predictions = self.postgres.get_queued_predictions()
+        except IndexError:
+            self.log.debug("No queued predictions, continuing..")
+            return
         if not queued_predictions:
             self.log.debug("No queued predictions, continuing..")
+            return
         
         latest_queued_prediction = queued_predictions[-1]
         latest_time = now()
