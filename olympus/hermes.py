@@ -28,7 +28,6 @@ class Hermes(PrimordialChaos):
         self.gsheets = GoogleSheets()
         self.postgres = Postgres()
         self.abort = False
-        self.__main_thread: Thread = Thread(target=self.__main_loop, args=())
         self.submitted_order_count = 0 # Used for tracking activity status
         
         self.order_listener: OrderListener = override_orderListener if override_orderListener is not None else OrderListener()
@@ -36,9 +35,14 @@ class Hermes(PrimordialChaos):
         self.prediction_queue: PredictionQueue = override_predictionQueue if override_predictionQueue else PredictionQueue(self.postgres)
         
         # Order listener is not itself a thread, but is a wrapper for a thread
-        self.all_threads = [self.order_listener, self.__main_thread]
+        # self.all_threads = [self.order_listener, self.__main_thread]
 
     # Public
+
+    def run(self):
+        self.log.debug('Starting all threads')
+        self.order_listener.start()
+        self.__main_loop()
 
     def stop(self):
         # Reverse thread list so they shut down in the right order
@@ -156,7 +160,7 @@ class Hermes(PrimordialChaos):
         Get the next prediction from the queue, get the current balances, and create an order based on the
         prediction, repeat until abort
         '''
-        self.log.debug('Starting loop')
+        self.log.debug('Starting main loop')
         try:
             while not self.abort:
                 if self.prediction_queue.size > 0:
@@ -171,15 +175,15 @@ class Hermes(PrimordialChaos):
                         self.__submit_order(order, current_btc_price, crypto_balance, fiat_balance)
                     self.prediction_queue.close(prediction, failed=(order is None))
                     sleep(1)
-                    try:
-                        self.gsheets.update_order_feed()
-                    except:
-                        self.log.error("Could not rotate order feed. Prob expired token?")
+                    # try:
+                    #     self.gsheets.update_order_feed()
+                    # except:
+                    #     self.log.error("Could not rotate order feed. Prob expired token?")
                 sleep(0.2)
         except KeyboardInterrupt:
             self.log.debug('Keyboard interrupt received, aborting')
             self.abort = True
         except Exception:
-            self.alert_with_error('Error in main loop', traceback.format_exc())
+            self.alert_with_error(f'Error in main loop: \n{traceback.format_exc()}')
             self.stop()
         self.log.debug('Exiting loop')

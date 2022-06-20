@@ -59,7 +59,19 @@ class Trading:
         )
 
     def __request_until_complete(self, method: str, params: str):
-        return asyncio.get_event_loop().run_until_complete(SocketAPI.request(self.websocket, method, params))
+        try:
+            loop = asyncio.get_event_loop()
+        except RuntimeError as e:
+            if str(e).startswith('There is no current event loop in thread'):
+                loop = asyncio.new_event_loop()
+                asyncio.set_event_loop(loop)
+            else:
+                raise
+        try:
+            return loop.run_until_complete(SocketAPI.request(self.websocket, method, params))
+        except Exception as e:
+            print(traceback.format_exc())
+            raise
 
     def get_active_orders(self) -> List[Order]:
         """
@@ -94,7 +106,15 @@ class Trading:
         ----------
         A list of `Balance` objects
         """
-        result = self.__request_until_complete('spot_balances', {})
+        result = []
+        for i in range(3):
+            try:
+                result = self.__request_until_complete('spot_balances', {})
+                break
+            except:
+                continue
+        if not result:
+            return []
         balance = []
         count = len(currencies)
         for coin in result:
