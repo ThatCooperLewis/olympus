@@ -3,7 +3,7 @@ import logging
 
 class General:
 
-    STREAM_LOGGING_LEVEL = logging.INFO
+    STREAM_LOGGING_LEVEL = logging.DEBUG
     '''Tells the logging module to stream messages of a certain level to the CLI (INFO, DEBUG, ERROR).'''
 
     FILE_LOGGING_LEVEL = logging.DEBUG
@@ -142,3 +142,10 @@ class PredictionConfig:
 
     PREDICTION_QUEUE_MAX_SIZE = 5
     '''The maximum number of queued predictions before alerting'''
+
+class RobinhoodConfig:
+
+    LOGIN_URL = 'https://robinhood.com/login/'
+    '''The URL to use when logging into Robinhood'''
+
+    BTC_URL = 'https://robinhood.com/crypto/BTC/'
