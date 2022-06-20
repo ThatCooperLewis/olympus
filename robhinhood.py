@@ -8,6 +8,7 @@ from pyotp import TOTP
 from selenium.webdriver import Chrome
 from selenium.webdriver.common.by import By
 from selenium.webdriver.remote.webelement import WebElement
+from selenium.common.exceptions import NoSuchElementException
 
 from utils.config import RobinhoodConfig
 from utils.environment import env
@@ -68,12 +69,18 @@ class Robinhood:
             element_text = "Sell BTC"
         else:
             raise Exception("Invalid side")
-        buy_tab = self.chrome.find_element(by=By.XPATH, value=f"//*[contains(text(), '{element_text}')]")
-        buy_tab.click()
-        sleep(1)
-        # Enter amount
-        amount_field = self.chrome.find_element(by=By.XPATH, value=f'//input[@placeholder="0"]')
-        amount_field.send_keys(str(quantity))
+        try:
+            buy_tab = self.chrome.find_element(by=By.XPATH, value=f"//*[contains(text(), '{element_text}')]")
+            buy_tab.click()
+            sleep(1)
+            # Enter amount
+            amount_field = self.chrome.find_element(by=By.XPATH, value=f'//input[@placeholder="0"]')
+            amount_field.send_keys(str(quantity))
+        except NoSuchElementException:
+            print("Likely on wrong page")
+            # TODO: Handle reloading of page
+        except Exception:
+            print("Ugh something else happened")
         sleep(1)
         # Click "Review Order"
         review_button = self.__find_submit_button()
