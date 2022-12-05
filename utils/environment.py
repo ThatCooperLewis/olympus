@@ -7,6 +7,10 @@ class env_meta(type):
         return
 
     @property
+    def service_name(cls) -> str:
+        return os.getenv('OLYMPUS_SERVICE')
+
+    @property
     def crosstower_api_key(cls) -> str:
         return os.getenv('CT_API_KEY')
 
@@ -24,23 +28,23 @@ class env_meta(type):
 
     @property
     def postgres_user(cls) -> str:
-        return os.getenv('PSQL_USER')
+        return os.getenv('POSTGRES_USER')
 
     @property
     def postgres_password(cls) -> str:
-        return os.getenv('PSQL_PW')
+        return os.getenv('POSTGRES_PASSWORD')
 
     @property
     def postgres_host(cls) -> str:
-        return os.getenv('PSQL_HOST')
+        return os.getenv('POSTGRES_HOST')
 
     @property
     def postgres_port(cls) -> str:
-        return os.getenv('PSQL_PORT')
+        return os.getenv('POSTGRES_PORT')
 
     @property
     def postgres_database(cls) -> str:
-        return os.getenv('PSQL_DB')
+        return os.getenv('POSTGRES_DB')
 
     @property
     def keras_model_path(cls) -> str:
