@@ -34,9 +34,19 @@ To make things a little more difficult for those who lack the sheer will to make
 
 - **PrimordialChaos** : Superclass of all others, manages starting/stopping of threads and handles alerts
 
+## Docker Containers
+
+All services are run using docker-compose, because I hate myself and can't be bothered to learn Terraform or any other alternative for this.
+
+To run the services, you'll need Docker and `docker-compose` installed, which are included in [Docker Desktop](https://www.docker.com/products/docker-desktop/). Then, run this command..
+
+      docker-compose --env-file .env.production up -d
+
+This will initialize a Postgres DB, create the proper tables/webportal, and run the app's services once the DB is healthy.
+
 ## Tools
 
 - `tools/filter_csv.py`
         
-  - Used to reduce historical data into larger granuels. Data with sporadic timing can be filtered to regular segments of time.
-  - Expects a CSV with two columns: "timestamp" and "price". Both should be numberical. Timstamp should be epoch seconds.
+  - Used to reduce historical data into larger granules. Data with sporadic timing can be filtered to regular segments of time.
+  - Expects a CSV with two columns: "timestamp" and "price". Both should be numerical. Timestamp should be epoch seconds.

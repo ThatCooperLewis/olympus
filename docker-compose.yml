@@ -1,0 +1,96 @@
+version: '3.7'
+
+networks:
+  default:
+    name: the-pale
+
+services:
+
+  ### PSQL DATABASE ###
+  postgres:
+    container_name: postgres
+    image: postgres
+    restart: always
+    healthcheck:
+      # Make sure the tables exist
+      test:
+        [ "CMD", "psql", "-d", "olympus", "-U", "athena", "-c", "SELECT * FROM ticker_feed LIMIT 1" ]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    volumes:
+      - ./pgdata:/var/lib/postgresql/data
+      - ./schema.sql:/docker-entrypoint-initdb.d/schema.sql
+    env_file:
+      - '.env.production'
+    ports:
+      - 5432:5432
+
+  ### PSQL DASHBOARD ###
+  # http://localhost:8080
+  postgres-portal:
+    container_name: postgres-portal
+    image: adminer
+    restart: always
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:8080" ]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+    env_file:
+      - '.env.production'
+    ports:
+      - 8080:8080
+
+  ### TICKER SCRAPER ###
+  athena:
+    container_name: athena
+    image: athena
+    build:
+      context: .
+      dockerfile: Dockerfile.athena
+    depends_on:
+      postgres:
+        condition: service_healthy
+      postgres-portal:
+        condition: service_healthy
+    command: python services_manager.py
+    volumes:
+      - .:/app
+    working_dir: /app
+    env_file:
+      - '.env.production'
+    environment:
+      - OLYMPUS_SERVICE=scraper
+ 
+
+    # volumes:
+    #   app_data:
+
+    # The app_data volume in the docker-compose.yml file is not being used in the provided configuration. It is defined as an empty volume at the bottom of the file, but it is not being attached to any services.
+
+    # In Docker, a volume is a persistent storage location that can be shared among multiple containers. In this docker-compose.yml file, the app_data volume is not being attached to any services, so it will not be used.
+
+    # If you want to use the app_data volume, you can attach it to a service by adding the following to the service configuration in the docker-compose.yml file:
+
+    # volumes:
+    #   - app_data:/path/in/container
+
+    # This will attach the app_data volume to the specified service and mount it at the specified path in the container. For example, if you want to attach the app_data volume to the app service and mount it at /data, you can update the app service configuration like this:
+
+    # services:
+    #   app:
+    #     build: .
+    #     command: python services.py scraper
+    #     volumes:
+    #       - .:/app
+    #       - app_data:/data
+    #     working_dir: /app
+    #     ports:
+    #       - "5000:5000"
+    #     environment:
+    #       - FLASK_ENV=development
+
+    # This will attach the app_data volume to the app service and mount it at /data in the container. Any data written to the /data directory in the container will be persisted in the app_data volume on the host machine.

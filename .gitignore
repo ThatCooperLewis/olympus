@@ -4,6 +4,7 @@ __pycache__/
 
 # Local Data
 data/
+pgdata/
 *.csv
 
 # Test files
@@ -33,7 +34,7 @@ debug-log.txt
 
 # IDE
 .vscode
-
+TODO.md
 
 # Include unit test files
 !test_data.csv
