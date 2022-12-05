@@ -1,20 +1,20 @@
 import asyncio
 import json
+import traceback
 from queue import Queue
 from threading import Thread
 from time import sleep
 from time import time as now
-from typing import List
-import traceback
-from collections.abc import Callable
+from typing import Callable, List
+
+from websockets import connect as Connection
 
 from crosstower.models import Balance, Order
 from crosstower.socket_api import utils
-from websockets import connect as Connection
-
-from utils import Logger, DiscordWebhook
+from utils import DiscordWebhook, Logger
 from utils.config import CrosstowerConfig
 from utils.environment import env
+
 
 class SocketAPI:
 
