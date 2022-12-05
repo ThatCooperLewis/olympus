@@ -3,7 +3,7 @@ import logging
 
 class General:
 
-    STREAM_LOGGING_LEVEL = logging.INFO
+    STREAM_LOGGING_LEVEL = logging.DEBUG
     '''Tells the logging module to stream messages of a certain level to the CLI (INFO, DEBUG, ERROR).'''
 
     FILE_LOGGING_LEVEL = logging.DEBUG
@@ -39,6 +39,9 @@ class PostgresConfig:
 
     TICKER_COLUMNS = '(timestamp, ask, bid, last, low, high, open, volume, volume_quote)'
     '''The columns of the pSQL table that stores live ticker data. Used for sql insert queries.'''
+
+    TICKER_SELECT_NEWEST = "SELECT FLOOR(EXTRACT(EPOCH FROM timestamp)) AS timestamp_epoch, ask, bid, last, low, high, open, volume, volume_quote FROM ticker_feed ORDER BY timestamp_epoch DESC LIMIT %s"
+    '''Used to select the newest rows from ticker_feed. Use '%' after this string to format a LIMIT number into the query'''
 
     ORDER_TABLE_NAME = 'order_feed'
     '''The name of the pSQL table that stores order data & history.'''

@@ -1,6 +1,7 @@
 import json
 import traceback
 from time import time as now
+from time import sleep
 from typing import List, Tuple
 
 import psycopg2 as psql
@@ -89,27 +90,32 @@ class Postgres:
         self.prediction_table_name = prediction_table_override if prediction_table_override is not None else PostgresConfig.PREDICTION_TABLE_NAME
         self.log = Logger.setup(self.__class__.__name__)
         self.discord = DiscordWebhook("Postgres")
-        self.__setup_connection()
+        try:
+            self.__setup_connection()
+        except:
+            self.log.warn('Postgres connection failed. Attempting again in 10 seconds...')
+            sleep(10)
+            self.__setup_connection()
 
     # Public Methods - INSERT
 
     def insert_ticker(self, ticker: Ticker):
         self.log.debug(f"Inserting ticker with timestamp: {ticker.timestamp}")
         query = f"""INSERT INTO {self.ticker_table_name} {PostgresConfig.TICKER_COLUMNS}
-        VALUES ({ticker.timestamp}, {ticker.ask}, {ticker.bid}, {ticker.last}, {ticker.low}, {ticker.high}, {ticker.open}, {ticker.volume}, {ticker.volume_quote})"""
+        VALUES (TO_TIMESTAMP({ticker.timestamp}), {ticker.ask}, {ticker.bid}, {ticker.last}, {ticker.low}, {ticker.high}, {ticker.open}, {ticker.volume}, {ticker.volume_quote})"""
         self._query(query, False)
 
     def insert_order(self, order: Order, current_price: float, crypto_balance: float, fiat_balance: float):
         self.log.debug(f"Inserting order with uuid: {order.uuid}")
         query = f"""INSERT INTO {self.order_table_name} {PostgresConfig.ORDER_COLUMNS}
-        VALUES ({int(now())}, {order.quantity}, '{order.side}', '{PostgresConfig.STATUS_QUEUED}', '{order.uuid}', {fiat_balance}, {crypto_balance}, {current_price})"""
+        VALUES (TO_TIMESTAMP({int(now())}), {order.quantity}, '{order.side}', '{PostgresConfig.STATUS_QUEUED}', '{order.uuid}', {fiat_balance}, {crypto_balance}, {current_price})"""
         self._query(query, False)
 
     def insert_prediction_vector(self, prediction_vector: PredictionVector):
         self.log.debug(f"Inserting prediction vector with uuid: {prediction_vector.uuid}")
         history = self.__convert_prediction_history_to_string(prediction_vector.prediction_history)
         query = f"""INSERT INTO {self.prediction_table_name} {PostgresConfig.PREDICTION_COLUMNS}
-        VALUES ({int(now())}, {prediction_vector.timestamp}, {prediction_vector.weight}, {history}, '{PostgresConfig.STATUS_QUEUED}', '{prediction_vector.uuid}', {prediction_vector.percent})"""
+        VALUES (TO_TIMESTAMP({int(now())}), {prediction_vector.timestamp}, {prediction_vector.weight}, {history}, '{PostgresConfig.STATUS_QUEUED}', '{prediction_vector.uuid}', {prediction_vector.percent})"""
         self._query(query, False)
 
     # Public Methods - SELECT
@@ -121,7 +127,7 @@ class Postgres:
         :param row_count: The number of rows to return
         :return: A list of PostgresTicker objects
         """
-        query = f"SELECT * FROM {self.ticker_table_name} ORDER BY timestamp DESC LIMIT {row_count}"
+        query = PostgresConfig.TICKER_SELECT_NEWEST % row_count
         result = self._query(query, True)
         if type(result) is list:
             result.reverse()
