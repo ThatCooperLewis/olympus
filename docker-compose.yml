@@ -48,9 +48,10 @@ services:
   athena:
     container_name: athena
     image: athena
+    restart: always
     build:
       context: .
-      dockerfile: Dockerfile.athena
+      dockerfile: Dockerfile.cudaless
     depends_on:
       postgres:
         condition: service_healthy
@@ -65,6 +66,27 @@ services:
     environment:
       - OLYMPUS_SERVICE=scraper
  
+  ### ORDER LISTENER ###
+  hermes:
+    container_name: hermes
+    image: hermes
+    restart: always
+    build:
+      context: .
+      dockerfile: Dockerfile.cudaless
+    depends_on:
+      postgres:
+        condition: service_healthy
+      postgres-portal:
+        condition: service_healthy
+    command: python services_manager.py
+    volumes:
+      - .:/app
+    working_dir: /app
+    env_file:
+      - '.env.production'
+    environment:
+      - OLYMPUS_SERVICE=orders
 
     # volumes:
     #   app_data:
