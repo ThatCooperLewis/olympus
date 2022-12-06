@@ -51,6 +51,7 @@ class SocketAPI:
 class Trading:
 
     def __init__(self, symbol: str = CrosstowerConfig.DEFAULT_SYMBOL):
+        self.log = Logger.setup(self.__class__.__name__)
         self.symbol = symbol
         loop = asyncio.new_event_loop()
         asyncio.set_event_loop(loop)
@@ -109,9 +110,12 @@ class Trading:
         result = []
         for i in range(3):
             try:
+                self.log.debug('Requesting balances from account...')
                 result = self.__request_until_complete('spot_balances', {})
                 break
-            except:
+            except Exception as e:
+                self.log.debug(f'Error when fetching balance: {e.with_traceback}')
+                sleep(1)
                 continue
         if not result:
             return []
