@@ -56,16 +56,16 @@ class PostgresConfig:
     '''The columns of the pSQL table that stores prediction data & history. Used for sql insert queries.'''
 
     STATUS_QUEUED = 'QUEUED'
-    '''The postgres.order_feed status of a prediction that has been queued for order.'''
+    '''The postgres.order_feed & prediction_feed status of a prediction that has been queued for order.'''
 
     STATUS_PROCESSING = 'PROCESSING'
-    '''The postgres.order_feed status of a prediction/order that is currently being processed.'''
+    '''The postgres.order_feed & prediction_feed status of a prediction/order that is currently being processed.'''
 
     STATUS_COMPLETE = 'COMPLETE'
-    '''The postgres.order_feed status of an order that has been completed.'''
+    '''The postgres.order_feed & prediction_feed status of an order that has been completed.'''
 
     STATUS_FAILED = 'FAILED'
-    '''The postgres.order_feed status of an order that has failed.'''
+    '''The postgres.order_feed & prediction_feed status of an order that has failed.'''
 
     ALLOWED_STATUSES = [STATUS_QUEUED, STATUS_PROCESSING, STATUS_COMPLETE, STATUS_FAILED]
 
