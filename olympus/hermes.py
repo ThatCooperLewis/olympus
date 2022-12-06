@@ -91,6 +91,9 @@ class Hermes(PrimordialChaos):
         :type balances: List[Balance]
         :return: The balances of crypto and fiat.
         '''
+        if len(balances) == 0:
+            raise Exception("hermes.__parse_balances called but no balances provided")
+        self.log.debug(f"Parsing {len(balances)} balances: {balances}")
         for balance in balances:
             if balance.currency == TradingConfig.FIAT_SYMBOL:
                 fiat_balance = balance.available
