@@ -1,5 +1,5 @@
 from unittest import TestCase
-import services_manager_no_cuda as ServicesManager
+import services_manager_cudaless as ServicesManager
 from services import PostgresMonitor, TickerScraper, OrderListener
 
 class TestServicesManager(TestCase):

@@ -1,0 +1,7 @@
+FROM python:3.8.5
+
+COPY requirements-cudaless.txt /app/requirements-cudaless.txt
+
+WORKDIR /app
+
+RUN pip install -r requirements-cudaless.txt

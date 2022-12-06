@@ -5,5 +5,5 @@ if __name__ == "__main__":
     if env.service_name in ['integration', 'prediction']:
         from services_manager_cuda import handle
     else:
-        from services_manager_no_cuda import handle
+        from services_manager_cudaless import handle
     handle()

@@ -92,7 +92,7 @@ Setup virtual environment & install dependencies (in repo directory)
     python -m venv venv
     source venv/bin/activate
 
-If setting up a machine without CUDA capability, use `requirements-no-cuda.txt` instead
+If setting up a machine without CUDA capability, use `requirements-cudaless.txt` instead
 
     pip install -r requirements.txt
 

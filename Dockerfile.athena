@@ -1,7 +1,0 @@
-FROM python:3.8.5
-
-COPY requirements-no-cuda.txt /app/requirements-no-cuda.txt
-
-WORKDIR /app
-
-RUN pip install -r requirements-no-cuda.txt

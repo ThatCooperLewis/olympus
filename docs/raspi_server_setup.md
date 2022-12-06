@@ -28,7 +28,7 @@ Similar to the local setup guide, this is a walkthrough of vanilla ubuntu server
     cd olympus
     python -m venv venv
     source venv/bin/activate
-    pip install -r requirements-no-cuda.txt
+    pip install -r requirements-cudaless.txt
 
 ### Enable desired service
 
