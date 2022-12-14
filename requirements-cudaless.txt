@@ -4,6 +4,8 @@ google-auth-oauthlib==0.4.1
 numpy==1.22.2
 psycopg2==2.9.3
 PyGithub==1.55
+pyotp==2.6.0
 requests==2.27.1
+selenium==4.2.0
 websockets==10.1
 websocket-client==1.3.1
