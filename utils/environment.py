@@ -62,6 +62,17 @@ class env_meta(type):
     def github_access_token(cls) -> str:
         return os.getenv('GITHUB_ACCESS_TOKEN')
 
+    @property
+    def robinhood_email(cls) -> str:
+        return os.getenv('RH_EMAIL')
+
+    @property
+    def robinhood_password(cls) -> str:
+        return os.getenv('RH_PASSWORD')
+
+    @property
+    def robinhood_mfa(cls) -> str:
+        return os.getenv('RH_MFA')
 
 class env(metaclass=env_meta):
     pass

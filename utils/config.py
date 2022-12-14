@@ -82,8 +82,13 @@ class ScraperConfig:
     SOCKET_TIMEOUT_INTERVAL_MULTIPLIER = 2
     '''Multiplies the TICKER_INTERVAL for length of time without any new data from ticker scraper before we attempt a socket reconnect'''
 
-    DEFAULT_CSV_HEADERS = 'price,bid,last,low,high,open,volume,volumeQuote,timestamp\n'
-    '''The default headers to use when creating a new ticker/prediction CSV file'''
+    # For these headers, the prediction engine is looking for the "price" column in the table. 
+    # 
+    DEFAULT_ASK_CSV_HEADERS = 'price,bid,last,low,high,open,volume,volumeQuote,timestamp\n'
+    '''The default headers to use when creating a new ask-based ticker/prediction CSV file'''
+    
+    DEFAULT_BID_CSV_HEADERS = 'ask,price,last,low,high,open,volume,volumeQuote,timestamp\n'
+    '''The default headers to use when creating a new bid-based ticker/prediction CSV file'''
 
 ################# Hermes Trading #################
 
@@ -145,3 +150,12 @@ class PredictionConfig:
 
     PREDICTION_QUEUE_MAX_SIZE = 5
     '''The maximum number of queued predictions before alerting'''
+
+################# Robinhood #################
+
+class RobinhoodConfig:
+    
+    LOGIN_URL = 'https://robinhood.com/login/'
+    '''The URL to use when logging into Robinhood'''
+
+    BTC_URL = 'https://robinhood.com/crypto/BTC/'

@@ -6,6 +6,7 @@ __pycache__/
 data/
 pgdata/
 *.csv
+*.zip
 
 # Test files
 socket_test.py
@@ -31,6 +32,7 @@ results/
 # Runtime files
 run/
 debug-log.txt
+chromedriver
 
 # IDE
 .vscode
