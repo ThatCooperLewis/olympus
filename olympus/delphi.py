@@ -103,6 +103,7 @@ class Delphi(PrimordialChaos):
         tmp_rows = [ScraperConfig.DEFAULT_CSV_HEADERS]
         
         for index, ticker in enumerate(rows):
+            # Ditch newline if it's the last row
             row = ticker.csv_line.strip() if index == len(rows) - 1 else ticker.csv_line
             tmp_rows.append(row)
         
